@@ -1,0 +1,64 @@
+[project]
+name = "mc"
+description = "Missile Command"
+version = "0.0.1"
+readme = "README.md"
+
+authors = [
+    { name="Michael Lamertz", email="michael.lamertz@gmail.com" }
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries :: pygame",
+]
+
+license = "MIT"
+license-files = ["LICENSE"]
+
+dependencies = [
+    "pygame-ce",
+    "pgcooldown",
+    "ddframework @ git+https://github.com/dickerdackel/ddframework",
+]
+
+[project.scripts]
+missile = "mc.__main__:main"
+
+[project.urls]
+homepage = "https://github.com/dickerdackel/mc"
+bugtracker = "https://github.com/DickerDackel/mc/issues"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-rA"
+testpaths = [
+    "tests",
+]
+
+[tool.ruff]
+ignore = [
+    # "ANN",
+    "E501",
+    "E701",
+    "E731",
+    "E741",
+    "I001",
+    "PLR2004",
+]
+line-length = 100
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = false
+known-third-party = ["pygame", "numpy", "tinyecs", "patternegine", "pgcooldown", "rpeasings"]
+lines-between-types = 1
+
+[tool.cibuildwheel]
+# Don't build for pypy
+skip = "pp*"
+build = ["cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]

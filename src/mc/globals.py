@@ -68,8 +68,18 @@ POS_CITY_6 = (206, SCREEN.bottom - 8)
 #       |_|                        
 ########################################################################
 
-SPRITESHEET_MISSILE = pygame.Rect(0, 0, 16, 16)
-SPRITESHEET_BIG_CITY = pygame.Rect(16, 0, 32, 16)
-SPRITESHEET_CITY = pygame.Rect(48, 0, 32, 16)
+SPRITESHEET_CROSSHAIR = pygame.Rect(0, 0, 7, 7)
+SPRITESHEET_TARGET = pygame.Rect(8, 0, 7, 7)
+SPRITESHEET_MISSILE = pygame.Rect(16, 0, 4, 3)
+
+SPRITESHEET_BIG_CITY = pygame.Rect(32, 0, 32, 16)
+SPRITESHEET_CITY = pygame.Rect(64, 0, 32, 16)
+SPRITESHEET_ALIEN_BIG_GREEN = pygame.Rect(96, 0, 16, 16)
+SPRITESHEET_ALIEN_BIG_RED = pygame.Rect(112, 0, 16, 16)
+SPRITESHEET_ALIEN_GREEN = pygame.Rect(128, 0, 16, 16)
+SPRITESHEET_ALIEN_RED = pygame.Rect(144, 0, 16, 16)
+SPRITESHEET_PLANE_GREEN = pygame.Rect(160, 0, 16, 16)
+SPRITESHEET_PLANE_RED = pygame.Rect(176, 0, 16, 16)
+SPRITESHEET_SMARTBOMB_GREEN = pygame.Rect(192, 0, 16, 16)
+SPRITESHEET_SMARTBOMB_RED = pygame.Rect(200, 0, 16, 16)
 SPRITESHEET_GROUND = pygame.Rect(0, 16, 256, 32)
-SPRITESHEET_CROSSHAIR = pygame.Rect(48, 0, 9, 9)

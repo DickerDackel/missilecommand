@@ -3,6 +3,8 @@ from types import SimpleNamespace
 
 import pygame
 
+from pygame import Vector2 as v2
+
 ########################################################################
 #     _                _ _           _   _
 #    / \   _ __  _ __ | (_) ___ __ _| |_(_) ___  _ __ 
@@ -34,6 +36,7 @@ COLOR = SimpleNamespace(
     own_missile ='blue',
     background='darkslategray',
     grid='grey',
+    clear=(255, 255, 255, 0),
 )
 
 ########################################################################
@@ -45,19 +48,45 @@ COLOR = SimpleNamespace(
 #                                                          |___/     
 ########################################################################
 
-POS_BATTERY_X_STEP = 8
-POS_BATTERY_Y_STEP = 3
-POS_BATTERY_LEFT =   (24, SCREEN.bottom - 8)
-POS_BATTERY_CENTER = (SCREEN.centerx, SCREEN.bottom - 8)
-POS_BATTERY_RIGHT =  (SCREEN.width - 24, SCREEN.bottom - 8)
+POS_BATTERIES = [
+    v2(24, SCREEN.bottom - 16),
+    v2(SCREEN.centerx, SCREEN.bottom - 16),
+    v2(SCREEN.width - 24, SCREEN.bottom - 16),
+]
+
+POS_LAUNCHPADS = [pos + (0, -4) for pos in POS_BATTERIES]
 
 POS_GROUND = SCREEN.midbottom
-POS_CITY_1 = ( 56, SCREEN.bottom - 8)
-POS_CITY_2 = ( 80, SCREEN.bottom - 6)
-POS_CITY_3 = (104, SCREEN.bottom - 9)
-POS_CITY_4 = (154, SCREEN.bottom - 9)
-POS_CITY_5 = (180, SCREEN.bottom - 6)
-POS_CITY_6 = (206, SCREEN.bottom - 8)
+POS_CITIES = [
+    v2( 56, SCREEN.bottom - 8 - 8),
+    v2( 80, SCREEN.bottom - 8 - 6),
+    v2(104, SCREEN.bottom - 8 - 9),
+    v2(154, SCREEN.bottom - 8 - 9),
+    v2(180, SCREEN.bottom - 8 - 6),
+    v2(206, SCREEN.bottom - 8 - 8),
+]
+
+KEY_SILO_MAP = {
+    pygame.K_q: 0,
+    pygame.K_w: 1,
+    pygame.K_e: 2,
+}
+
+NUMBER_OF_MISSILES = 15
+
+
+_dx = 8
+_dy = 3
+MISSILE_OFFSETS = [
+    #     #
+    #    # #
+    #   # # #
+    #  # # # #
+    (0, -2 * _dy),
+    (-_dx / 2, -_dy), (_dx / 2, -_dy),
+    (-_dx, 0), (_dx, 0), (0,  0),
+    (-1.5 * _dx, _dy), (1.5 * _dx, _dy), (-_dx / 2, _dy), (_dx / 2, _dy),
+]
 
 ########################################################################
 #  ____             _ _            

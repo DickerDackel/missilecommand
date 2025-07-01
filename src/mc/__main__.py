@@ -23,7 +23,7 @@ def load_atlas(renderer, fname):
 
     cache.create_atlas('spritesheet')
     cache.add_to_atlas('spritesheet', 'crosshair', G.SPRITESHEET_CROSSHAIR)
-    cache.add_to_atlas('spritesheet', 'target', G.SPRITESHEET_TARGET)
+    cache.add_to_atlas('spritesheet', 'targets', G.SPRITESHEET_TARGETS)
     cache.add_to_atlas('spritesheet', 'missile', G.SPRITESHEET_MISSILE)
     cache.add_to_atlas('spritesheet', 'big-city', G.SPRITESHEET_BIG_CITY)
     cache.add_to_atlas('spritesheet', 'city', G.SPRITESHEET_CITY)
@@ -40,7 +40,7 @@ def load_atlas(renderer, fname):
 
 
 def main():
-    app = App(G.TITLE, resolution=G.SCREEN.size, fps=G.FPS)
+    app = App(G.TITLE, resolution=G.SCREEN.size, fps=G.FPS, bgcolor=G.COLOR.background)
     pygame.mouse.set_visible(False)
 
     load_atlas(app.renderer, G.ASSETS.joinpath('spritesheet.png'))

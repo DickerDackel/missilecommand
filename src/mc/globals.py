@@ -34,7 +34,7 @@ COLOR = SimpleNamespace(
     ground = 'yellow',
     enemy_missile = 'red',
     own_missile ='blue',
-    background='darkslategray',
+    background='black',
     grid='grey',
     clear=(255, 255, 255, 0),
 )
@@ -54,7 +54,7 @@ POS_BATTERIES = [
     v2(SCREEN.width - 24, SCREEN.bottom - 16),
 ]
 
-POS_LAUNCHPADS = [pos + (0, -4) for pos in POS_BATTERIES]
+POS_LAUNCHPADS = [pos + (0, -11) for pos in POS_BATTERIES]
 
 POS_GROUND = SCREEN.midbottom
 POS_CITIES = [
@@ -74,7 +74,6 @@ KEY_SILO_MAP = {
 
 NUMBER_OF_MISSILES = 15
 
-
 _dx = 8
 _dy = 3
 MISSILE_OFFSETS = [
@@ -88,6 +87,8 @@ MISSILE_OFFSETS = [
     (-1.5 * _dx, _dy), (1.5 * _dx, _dy), (-_dx / 2, _dy), (_dx / 2, _dy),
 ]
 
+MISSILE_SPEEDS = [136, 272, 136]
+
 ########################################################################
 #  ____             _ _            
 # / ___| _ __  _ __(_) |_ ___  ___ 
@@ -98,9 +99,8 @@ MISSILE_OFFSETS = [
 ########################################################################
 
 SPRITESHEET_CROSSHAIR = pygame.Rect(0, 0, 7, 7)
-SPRITESHEET_TARGET = pygame.Rect(8, 0, 7, 7)
+SPRITESHEET_TARGETS = [pygame.Rect(8, 0, 7, 7), pygame.Rect(0, 8, 7, 7), pygame.Rect(8, 8, 7, 7)]
 SPRITESHEET_MISSILE = pygame.Rect(16, 0, 4, 3)
-
 SPRITESHEET_BIG_CITY = pygame.Rect(32, 0, 32, 16)
 SPRITESHEET_CITY = pygame.Rect(64, 0, 32, 16)
 SPRITESHEET_ALIEN_BIG_GREEN = pygame.Rect(96, 0, 16, 16)

@@ -1,63 +1,22 @@
-from itertools import cycle
-
 import pygame
 import pygame._sdl2 as sdl2
 
 import ddframework.cache as cache
 
 from ddframework.app import GameState, StateExit
-from pgcooldown import Cooldown, remap
 
 import mc.globals as G
 
-
-def to_viewport(pos, real_size, virtual_size):
-    return (remap(0, real_size[0], 0, virtual_size[0], pos[0]),
-            remap(0, real_size[1], 0, virtual_size[1], pos[1]))
-
-
-class TSprite:
-    def __init__(self, pos, atlas, sprite_rect, anchor='center'):
-        self.pos = pos
-        self.atlas = atlas
-        self.anchor = anchor
-
-        self.srcrect = sprite_rect.copy()
-        self.dstrect = sprite_rect.move_to(**{anchor: self.pos})
-
-    def update(self, dt):
-        print(f'{self.anchor=}  {self.pos=}')
-        setattr(self.dstrect, self.anchor, self.pos)
-
-    def draw(self):
-        self.atlas.draw(srcrect=self.srcrect, dstrect=self.dstrect)
-
-
-class TSpriteAnim(TSprite):
-    def __init__(self, pos, atlas, sprite_rects, anchor='center', delay=1/60):
-        super().__init__(pos, atlas, sprite_rects[0], anchor)
-        self.textures = cycle(sprite_rects)
-        self.cooldown = Cooldown(delay)
-
-    def update(self, dt):
-        if self.cooldown.cold():
-            self.srcrect = next(self.textures)
-            self.cooldown.reset()
-
-        super().update(dt)
-
-    def draw(self):
-        super().draw()
-
+from mc.utils import to_viewport
+from mc.sprite import TSprite, TAnimSprite, TGroup
 
 
 class Silo:
     def __init__(self, pos):
         self.pos = pygame.Vector2(pos)
 
-        atlas = cache.get('spritesheet')
-        texture = cache.get_from_atlas('spritesheet', 'missile')
-        self.missiles = [TSprite(self.pos + offset, atlas, texture)
+        textures = cache.get('missiles')
+        self.missiles = [TAnimSprite(self.pos + offset, textures, delay=1)
                          for offset in G.MISSILE_OFFSETS]
 
     def draw(self):
@@ -66,10 +25,14 @@ class Silo:
 
 class City(TSprite):
     def __init__(self, pos):
-        atlas = cache.get('spritesheet')
-        texture = cache.get_from_atlas('spritesheet', 'city')
-        super().__init__(pos, atlas, texture, anchor='midbottom')
+        texture = cache.get('city')
+        super().__init__(pos, texture, anchor='midbottom')
 
+
+class Target(TAnimSprite):
+    def __init__(self, pos):
+        textures = cache.get('targets')
+        super().__init__(pos, textures, delay=0.3)
 
 class Missile:
     def __init__(self, pos, destination, speed, renderer, trail_texture):
@@ -79,9 +42,7 @@ class Missile:
         self.renderer = renderer
         self.trail_texture = trail_texture
 
-        atlas = cache.get('spritesheet')
-        textures = cache.get_from_atlas('spritesheet', 'targets')
-        self.crosshair = TSpriteAnim(self.destination, atlas, textures, delay=0.1)
+        self.target = Target(self.destination)
 
         self.explode = False
         self.trail = []
@@ -99,10 +60,10 @@ class Missile:
         self.trail.append((self.pos, self.pos + step))
         self.pos = self.trail[-1][1]
 
-        self.crosshair.update(dt)
+        self.target.update(dt)
 
     def draw(self):
-        self.crosshair.draw()
+        self.target.draw()
 
         if not self.trail: return
 
@@ -129,7 +90,7 @@ class Missile:
         self.renderer.draw_color = save_color
         self.renderer.target = save_target
 
-        self.crosshair = None
+        self.target = None
 
 
 class Game(GameState):
@@ -198,11 +159,9 @@ class Game(GameState):
     def draw(self):
         renderer = self.app.renderer
 
-        atlas = cache.get('spritesheet')
-
-        ground = cache.get_from_atlas('spritesheet', 'ground')
-        rect = ground.move_to(midbottom=self.app.logical_rect.midbottom)
-        atlas.draw(srcrect=ground, dstrect=rect)
+        ground = cache.get('ground')
+        rect = ground.get_rect(midbottom=self.app.logical_rect.midbottom)
+        ground.draw(dstrect=rect)
 
         for city in self.cities: city.draw()
         for silo in self.silos: silo.draw()
@@ -211,8 +170,9 @@ class Game(GameState):
 
         mp = pygame.mouse.get_pos()
         mouse = to_viewport(mp, self.app.window_rect.size, self.app.logical_rect.size)
-        crosshair = cache.get_from_atlas('spritesheet', 'crosshair')
-        atlas.draw(srcrect=crosshair, dstrect=crosshair.move_to(center=mouse))
+        crosshair = cache.get('crosshair')
+        rect = crosshair.get_rect(center=mouse)
+        crosshair.draw(dstrect=rect)
 
     def try_missile_launch(self, launchpad, destination):
         if not self.silos[launchpad].missiles: return

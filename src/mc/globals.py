@@ -98,17 +98,19 @@ MISSILE_SPEEDS = [136, 272, 136]
 #       |_|                        
 ########################################################################
 
-SPRITESHEET_CROSSHAIR = pygame.Rect(0, 0, 7, 7)
-SPRITESHEET_TARGETS = [pygame.Rect(8, 0, 7, 7), pygame.Rect(0, 8, 7, 7), pygame.Rect(8, 8, 7, 7)]
-SPRITESHEET_MISSILE = pygame.Rect(16, 0, 4, 3)
-SPRITESHEET_BIG_CITY = pygame.Rect(32, 0, 32, 16)
-SPRITESHEET_CITY = pygame.Rect(64, 0, 32, 16)
-SPRITESHEET_ALIEN_BIG_GREEN = pygame.Rect(96, 0, 16, 16)
-SPRITESHEET_ALIEN_BIG_RED = pygame.Rect(112, 0, 16, 16)
-SPRITESHEET_ALIEN_GREEN = pygame.Rect(128, 0, 16, 16)
-SPRITESHEET_ALIEN_RED = pygame.Rect(144, 0, 16, 16)
-SPRITESHEET_PLANE_GREEN = pygame.Rect(160, 0, 16, 16)
-SPRITESHEET_PLANE_RED = pygame.Rect(176, 0, 16, 16)
-SPRITESHEET_SMARTBOMB_GREEN = pygame.Rect(192, 0, 16, 16)
-SPRITESHEET_SMARTBOMB_RED = pygame.Rect(200, 0, 16, 16)
-SPRITESHEET_GROUND = pygame.Rect(0, 16, 256, 32)
+SPRITESHEET = {
+    'crosshair': pygame.Rect(0, 0, 7, 7),
+    'targets': [pygame.Rect(8, 0, 7, 7), pygame.Rect(0, 8, 7, 7), pygame.Rect(8, 8, 7, 7)],
+    'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3), pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
+    'big_city': pygame.Rect(32, 0, 32, 16),
+    'city': pygame.Rect(64, 0, 32, 16),
+    'alien_big_green': pygame.Rect(96, 0, 16, 16),
+    'alien_big_red': pygame.Rect(112, 0, 16, 16),
+    'alien_green': pygame.Rect(128, 0, 16, 16),
+    'alien_red': pygame.Rect(144, 0, 16, 16),
+    'plane_green': pygame.Rect(160, 0, 16, 16),
+    'plane_red': pygame.Rect(176, 0, 16, 16),
+    'smartbomb_green': pygame.Rect(192, 0, 16, 16),
+    'smartbomb_red': pygame.Rect(200, 0, 16, 16),
+    'ground': pygame.Rect(0, 16, 256, 32),
+}

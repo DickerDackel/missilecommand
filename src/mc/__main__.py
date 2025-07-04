@@ -16,7 +16,6 @@ from mc.game import Game
 
 def load_spritesheet(renderer, fname):
     def ss2t(i, r):
-        print(i, r)
         return sdl2.Texture.from_surface(renderer, i.subsurface(r))
 
     spritesheet = pygame.image.load(fname)

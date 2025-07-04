@@ -100,7 +100,6 @@ MISSILE_SPEEDS = [136, 272, 136]
 
 SPRITESHEET = {
     'crosshair': pygame.Rect(0, 0, 7, 7),
-    'targets': [pygame.Rect(8, 0, 7, 7), pygame.Rect(0, 8, 7, 7), pygame.Rect(8, 8, 7, 7)],
     'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3), pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
     'big_city': pygame.Rect(32, 0, 32, 16),
     'city': pygame.Rect(64, 0, 32, 16),
@@ -112,5 +111,9 @@ SPRITESHEET = {
     'plane_red': pygame.Rect(176, 0, 16, 16),
     'smartbomb_green': pygame.Rect(192, 0, 16, 16),
     'smartbomb_red': pygame.Rect(200, 0, 16, 16),
+    'missile-heads': [pygame.Rect(208, 0, 1, 1), pygame.Rect(216, 0, 1, 1), pygame.Rect(224, 0, 1, 1),
+                      pygame.Rect(208, 8, 1, 1), pygame.Rect(216, 8, 1, 1), pygame.Rect(224, 8, 1, 1)],
+    'targets': [pygame.Rect(232, 0, 7, 7), pygame.Rect(240, 0, 7, 7), pygame.Rect(248, 0, 7, 7),
+                pygame.Rect(232, 8, 7, 7), pygame.Rect(240, 8, 7, 7), pygame.Rect(248, 8, 7, 7)],
     'ground': pygame.Rect(0, 16, 256, 32),
 }

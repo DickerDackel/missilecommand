@@ -11,7 +11,7 @@ from ddframework import App
 
 import mc.globals as G
 
-from mc.states.game import Game
+from mc.game import Game
 
 
 def load_spritesheet(renderer, fname):

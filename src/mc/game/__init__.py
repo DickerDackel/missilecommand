@@ -8,7 +8,7 @@ from ddframework.app import GameState, StateExit
 import mc.globals as G
 
 from mc.utils import to_viewport
-from mc.sprite import TSprite, TAnimSprite, TGroup
+from mc.sprite import TSprite, TAnimSprite
 
 
 class Silo:
@@ -157,8 +157,6 @@ class Game(GameState):
             self.launch_explosion(e.pos)
 
     def draw(self):
-        renderer = self.app.renderer
-
         ground = cache.get('ground')
         rect = ground.get_rect(midbottom=self.app.logical_rect.midbottom)
         ground.draw(dstrect=rect)

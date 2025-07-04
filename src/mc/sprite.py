@@ -43,10 +43,10 @@ class ImageCycle:
 class TSprite(pygame.sprite.Sprite):
     def __init__(self, pos, image, *groups, anchor='center'):
         super().__init__(groups)
-        self.pos = pos
+        self.pos = Vector2(pos)
         self.image = image
         self.anchor = anchor
-        self.rect = self.image.get_rect()
+        self.rect = pygame.FRect(self.image.get_rect())
         self.update(0)
 
     def update(self, dt):
@@ -61,11 +61,11 @@ class TAnimSprite(pygame.sprite.Sprite):
 
     def __init__(self, pos, images, *groups, delay=1, anchor='center'):
         super().__init__(*groups)
-        self.pos = pos
+        self.pos = Vector2(pos)
         self.image = (images, delay)
         self.anchor = anchor
-        self.rect =self.image.get_rect()
-        self.update(0)
+        self.rect = pygame.FRect(self.image.get_rect())
+        setattr(self.rect, self.anchor, self.pos)
 
     def update(self, dt):
         setattr(self.rect, self.anchor, self.pos)

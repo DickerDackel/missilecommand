@@ -94,9 +94,6 @@ class Game(GameState):
         self.trail_canvas.draw()
 
         self.mouse.draw()
-        # crosshair = cache.get('crosshair')
-        # rect = crosshair.get_rect(center=mouse)
-        # crosshair.draw(dstrect=rect)
 
     def try_missile_launch(self, launchpad, target):
         if not self.silos[launchpad].missiles: return

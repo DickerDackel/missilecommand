@@ -37,7 +37,12 @@ class ImageCycle:
 
         anim = obj.__getattribute__(self.attrib)
 
-        return anim.image[int(anim.lt())]
+        ltres = anim.lt()
+        idx = int(ltres)
+        try:
+            return anim.image[idx]
+        except IndexError as  e:
+            raise IndexError(f'should not happen: {len(anim.image)=}  {ltres=}  {idx=}  {e=}') from IndexError
 
 
 class TSprite(pygame.sprite.Sprite):

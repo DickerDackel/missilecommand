@@ -40,6 +40,7 @@ class MissileHead(TAnimSprite):
         self.target = Vector2(target)
         self.speed = speed
         self.explode = False
+        print(self.speed)
 
     def update(self, dt):
         distance = self.target - self.pos

@@ -125,7 +125,9 @@ SPRITESHEET = {
     'targets': [pygame.Rect(232, 0, 7, 7), pygame.Rect(240, 0, 7, 7), pygame.Rect(248, 0, 7, 7),
                 pygame.Rect(232, 8, 7, 7), pygame.Rect(240, 8, 7, 7), pygame.Rect(248, 8, 7, 7)],
     'ground': pygame.Rect(0, 16, 256, 32),
-    'explosion':pygame.Rect(256, 0, 32, 32),
+    'explosion': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
+                  pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
+                  pygame.Rect(384, 0, 32, 32), pygame.Rect(416, 0, 32, 32)],
 }
 
 ########################################################################

@@ -1,12 +1,14 @@
+from random import choice
+
 import pygame
 
-from pgcooldown import Cooldown
+from pgcooldown import LerpThing, Cooldown
 from pygame import Vector2
 
 import ddframework.cache as cache
 
 import mc.globals as G
-from mc.sprite import TSprite, TAnimSprite, TSequenceSprite
+from mc.sprite import TSprite, TAnimSprite
 from mc.utils import to_viewport
 
 
@@ -122,27 +124,40 @@ class Mouse(TSprite):
                             self.logical_rect.size)
 
 class Explosion(TSprite):
+    RAMP = ((0.1, 1, 0.5), (1, 0.1, 0.5))
+
     @staticmethod
     def collidepoint(left, right):
         v = left.pos - right.pos
-        radius = 32 * left.scale if isinstance(left, Explosion) else 32 * right.scale
-        print(f'{left.pos=}  {right.pos=}  {v.length()=}  {radius=}  {v.length() < radius}')
+
+        scale = left.scale if isinstance(left, Explosion) else right.scale
+        radius = 16 * scale
+
         return v.length() < radius
 
     def __init__(self, pos):
-        texture = cache.get('explosion')
+        self.textures = cache.get('explosion')
+        texture = choice(self.textures)
         super().__init__(pos, texture)
-        self.cooldown = Cooldown(0.15)
-        self.scales = iter([6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6])
-        self.scale = 1 / 2 ** next(self.scales)
+
+        self.lt_cfg = iter(self.RAMP)
+        self.lt = LerpThing(*next(self.lt_cfg), repeat=0)
+        self.scale = self.lt()
+
+        self.color_change = Cooldown(0.1)
 
     def update(self, dt):
-        if self.cooldown.cold():
+        self.scale = self.lt()
+
+        if self.lt.finished():
             try:
-                self.scale = 1 / 2 ** next(self.scales)
+                self.lt = LerpThing(*next(self.lt_cfg), repeat=0)
             except StopIteration:
                 self.kill()
-            self.cooldown.reset()
 
     def draw(self):
+        if self.color_change.cold():
+            self.color_change.reset()
+            self.image = choice(self.textures)
+
         self.image.draw(dstrect=self.rect.scale_by(self.scale))

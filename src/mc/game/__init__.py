@@ -177,5 +177,4 @@ class Game(GameState):
         self.trails.append(Trail(start, missile, self.app.renderer, self.trail_canvas))
 
     def launch_explosion(self, pos):
-        print(f'Explode at {pos}')
         self.explosions.add(Explosion(pos))

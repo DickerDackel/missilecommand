@@ -1,11 +1,12 @@
 import pygame
 
+from pgcooldown import Cooldown
 from pygame import Vector2
 
 import ddframework.cache as cache
 
 import mc.globals as G
-from mc.sprite import TSprite, TAnimSprite
+from mc.sprite import TSprite, TAnimSprite, TSequenceSprite
 from mc.utils import to_viewport
 
 
@@ -28,9 +29,10 @@ class City(TSprite):
 
 
 class Target(TAnimSprite):
-    def __init__(self, pos):
+    def __init__(self, pos, parent):
         textures = cache.get('targets')
         super().__init__(pos, textures, delay=0.3)
+        self.parent = parent
 
 class MissileHead(TAnimSprite):
     def __init__(self, start, target, speed):
@@ -40,7 +42,6 @@ class MissileHead(TAnimSprite):
         self.target = Vector2(target)
         self.speed = speed
         self.explode = False
-        print(self.speed)
 
     def update(self, dt):
         distance = self.target - self.pos
@@ -119,3 +120,29 @@ class Mouse(TSprite):
         return  to_viewport(pygame.mouse.get_pos(),
                             self.window_rect.size,
                             self.logical_rect.size)
+
+class Explosion(TSprite):
+    @staticmethod
+    def collidepoint(left, right):
+        v = left.pos - right.pos
+        radius = 32 * left.scale if isinstance(left, Explosion) else 32 * right.scale
+        print(f'{left.pos=}  {right.pos=}  {v.length()=}  {radius=}  {v.length() < radius}')
+        return v.length() < radius
+
+    def __init__(self, pos):
+        texture = cache.get('explosion')
+        super().__init__(pos, texture)
+        self.cooldown = Cooldown(0.15)
+        self.scales = iter([6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6])
+        self.scale = 1 / 2 ** next(self.scales)
+
+    def update(self, dt):
+        if self.cooldown.cold():
+            try:
+                self.scale = 1 / 2 ** next(self.scales)
+            except StopIteration:
+                self.kill()
+            self.cooldown.reset()
+
+    def draw(self):
+        self.image.draw(dstrect=self.rect.scale_by(self.scale))

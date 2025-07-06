@@ -12,8 +12,9 @@ from ddframework.statemachine import StateMachine
 
 import mc.globals as G
 
-from mc.game.entities import Silo, City, Target, MissileHead, Trail, Mouse
+from mc.game.entities import Silo, City, Target, MissileHead, Trail, Mouse, Explosion
 from mc.game.waves import wave_iter
+from mc.sprite import TGroup
 
 
 state_machine = StateMachine()
@@ -34,11 +35,11 @@ class Game(GameState):
         self.trail_canvas.blend_mode = pygame.BLENDMODE_BLEND
 
         self.silos = []
-        self.cities = []
-        self.attacks = []
-        self.missiles = []
-        self.targets = []
         self.trails = []
+        self.cities = TGroup()
+        self.missiles = TGroup()
+        self.targets = TGroup()
+        self.explosions = TGroup()
 
         self.paused = False
 
@@ -56,11 +57,14 @@ class Game(GameState):
 
     def level_reset(self):
         self.silos = [Silo(pos) for pos in G.POS_BATTERIES]
-        self.cities = [City(pos) for pos in G.POS_CITIES]
-        self.attacks.clear()
-        self.missiles.clear()
-        self.targets.clear()
         self.trails.clear()
+
+        self.cities.empty()
+        self.missiles.empty()
+        self.targets.empty()
+        self.explosions.empty()
+
+        self.cities.add(City(pos) for pos in G.POS_CITIES)
 
         self.renderer.draw_color = G.COLOR.clear
         self.renderer.target = self.trail_canvas
@@ -69,7 +73,7 @@ class Game(GameState):
         self.renderer.target = None
         self.renderer.draw_color = G.COLOR.background
 
-        self.next_target = cycle(chain(self.silos, sample(self.cities, k=3)))
+        self.next_target = cycle(chain(self.silos, sample(self.cities.sprites(), k=3)))
 
         self.wave = next(self.wave_iter)
         self.score_mult = self.level // 2 + 1
@@ -110,40 +114,38 @@ class Game(GameState):
                                                self.app.logical_rect,
                                                self.renderer,
                                                self.trail_canvas)
-                self.attacks.append(missile)
+                self.missiles.add(missile)
                 self.trails.append(trail)
 
             self.to_launch -= count
 
         self.mouse.update(dt)
 
-        for o in self.attacks: o.update(dt)
         for o in self.missiles: o.update(dt)
         for o in self.targets: o.update(dt)
         for o in self.trails: o.update(dt)
+        for o in self.explosions: o.update(dt)
 
-        explosions = [m for m in self.missiles if m.explode]
-        explosions = [
-            (head, target, trail)
-            for head, target, trail in zip(self.missiles, self.targets, self.trails)
-            if head.explode]
-        for head, target, trail in explosions:
-            trail.kill()
-            self.missiles.remove(head)
-            self.targets.remove(target)
-            self.trails.remove(trail)
-            self.launch_explosion(target.pos)
+        dead_trails = [o for o in self.trails if o.parent.explode]
+        for o in dead_trails:
+            o.kill()
+            self.trails.remove(o)
 
-        explosions = [m for m in self.attacks if m.explode]
-        explosions = [
-            (head, trail)
-            for head, trail in zip(self.attacks, self.trails)
-            if head.explode]
-        for head, trail in explosions:
-            trail.kill()
-            self.attacks.remove(head)
-            self.trails.remove(trail)
-            self.launch_explosion(head.pos)
+        dead_targets = [o for o in self.targets if o.parent.explode]
+        for o in dead_targets:
+            o.kill()
+
+        dead_missiles = [o for o in self.missiles if o.explode]
+        for o in dead_missiles:
+            self.launch_explosion(o.pos)
+            o.kill()
+
+        collisions = pygame.sprite.groupcollide(self.explosions, self.missiles,
+                                                False, False,
+                                                collided=Explosion.collidepoint)
+        for explosion, missiles in collisions.items():
+            for m in missiles:
+                m.explode = True
 
     def draw(self):
         ground = cache.get('ground')
@@ -156,9 +158,10 @@ class Game(GameState):
         for o in self.trails: o.draw()
         self.trail_canvas.draw()
 
-        for o in self.attacks: o.draw(self.renderer)
         for o in self.missiles: o.draw(self.renderer)
         for o in self.targets: o.draw()
+
+        for o in self.explosions: o.draw()
 
         self.mouse.draw()
 
@@ -169,9 +172,10 @@ class Game(GameState):
         start = G.POS_LAUNCHPADS[launchpad]
         self.silos[launchpad].missiles.pop()
         missile = MissileHead(start, target, speed)
-        self.missiles.append(missile)
+        self.targets.add(Target(target, missile))
+        self.missiles.add(missile)
         self.trails.append(Trail(start, missile, self.app.renderer, self.trail_canvas))
-        self.targets.append(Target(target))
 
     def launch_explosion(self, pos):
-        ...
+        print(f'Explode at {pos}')
+        self.explosions.add(Explosion(pos))

@@ -1,4 +1,4 @@
-import pygame._sdl2 as sdl2
+import pygame
 
 from ddframework.app import StateExit
 from pgcooldown import Cooldown
@@ -6,20 +6,34 @@ from ddframework.app import GameState
 
 import mc.globals as G
 
+from mc.game.entities import TString
 
-class Prep(GameState):
-    def __init__(self, app):
+
+class Briefing(GameState):
+    def __init__(self, app, mult):
         self.app = app
-        self.cooldown = Cooldown(3)
+        self.cd = Cooldown(3)
 
-        surf = G.FONT.normal.render('LOREM IPSUM', 'red', True)
-        self.texture = sdl2.Texture.from_surface(self.app.renderer, surf)
-        self.rect = surf.get_rect(center=app.logical_rect.center)
+        self.texts = {
+            'PLAYER': TString(G.MESSAGES['PLAYER'][0], 'PLAYER ', anchor='midleft', color='blue'),
+            'DEFEND': TString(G.MESSAGES['DEFEND CITIES'][0], 'DEFEND      CITIES', anchor='midleft', color='blue'),
+            'x POINTS': TString(G.MESSAGES['x POINTS'][0], 'x POINTS', anchor='midleft', color='blue'),
+            'MULT': TString((0, 0), '1 ', color='red'),
+            'PLAYER_NO': TString((0, 0), '1', color='red')
+        }
+        self.texts['MULT'].rect.midright = self.texts['x POINTS'].rect.midleft
+        self.texts['PLAYER_NO'].rect.midleft = self.texts['PLAYER'].rect.midright
 
+        self.cd = Cooldown(3)
+
+    def dispatch_events(self, e):
+        if e.key == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            raise StateExit(None)
 
     def update(self, dt):
-        if self.cooldown.cold():
-            raise StateExit(-1)
+        if self.cd.cold():
+            raise StateExit(None)
 
     def draw(self):
-        self.texture.draw(dstrect=self.rect)
+        for t in self.texts.values():
+            t.draw()

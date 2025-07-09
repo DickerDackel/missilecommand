@@ -9,7 +9,7 @@ import ddframework.cache as cache
 
 import mc.globals as G
 from mc.sprite import TSprite, TAnimSprite
-from mc.utils import to_viewport
+from mc.utils import to_viewport, colorize
 
 
 class Silo:
@@ -161,3 +161,37 @@ class Explosion(TSprite):
             self.image = choice(self.textures)
 
         self.image.draw(dstrect=self.rect.scale_by(self.scale))
+
+
+class TString:
+    def __init__(self, pos, text, *, scale=1, anchor='center', color=None):
+        self.pos = pos
+        self.anchor = anchor
+
+        font = cache.get('letters')
+
+        def get_letter_texture(c):
+            return colorize(font[G.CHAR_MAP[c]], color) if color else font[G.CHAR_MAP[c]]
+
+        self.letters = [get_letter_texture(c) for c in text]
+
+        self.rect_1 = self.letters[0].get_rect().scale_by(scale)
+        self.rect = self.rect_1.scale_by(len(self.letters), 1)
+        self.update(0)
+
+    def update(self, dt):
+        setattr(self.rect, self.anchor, self.pos)
+
+    def draw(self):
+        rect = self.rect_1.copy().move_to(topleft=self.rect.topleft)
+        step = rect.width
+        for c in self.letters:
+            c.draw(dstrect=rect)
+            rect.move_ip(step, 0)
+
+        renderer = self.letters[0].renderer
+
+#         bkp_color = renderer.draw_color
+#         renderer.draw_color = 'yellow'
+#         renderer.draw_rect(self.rect)
+#         renderer.draw_color = bkp_color

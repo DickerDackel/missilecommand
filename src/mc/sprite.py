@@ -91,6 +91,10 @@ class TSprite(pygame.sprite.Sprite):
 
     def draw(self):
         self.image.draw(dstrect=self.rect)
+        bkp_color = self.image.renderer.draw_color
+        self.image.renderer.draw_color = 'yellow'
+        self.image.renderer.draw_rect(self.rect)
+        self.image.renderer.draw_color = bkp_color
 
 
 class TAnimSprite(TSprite):

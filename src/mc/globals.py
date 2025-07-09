@@ -75,6 +75,9 @@ POS_CITIES = [
     v2(206, SCREEN.bottom - 8 - 8),
 ]
 
+POS_MISSILES_DEBRIEFING = v2(SCREEN.width / 3, SCREEN.centery)
+POS_CITIES_DEBRIEFING = v2(SCREEN.width / 3, 2 * SCREEN.height / 3) 
+
 KEY_SILO_MAP = {
     pygame.K_q: 0,
     pygame.K_w: 1,
@@ -111,7 +114,7 @@ SPRITESHEET = {
     'crosshair': pygame.Rect(0, 0, 7, 7),
     'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3), pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
     'big_city': pygame.Rect(32, 0, 32, 16),
-    'city': pygame.Rect(64, 0, 32, 16),
+    'city': pygame.Rect(64, 0, 22, 12),
     'alien_big_green': pygame.Rect(96, 0, 16, 16),
     'alien_big_red': pygame.Rect(112, 0, 16, 16),
     'alien_green': pygame.Rect(128, 0, 16, 16),
@@ -128,7 +131,46 @@ SPRITESHEET = {
     'explosion': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
                   pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
                   pygame.Rect(384, 0, 32, 32), pygame.Rect(416, 0, 32, 32)],
+    'letters': [pygame.Rect(0, 48, 8, 8), pygame.Rect(8, 48, 8, 8),
+                pygame.Rect(16, 48, 8, 8), pygame.Rect(24, 48, 8, 8),
+                pygame.Rect(32, 48, 8, 8), pygame.Rect(40, 48, 8, 8),
+                pygame.Rect(48, 48, 8, 8), pygame.Rect(56, 48, 8, 8),
+                pygame.Rect(64, 48, 8, 8), pygame.Rect(72, 48, 8, 8),
+                pygame.Rect(80, 48, 8, 8), pygame.Rect(88, 48, 8, 8),
+                pygame.Rect(96, 48, 8, 8), pygame.Rect(104, 48, 8, 8),
+                pygame.Rect(112, 48, 8, 8), pygame.Rect(120, 48, 8, 8),
+                pygame.Rect(128, 48, 8, 8), pygame.Rect(136, 48, 8, 8),
+                pygame.Rect(144, 48, 8, 8), pygame.Rect(152, 48, 8, 8),
+                pygame.Rect(160, 48, 8, 8), pygame.Rect(168, 48, 8, 8),
+                pygame.Rect(176, 48, 8, 8), pygame.Rect(184, 48, 8, 8),
+                pygame.Rect(192, 48, 8, 8), pygame.Rect(200, 48, 8, 8),
+                pygame.Rect(0, 56, 8, 8), pygame.Rect(8, 56, 8, 8),
+                pygame.Rect(16, 56, 8, 8), pygame.Rect(24, 56, 8, 8),
+                pygame.Rect(32, 56, 8, 8), pygame.Rect(40, 56, 8, 8),
+                pygame.Rect(48, 56, 8, 8), pygame.Rect(56, 56, 8, 8),
+                pygame.Rect(64, 56, 8, 8), pygame.Rect(72, 56, 8, 8),
+                pygame.Rect(80, 56, 8, 8), pygame.Rect(88, 56, 8, 8),
+                pygame.Rect(96, 56, 8, 8), pygame.Rect(104, 56, 8, 8),
+                pygame.Rect(112, 56, 8, 8), pygame.Rect(120, 56, 8, 8),
+                pygame.Rect(128, 56, 8, 8), pygame.Rect(136, 56, 8, 8),
+                pygame.Rect(144, 56, 8, 8), pygame.Rect(152, 56, 8, 8),
+                pygame.Rect(160, 56, 8, 8), pygame.Rect(168, 56, 8, 8),
+                pygame.Rect(176, 56, 8, 8)],
+    'red': pygame.Rect(0, 64, 8, 8),
+    'green': pygame.Rect(8, 64, 8, 8),
+    'blue': pygame.Rect(16, 64, 8, 8),
+    'cyan': pygame.Rect(24, 64, 8, 8),
+    'magenta': pygame.Rect(32, 64, 8, 8),
+    'yellow': pygame.Rect(40, 64, 8, 8),
 }
+
+CHAR_MAP = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7,
+            'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14,
+            'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21,
+            'W': 22, 'X': 23, 'Y': 24, 'Z': 25, '0': 26, '1': 27, '2': 28,
+            '3': 29, '4': 30, '5': 31, '6': 32, '7': 33, '8': 34, '9': 35,
+            'up': 36, 'down': 37, 'left': 38, 'right': 39, 'copy': 40, 'popy': 41,
+            ' ': 42, '.': 43, ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48}
 
 ########################################################################
 #
@@ -193,8 +235,11 @@ SILO_ATTACKS = 3
 #                             |___/
 ########################################################################
 
+# Original y coordinates left in, but since line 0 is at the bottom, all are
+# 240 - y
 MESSAGES = {
-    'PLAYER': ((96, 144), (1, 1 )),
-    'X POINTS': ((104, 112), (1, 1)),
-    'DEFEND    CITIES': ((56, 56), (1, 1)),
+    'PLAYER': ((96, 240 - 144), (1, 1 ), 'blue'),
+    'x POINTS': ((104, 240 - 112), (1, 1), 'blue'),
+    'DEFEND CITIES': ((56, 240 - 56), (1, 1), 'blue'),
+    'BONUS POINTS': ((80, 240 - 160), (1, 1), 'blue'),
 }

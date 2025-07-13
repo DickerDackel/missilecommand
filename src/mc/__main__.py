@@ -30,7 +30,8 @@ def load_spritesheet(renderer, fname):
 
 
 def main():
-    app = App(G.TITLE, resolution=G.SCREEN.size, fps=G.FPS, bgcolor=G.COLOR.background)
+    w = pygame.Window(size=(1024, 960))
+    app = App(G.TITLE, window=w, resolution=G.SCREEN.size, fps=G.FPS, bgcolor=G.COLOR.background)
     pygame.mouse.set_visible(False)
 
     load_spritesheet(app.renderer, G.ASSETS.joinpath('spritesheet.png'))

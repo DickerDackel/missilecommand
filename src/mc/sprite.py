@@ -77,6 +77,8 @@ class ImageSequence:
 
 
 class TSprite(pygame.sprite.Sprite):
+    debug = False
+
     def __init__(self, pos, image, *groups, anchor='center'):
         super().__init__(groups)
         self.pos = Vector2(pos)
@@ -91,10 +93,12 @@ class TSprite(pygame.sprite.Sprite):
 
     def draw(self):
         self.image.draw(dstrect=self.rect)
-        bkp_color = self.image.renderer.draw_color
-        self.image.renderer.draw_color = 'yellow'
-        self.image.renderer.draw_rect(self.rect)
-        self.image.renderer.draw_color = bkp_color
+
+        if self.debug:
+            bkp_color = self.image.renderer.draw_color
+            self.image.renderer.draw_color = 'yellow'
+            self.image.renderer.draw_rect(self.rect)
+            self.image.renderer.draw_color = bkp_color
 
 
 class TAnimSprite(TSprite):

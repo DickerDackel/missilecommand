@@ -26,8 +26,13 @@ class Silo:
 
 class City(TSprite):
     def __init__(self, pos):
-        texture = cache.get('city')
-        super().__init__(pos, texture, anchor='midbottom')
+        self.textures = [cache.get('city'), cache.get('ruins')]
+        super().__init__(pos, self.textures[0], anchor='midbottom')
+        self.ruined = False
+
+    def draw(self):
+        self.image = self.textures[self.ruined]
+        super().draw()
 
 
 class Target(TAnimSprite):
@@ -165,7 +170,7 @@ class Explosion(TSprite):
 
 class TString:
     def __init__(self, pos, text, *, scale=1, anchor='center', color=None):
-        self.pos = pos
+        self.pos = Vector2(pos)
         self.anchor = anchor
 
         font = cache.get('letters')
@@ -188,10 +193,3 @@ class TString:
         for c in self.letters:
             c.draw(dstrect=rect)
             rect.move_ip(step, 0)
-
-        renderer = self.letters[0].renderer
-
-#         bkp_color = renderer.draw_color
-#         renderer.draw_color = 'yellow'
-#         renderer.draw_rect(self.rect)
-#         renderer.draw_color = bkp_color

@@ -1,3 +1,4 @@
+from enum import IntEnum, auto
 from importlib.resources import files
 from types import SimpleNamespace
 
@@ -75,8 +76,8 @@ POS_CITIES = [
     v2(206, SCREEN.bottom - 8 - 8),
 ]
 
-POS_MISSILES_DEBRIEFING = v2(SCREEN.width / 3, SCREEN.centery)
-POS_CITIES_DEBRIEFING = v2(SCREEN.width / 3, 2 * SCREEN.height / 3) 
+POS_MISSILES_DEBRIEFING = v2(SCREEN.centerx - 15, SCREEN.centery)
+POS_CITIES_DEBRIEFING = v2(SCREEN.centerx - 15, 2 * SCREEN.height / 3) 
 
 KEY_SILO_MAP = {
     pygame.K_q: 0,
@@ -100,6 +101,15 @@ MISSILE_OFFSETS = [
 ]
 
 MISSILE_SPEEDS = [136, 272, 136]
+
+
+class Score(IntEnum):
+    UNUSED_MISSILE = 5
+    MISSILE = 20
+    CITY = 100
+    PLANE = 100
+    SATELLITE = 100
+    SMART_BOMB = 125
 
 ########################################################################
 #  ____             _ _
@@ -226,13 +236,27 @@ SATELLITE_SPEED = 30
 CITY_ATTACKS = 3
 SILO_ATTACKS = 3
 
+
 ########################################################################
-#  __  __
-# |  \/  | ___  ___ ___  __ _  __ _  ___  ___
-# | |\/| |/ _ \/ __/ __|/ _` |/ _` |/ _ \/ __|
-# | |  | |  __/\__ \__ \ (_| | (_| |  __/\__ \
-# |_|  |_|\___||___/___/\__,_|\__, |\___||___/
-#                             |___/
+#  _____                 _       
+# | ____|_   _____ _ __ | |_ ___ 
+# |  _| \ \ / / _ \ '_ \| __/ __|
+# | |___ \ V /  __/ | | | |_\__ \
+# |_____| \_/ \___|_| |_|\__|___/
+#                                
+########################################################################
+
+class Events(IntEnum):
+    ADD_SCORE = auto()
+
+
+########################################################################
+# _____         _       
+# |_   _|____  _| |_ ___ 
+#  | |/ _ \ \/ / __/ __|
+#  | |  __/>  <| |_\__ \
+#  |_|\___/_/\_\\__|___/
+#
 ########################################################################
 
 # Original y coordinates left in, but since line 0 is at the bottom, all are
@@ -242,4 +266,5 @@ MESSAGES = {
     'x POINTS': ((104, 240 - 112), (1, 1), 'blue'),
     'DEFEND CITIES': ((56, 240 - 56), (1, 1), 'blue'),
     'BONUS POINTS': ((80, 240 - 160), (1, 1), 'blue'),
+    'SCORE': ((128, 10), (1, 1), 'red'),
 }

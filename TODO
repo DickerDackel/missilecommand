@@ -1,7 +1,27 @@
-create canvas for xor effect of explosions
+ _____ ___  ____   ___  
+|_   _/ _ \|  _ \ / _ \ 
+  | || | | | | | | | | |
+  | || |_| | |_| | |_| |
+  |_| \___/|____/ \___/ 
+                        
+* create canvas for xor effect of explosions
 
-Flyers
-Smart bombs
+* Flyers
+* Smart bombs
 
-Exploding cities
-Exploding silos
+* Exploding silos
+* Preserve damaged cities
+* Bonus city
+* Total Score
+
+* Score
+    * How score from debriefing to game class?
+
+ ____                   
+|  _ \  ___  _ __   ___ 
+| | | |/ _ \| '_ \ / _ \
+| |_| | (_) | | | |  __/
+|____/ \___/|_| |_|\___|
+                        
+* Transparent text
+* Exploding cities

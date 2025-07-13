@@ -18,6 +18,7 @@ def colorize(texture, color):
     result = sdl2.Texture(texture.renderer, rect.size, target=True)
     result.blend_mode = pygame.BLENDMODE_BLEND
     renderer.target = result
+    renderer.draw_color = (0x40, 0x40, 0x40, 0)
     renderer.clear()
 
     color_texture = sdl2.Texture(renderer, rect.size, target=True)

@@ -1,7 +1,6 @@
 from itertools import chain
 
 import pygame
-from pygame import Vector2
 
 from ddframework.app import GameState
 from ddframework.app import StateExit
@@ -23,8 +22,9 @@ state_machine.add(DebriefingPhase.LINGER_POST, DebriefingPhase.LINGER_PRE)
 
 
 class Debriefing(GameState):
-    def __init__(self, app, silos, cities):
+    def __init__(self, app, parent, silos, cities):
         self.app = app
+        self.parent = parent
 
         self.phase_walker = state_machine.walker()
         self.phase = next(self.phase_walker)
@@ -34,7 +34,7 @@ class Debriefing(GameState):
         self.missile_pos = G.POS_MISSILES_DEBRIEFING.copy()
 
         self.cities = cities
-        self.it_cities = iter(cities)
+        self.it_cities = (city for city in cities if not city.ruined)
         self.cities_pos = G.POS_CITIES_DEBRIEFING.copy()
 
         label = 'BONUS POINTS'
@@ -42,8 +42,10 @@ class Debriefing(GameState):
                                     label,
                                     color=G.MESSAGES[label][2],
                                     anchor='midleft')
-        self.score_missiles = TString(self.missile_pos - (30, 0), '0', anchor='midright', color='red')
-        self.score_cities = TString(self.cities_pos - (30, 0), '0', anchor='midright', color='red')
+        self.missiles_label = TString(G.POS_MISSILES_DEBRIEFING - (30, 0),
+                                      '0', anchor='midright', color='red')
+        self.cities_label = TString(G.POS_CITIES_DEBRIEFING - (30, 0), '0',
+                                    anchor='midright', color='red')
 
         self.cd_linger_pre = Cooldown(2)
         self.cd_missiles = Cooldown(0.075)
@@ -52,7 +54,11 @@ class Debriefing(GameState):
 
         self.paused = False
 
-    def dispatch_events(e):
+        self.score = 0
+        self.missile_score = 0
+        self.city_score = 0
+
+    def dispatch_events(self, e):
         if e.type == pygame.KEYDOWN and e.key == pygame.K_p:
             self.paused = not self.paused
 
@@ -77,6 +83,11 @@ class Debriefing(GameState):
                 self.phase = next(self.phase_walker)
                 self.cd_cities.reset()
             else:
+                self.parent.score += G.Score.UNUSED_MISSILE
+                self.missile_score += G.Score.UNUSED_MISSILE
+                self.missiles_label = TString(G.POS_MISSILES_DEBRIEFING - (30, 0),
+                                              str(self.missile_score),
+                                              anchor='midright', color='red')
                 missile.anchor = 'midleft'
                 missile.pos = self.missile_pos
                 missile.update(dt)
@@ -92,6 +103,11 @@ class Debriefing(GameState):
                 self.phase = next(self.phase_walker)
                 self.cd_linger_post.reset()
             else:
+                self.parent.score += G.Score.CITY
+                self.city_score += G.Score.CITY
+                self.cities_label = TString(G.POS_CITIES_DEBRIEFING - (30, 0),
+                                            str(self.city_score),
+                                            anchor='midright', color='red')
                 city.anchor = 'midleft'
                 city.pos = self.cities_pos
                 city.update(dt)
@@ -105,8 +121,8 @@ class Debriefing(GameState):
 
     def draw(self):
         self.bonus_points.draw()
-        self.score_missiles.draw()
-        self.score_cities.draw()
+        self.missiles_label.draw()
+        self.cities_label.draw()
 
         for o in self.missiles: o.draw()
         for o in self.cities: o.draw()

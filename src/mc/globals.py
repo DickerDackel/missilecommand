@@ -113,8 +113,8 @@ MISSILE_SPEEDS = [136, 272, 136]
 SPRITESHEET = {
     'crosshair': pygame.Rect(0, 0, 7, 7),
     'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3), pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
-    'big_city': pygame.Rect(32, 0, 32, 16),
-    'city': pygame.Rect(64, 0, 22, 12),
+    'city': pygame.Rect(32, 0, 22, 12),
+    'ruins': pygame.Rect(64, 0, 22, 12),
     'alien_big_green': pygame.Rect(96, 0, 16, 16),
     'alien_big_red': pygame.Rect(112, 0, 16, 16),
     'alien_green': pygame.Rect(128, 0, 16, 16),

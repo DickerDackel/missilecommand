@@ -1,9 +1,10 @@
-from enum import StrEnum
 from itertools import chain, cycle
-from random import choice, randint, sample
+from random import randint, sample
 
 import pygame
 import pygame._sdl2 as sdl2
+
+import tinyecs as ecs
 
 from pgcooldown import Cooldown
 
@@ -14,13 +15,17 @@ from ddframework.statemachine import StateMachine
 
 import mc.globals as G
 
+from mc.components import Comp
+from mc.systems import sys_pos_to_rect, sys_draw_texture, sys_mouse
+
 from mc.game.briefing import Briefing
 from mc.game.debriefing import Debriefing
-from mc.game.entities import (Silo, City, Target, MissileHead, Trail, Mouse, Explosion, TString)
+from mc.game.entities import (Silo, City, Target, MissileHead, Trail, Explosion, TString, mk_crosshair)
 from mc.game.pause import Pause
 from mc.game.types import GamePhase
 from mc.game.waves import wave_iter
 from mc.sprite import TGroup
+from mc.utils import to_viewport
 
 state_machine = StateMachine()
 state_machine.add(GamePhase.SETUP, GamePhase.BRIEFING)
@@ -51,8 +56,6 @@ class Game(GameState):
 
         self.paused = False
 
-        self.mouse = Mouse(self.app.window_rect, self.app.logical_rect)
-
         self.level = 0
         self.wave = None
         self.wave_iter = None
@@ -67,6 +70,7 @@ class Game(GameState):
                                    anchor='midleft')
 
     def reset(self):
+
         self.level = 0
         self.wave_iter = wave_iter()
 
@@ -74,6 +78,9 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
 
         self.score = 0
+
+        ecs.reset()
+        mk_crosshair()
 
     def setup_wave(self):
         self.attacks.empty()
@@ -104,17 +111,25 @@ class Game(GameState):
         pass
 
     def dispatch_event(self, e):
+        self.mouse = to_viewport(pygame.mouse.get_pos(),
+                                 self.app.window_rect.size,
+                                 self.app.logical_rect.size)
+        print(self.mouse)
+
         if (e.type == pygame.QUIT
                 or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
             raise StateExit()
         elif e.type == pygame.KEYDOWN:
             if e.key in G.KEY_SILO_MAP:
                 launchpad = G.KEY_SILO_MAP[e.key]
-                self.try_missile_launch(launchpad, self.mouse.pos)
+                self.try_missile_launch(launchpad, self.mouse)
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
 
     def update(self, dt):
+
+        ecs.run_system(dt, sys_pos_to_rect, Comp.POS, Comp.RECT)
+
         self.score_label = TString(G.MESSAGES['SCORE'][0],
                                    str(self.score),
                                    color=G.MESSAGES['SCORE'][2],
@@ -214,7 +229,7 @@ class Game(GameState):
 
 
     def draw(self):
-
+        # Make mouse work even if stackpermissions forbids update
         ground = cache.get('ground')
         rect = ground.get_rect(midbottom=self.app.logical_rect.midbottom)
         ground.draw(dstrect=rect)
@@ -236,9 +251,9 @@ class Game(GameState):
         self.app.renderer.draw_color = 'grey'
         self.app.renderer.draw_rect(self.app.logical_rect)
 
-        # Make mouse move even if passthrough masks update
-        self.mouse.update(0)
-        self.mouse.draw()
+        ecs.run_system(0, sys_mouse, Comp.POS, Comp.RECT, Comp.TEXTURE, Comp.WANTS_MOUSE,
+                       real_size=self.app.window_rect.size,
+                       virtual_size=self.app.logical_rect.size)
 
     def try_missile_launch(self, launchpad, target):
         if not self.silos[launchpad].missiles: return

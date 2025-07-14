@@ -1,6 +1,7 @@
 from random import choice
 
 import pygame
+import tinyecs as ecs
 
 from pgcooldown import LerpThing, Cooldown
 from pygame import Vector2
@@ -10,6 +11,19 @@ import ddframework.cache as cache
 import mc.globals as G
 from mc.sprite import TSprite, TAnimSprite
 from mc.utils import to_viewport, colorize
+from mc.components import Comp
+
+
+def mk_crosshair():
+    texture = cache.get('crosshair')
+    rect = texture.get_rect()
+
+    eid = 'player'
+    ecs.create_entity(eid)
+    ecs.add_component(eid, Comp.POS, Vector2())
+    ecs.add_component(eid, Comp.WANTS_MOUSE, True)
+    ecs.add_component(eid, Comp.TEXTURE, texture)
+    ecs.add_component(eid, Comp.RECT, rect)
 
 
 class Silo:

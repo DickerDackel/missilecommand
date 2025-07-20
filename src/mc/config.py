@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pygame
 
-from pygame import Vector2 as v2
+from pygame import Vector2 as vec2
 
 ########################################################################
 #     _                _ _           _   _
@@ -34,7 +34,7 @@ ASSETS = files('mc.assets')
 COLOR = SimpleNamespace(
     ground = 'yellow',
     enemy_missile = 'red',
-    own_missile ='blue',
+    defense_missile ='blue',
     background='black',
     grid='grey',
     clear=(255, 255, 255, 0),
@@ -49,6 +49,51 @@ FONT = SimpleNamespace(
 for f in FONT.__dict__.values():
     f.align = pygame.FONT_CENTER
 
+
+########################################################################
+#  ____  _            _
+# |  _ \| | __ _  ___(_)_ __   __ _
+# | |_) | |/ _` |/ __| | '_ \ / _` |
+# |  __/| | (_| | (__| | | | | (_| |
+# |_|   |_|\__,_|\___|_|_| |_|\__, |
+#                             |___/
+########################################################################
+
+POS_GROUND = SCREEN.midbottom
+
+BATTERY_RECT = pygame.Rect(0, 0, 16, 8)
+POS_BATTERIES = [
+    vec2(24, SCREEN.bottom - 28),
+    vec2(SCREEN.centerx, SCREEN.bottom - 28),
+    vec2(SCREEN.width - 24, SCREEN.bottom - 28),
+]
+BATTERY_SILO_OFFSET = vec2(0, 11)
+
+_dx = 8
+_dy = 3
+SILO_OFFSETS = [
+    #     #
+    #    # #
+    #   # # #
+    #  # # # #
+    vec2(0, -2 * _dy),
+    vec2(-_dx / 2, -_dy), vec2(_dx / 2, -_dy),
+    vec2(-_dx, 0), vec2(_dx, 0), vec2(0,  0),
+    vec2(-1.5 * _dx, _dy), vec2(1.5 * _dx, _dy), vec2(-_dx / 2, _dy), vec2(_dx / 2, _dy),
+]
+
+POS_CITIES = [
+    vec2( 56, SCREEN.bottom - 8 - 8 - 6),
+    vec2( 80, SCREEN.bottom - 8 - 6 - 6),
+    vec2(104, SCREEN.bottom - 8 - 9 - 6),
+    vec2(154, SCREEN.bottom - 8 - 9 - 6),
+    vec2(180, SCREEN.bottom - 8 - 6 - 6),
+    vec2(206, SCREEN.bottom - 8 - 8 - 6),
+]
+
+POS_MISSILES_DEBRIEFING = vec2(SCREEN.centerx - 15, SCREEN.centery)
+POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3) 
+
 ########################################################################
 #   ____                        ____       _   _   _
 #  / ___| __ _ _ __ ___   ___  / ___|  ___| |_| |_(_)_ __   __ _ ___
@@ -58,47 +103,11 @@ for f in FONT.__dict__.values():
 #                                                          |___/
 ########################################################################
 
-POS_BATTERIES = [
-    v2(24, SCREEN.bottom - 16),
-    v2(SCREEN.centerx, SCREEN.bottom - 16),
-    v2(SCREEN.width - 24, SCREEN.bottom - 16),
-]
-
-POS_LAUNCHPADS = [pos + (0, -11) for pos in POS_BATTERIES]
-
-POS_GROUND = SCREEN.midbottom
-POS_CITIES = [
-    v2( 56, SCREEN.bottom - 8 - 8),
-    v2( 80, SCREEN.bottom - 8 - 6),
-    v2(104, SCREEN.bottom - 8 - 9),
-    v2(154, SCREEN.bottom - 8 - 9),
-    v2(180, SCREEN.bottom - 8 - 6),
-    v2(206, SCREEN.bottom - 8 - 8),
-]
-
-POS_MISSILES_DEBRIEFING = v2(SCREEN.centerx - 15, SCREEN.centery)
-POS_CITIES_DEBRIEFING = v2(SCREEN.centerx - 15, 2 * SCREEN.height / 3) 
-
 KEY_SILO_MAP = {
     pygame.K_q: 0,
     pygame.K_w: 1,
     pygame.K_e: 2,
 }
-
-NUMBER_OF_MISSILES = 15
-
-_dx = 8
-_dy = 3
-MISSILE_OFFSETS = [
-    #     #
-    #    # #
-    #   # # #
-    #  # # # #
-    (0, -2 * _dy),
-    (-_dx / 2, -_dy), (_dx / 2, -_dy),
-    (-_dx, 0), (_dx, 0), (0,  0),
-    (-1.5 * _dx, _dy), (1.5 * _dx, _dy), (-_dx / 2, _dy), (_dx / 2, _dy),
-]
 
 MISSILE_SPEEDS = [136, 272, 136]
 
@@ -124,7 +133,11 @@ SPRITESHEET = {
     'crosshair': pygame.Rect(0, 0, 7, 7),
     'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3), pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
     'city': pygame.Rect(32, 0, 22, 12),
-    'ruins': pygame.Rect(64, 0, 22, 12),
+    'cities': [pygame.Rect(0, 72, 22, 12), pygame.Rect(32, 72, 22, 12),
+               pygame.Rect(64, 72, 22, 12), pygame.Rect(96, 72, 22, 12)],
+    'ruin': pygame.Rect(64, 0, 22, 12),
+    'ruins': [pygame.Rect(0, 88, 22, 12), pygame.Rect(32, 88, 22, 12),
+               pygame.Rect(64, 88, 22, 12), pygame.Rect(96, 88, 22, 12)],
     'alien_big_green': pygame.Rect(96, 0, 16, 16),
     'alien_big_red': pygame.Rect(112, 0, 16, 16),
     'alien_green': pygame.Rect(128, 0, 16, 16),
@@ -133,8 +146,10 @@ SPRITESHEET = {
     'plane_red': pygame.Rect(176, 0, 16, 16),
     'smartbomb_green': pygame.Rect(192, 0, 16, 16),
     'smartbomb_red': pygame.Rect(200, 0, 16, 16),
-    'missile-heads': [pygame.Rect(208, 0, 1, 1), pygame.Rect(216, 0, 1, 1), pygame.Rect(224, 0, 1, 1),
-                      pygame.Rect(208, 8, 1, 1), pygame.Rect(216, 8, 1, 1), pygame.Rect(224, 8, 1, 1)],
+    # 'missile-heads': [pygame.Rect(208, 0, 1, 1), pygame.Rect(216, 0, 1, 1), pygame.Rect(224, 0, 1, 1),
+    #                   pygame.Rect(208, 8, 1, 1), pygame.Rect(216, 8, 1, 1), pygame.Rect(224, 8, 1, 1)],
+    'missiles-heads': [pygame.Rect(128, 72, 3, 3), pygame.Rect(136, 72, 3, 3), pygame.Rect(144, 72, 3, 3),
+                       pygame.Rect(128, 80, 3, 3), pygame.Rect(136, 80, 3, 3), pygame.Rect(144, 80, 3, 3)],
     'targets': [pygame.Rect(232, 0, 7, 7), pygame.Rect(240, 0, 7, 7), pygame.Rect(248, 0, 7, 7),
                 pygame.Rect(232, 8, 7, 7), pygame.Rect(240, 8, 7, 7), pygame.Rect(248, 8, 7, 7)],
     'ground': pygame.Rect(0, 16, 256, 32),

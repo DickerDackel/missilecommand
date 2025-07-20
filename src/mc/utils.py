@@ -35,4 +35,7 @@ def colorize(texture, color):
     renderer.target = bkp_target
 
     return result
+
+
 __all__ = ['to_viewport']
+

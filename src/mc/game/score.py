@@ -1,12 +1,12 @@
 import ddframework.msgbroker as broker
 
-import mc.globals as G
+import mc.config as C
 
 
 class Score:
     def __init__(self):
         self.score = 0
-        broker.register(G.Events.ADD_SCORE, self.add)
+        broker.register(C.Events.ADD_SCORE, self.add)
 
     def reset(self):
         self.score = 0

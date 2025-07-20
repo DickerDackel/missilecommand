@@ -1,96 +1,150 @@
-from random import choice
+from random import choice, uniform
 
 import pygame
 import tinyecs as ecs
+
+from pygame.typing import Point
 
 from pgcooldown import LerpThing, Cooldown
 from pygame import Vector2
 
 import ddframework.cache as cache
 
-import mc.globals as G
+import mc.config as C
+
+from mc.components import AutoCycle, Comp, PRSA
 from mc.sprite import TSprite, TAnimSprite
-from mc.utils import to_viewport, colorize
-from mc.components import Comp
+from mc.typing import EntityID, Trail
+from mc.utils import colorize
 
 
 def mk_crosshair():
-    texture = cache.get('crosshair')
-    rect = texture.get_rect()
-
     eid = 'player'
     ecs.create_entity(eid)
-    ecs.add_component(eid, Comp.POS, Vector2())
+    ecs.add_component(eid, Comp.TEXTURE, cache.get('crosshair'))
+    ecs.add_component(eid, Comp.PRSA, PRSA())
     ecs.add_component(eid, Comp.WANTS_MOUSE, True)
-    ecs.add_component(eid, Comp.TEXTURE, texture)
+
+    return eid
+
+
+def mk_city(city_id, pos):
+    textures = cache.get('cities')
+    cd = Cooldown(10)
+    cd.remaining = uniform(0, 10)
+
+    eid = f'city-{city_id}'
+    eid = ecs.create_entity(eid)
+    ecs.add_component(eid, Comp.IS_CITY, True)
+    ecs.add_component(eid, Comp.ID, city_id)
+    ecs.add_component(eid, Comp.TEXTURES, AutoCycle(cd, textures))
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos))
+
+    return eid
+
+
+def mk_battery(battery_id: int, pos: Point) -> None:
+    rect = pygame.Rect(0, 0, 10, 10).move_to(center=pos)
+
+    eid = f'battery-{battery_id}'
+    ecs.create_entity(eid)
+    ecs.add_component(eid, Comp.IS_BATTERY, True)
+    ecs.add_component(eid, Comp.ID, battery_id)
     ecs.add_component(eid, Comp.RECT, rect)
 
+    no_missiles = len(C.SILO_OFFSETS)
+    missiles = [mk_silo(battery_id * no_missiles + i,
+                        battery_id,
+                        pos + C.BATTERY_SILO_OFFSET + offset)
+                for i, offset in enumerate(C.SILO_OFFSETS)]
 
-class Silo:
-    def __init__(self, pos):
-        self.pos = pygame.Vector2(pos)
+    return (eid, missiles)
 
-        textures = cache.get('missiles')
-        self.missiles = [TAnimSprite(self.pos + offset, textures, delay=1)
-                         for offset in G.MISSILE_OFFSETS]
+def mk_silo(silo_id: int, battery_id: int, pos: Point) -> None:
+    textures = cache.get('missiles')
 
-    def draw(self):
-        for m in self.missiles: m.draw()
+    eid = f'silo-{silo_id}'
+    ecs.create_entity(eid)
+    ecs.add_component(eid, Comp.IS_SILO, True)
+    ecs.add_component(eid, Comp.ID, silo_id)
+    ecs.add_component(eid, Comp.BATTERY_ID, battery_id)
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos))
+    ecs.add_component(eid, Comp.TEXTURES, AutoCycle(1, textures))
+
+    return eid
+
+def mk_target(pos: Point, parent: EntityID):
+    textures = cache.get('targets')
+
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.IS_TARGET, True)
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos))
+    ecs.add_component(eid, Comp.TEXTURES, AutoCycle(1, textures))
+
+    return eid
+
+def mk_defense(pos: Point, target: EntityID, speed: float):
+    textures = cache.get('missiles-heads')
+
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.IS_DEFENSE, True)
+    ecs.add_component(eid, Comp.IS_MISSILE,True)
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos))
+    ecs.add_component(eid, Comp.TEXTURES, AutoCycle(1, textures))
+    ecs.add_component(eid, Comp.TARGET, target)
+    ecs.add_component(eid, Comp.SPEED, speed)
+    ecs.add_component(eid, Comp.TRAIL, [(pos, pos)])
+
+    return eid
+
+def mk_trail_eraser(trail: Trail) -> None:
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.IS_DEAD_TRAIL, True)
+    ecs.add_component(eid, Comp.TRAIL, trail)
+
+    return eid
+
+# def mk_explosion(pos):
+#     radiuses = [(0.1, 1, 0.5), (1, 0.1, 0.5)]
+#     textures = cache.get('explosions')
+
+#     eid = ecs.create_entity()
+#     ecs.add_component(eid, Comp.IS_EXPLOSION, True)
+#     ecs.add_component(eid, Comp.PRSA, PRSA(pos))
 
 
-class City(TSprite):
-    def __init__(self, pos):
-        self.textures = [cache.get('city'), cache.get('ruins')]
-        super().__init__(pos, self.textures[0], anchor='midbottom')
-        self.ruined = False
-
-    def draw(self):
-        self.image = self.textures[self.ruined]
-        super().draw()
 
 
-class Target(TAnimSprite):
-    def __init__(self, pos, parent):
-        textures = cache.get('targets')
-        super().__init__(pos, textures, delay=0.3)
-        self.parent = parent
 
-class MissileHead(TAnimSprite):
-    def __init__(self, start, target, speed):
-        textures = cache.get('missile-heads')
-        super().__init__(start, textures, delay=0.3, anchor='topleft')
+def mk_missile(missile_id, silo_id, pos):
+    textures = cache.get('missiles')
+    sprite = TAnimSprite(pos, textures, delay=1)
 
-        self.target = Vector2(target)
-        self.speed = speed
-        self.explode = False
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.ID, silo_id * len(C.SILO_OFFSETS))
+    ecs.add_component(eid, Comp.SILO_ID, silo_id)
+    ecs.add_component(eid, Comp.IS_MISSILE, True)
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos))
+    ecs.add_component(eid, Comp.SPRITE, sprite)
 
-    def update(self, dt):
-        distance = self.target - self.pos
-        speed = self.speed * dt
+    return eid
 
-        if distance.length() <= speed:
-            step = distance
-            self.explode = True
-        else:
-            step = distance.normalize() * speed
 
-        self.pos += step
+def mk_ruin(ruin_id, pos):
+    texture = cache.get('ruins')
+    sprite = TSprite(pos, texture)
 
-        super().update(dt)
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.ID, ruin_id)
+    ecs.add_component(eid, Comp.IS_RUIN, True)
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos))
+    ecs.add_component(eid, Comp.SPRITE, sprite)
 
-    def draw(self, renderer):
-        super().draw()
-        # bkp_color = renderer.draw_color
-        # renderer.draw_color = 'yellow'
-        # renderer.draw_point(self.pos)
-        # renderer.draw_color = bkp_color
+    return eid
+
 
 class Trail:
     def __init__(self, start, parent, renderer, trail_texture):
-        self.start = Vector2(start)
-        self.parent = parent
-        self.renderer = renderer
-        self.trail_texture = trail_texture
 
         self.trail = []
 
@@ -106,7 +160,7 @@ class Trail:
         bkp_color = self.renderer.draw_color
 
         self.renderer.target = self.trail_texture
-        self.renderer.draw_color = G.COLOR.enemy_missile
+        self.renderer.draw_color = C.COLOR.enemy_missile
         self.renderer.draw_line(*self.trail[-1])
 
         self.renderer.target = bkp_target
@@ -117,7 +171,7 @@ class Trail:
         bkp_color = self.renderer.draw_color
 
         self.renderer.target = self.trail_texture
-        self.renderer.draw_color = G.COLOR.clear
+        self.renderer.draw_color = C.COLOR.clear
         for t in self.trail:
             self.renderer.draw_line(*t)
 
@@ -126,25 +180,21 @@ class Trail:
 
         self.target = None
 
-class Mouse(TSprite):
-    def __init__(self, window_rect, logical_rect):
-        self.window_rect = window_rect
-        self.logical_rect = logical_rect
 
-        super().__init__(self.virtual_mouse_pos(), cache.get('crosshair'))
+def mk_explosion(pos):
+    ramp = ((0.1, 1, 0.5), (1, 0.1, 0.5))
 
-    def update(self, dt):
-        self.pos = self.virtual_mouse_pos()
-        super().update(dt)
+    textures = cache.get('explosions')
+    sprite = TSprite(pos, texture)
 
-    def virtual_mouse_pos(self):
-        return  to_viewport(pygame.mouse.get_pos(),
-                            self.window_rect.size,
-                            self.logical_rect.size)
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.IS_EXPLOSION, True)
+    ecs.add_component(eid, Comp.POS, pos)
+
+
+
 
 class Explosion(TSprite):
-    RAMP = ((0.1, 1, 0.5), (1, 0.1, 0.5))
-
     @staticmethod
     def collidepoint(left, right):
         v = left.pos - right.pos
@@ -190,7 +240,7 @@ class TString:
         font = cache.get('letters')
 
         def get_letter_texture(c):
-            return colorize(font[G.CHAR_MAP[c]], color) if color else font[G.CHAR_MAP[c]]
+            return colorize(font[C.CHAR_MAP[c]], color) if color else font[C.CHAR_MAP[c]]
 
         self.letters = [get_letter_texture(c) for c in text]
 

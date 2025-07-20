@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-import mc.globals as G
+import mc.config as C
 
 
 class Wave(NamedTuple):
@@ -17,8 +17,8 @@ def wave_iter():
     fidx = 0
     while True:
         yield Wave(
-            *G.WAVES[widx],
-            *G.FLYERS[fidx]
+            *C.WAVES[widx],
+            *C.FLYERS[fidx]
         )
-        widx = (widx + 1) % len(G.WAVES)
-        fidx = (fidx + 1) % len(G.FLYERS)
+        widx = (widx + 1) % len(C.WAVES)
+        fidx = (fidx + 1) % len(C.FLYERS)

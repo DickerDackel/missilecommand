@@ -4,7 +4,7 @@ from ddframework.app import StateExit
 from pgcooldown import Cooldown
 from ddframework.app import GameState
 
-import mc.globals as G
+import mc.config as C
 
 from mc.game.entities import TString
 
@@ -15,9 +15,9 @@ class Briefing(GameState):
         self.cd = Cooldown(3)
 
         self.texts = {
-            'PLAYER': TString(G.MESSAGES['PLAYER'][0], 'PLAYER ', anchor='midleft', color='blue'),
-            'DEFEND': TString(G.MESSAGES['DEFEND CITIES'][0], 'DEFEND      CITIES', anchor='midleft', color='blue'),
-            'x POINTS': TString(G.MESSAGES['x POINTS'][0], 'x POINTS', anchor='midleft', color='blue'),
+            'PLAYER': TString(C.MESSAGES['PLAYER'][0], 'PLAYER ', anchor='midleft', color='blue'),
+            'DEFEND': TString(C.MESSAGES['DEFEND CITIES'][0], 'DEFEND      CITIES', anchor='midleft', color='blue'),
+            'x POINTS': TString(C.MESSAGES['x POINTS'][0], 'x POINTS', anchor='midleft', color='blue'),
             'MULT': TString((0, 0), '1 ', color='red'),
             'PLAYER_NO': TString((0, 0), '1', color='red')
         }

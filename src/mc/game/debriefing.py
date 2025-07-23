@@ -9,7 +9,7 @@ from pgcooldown import Cooldown
 
 import mc.config as C
 
-from mc.game.entities import TString
+from mc.entities import TString
 from mc.game.types import DebriefingPhase
 
 

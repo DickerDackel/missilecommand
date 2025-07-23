@@ -1,41 +1,25 @@
 import pygame
-import pygame._sdl2 as sdl2
 
 from pgcooldown import remap
+
+from mc.config import GRID
 
 def to_viewport(pos, real_size, virtual_size):
     return (remap(0, real_size[0], 0, virtual_size[0], pos[0]),
             remap(0, real_size[1], 0, virtual_size[1], pos[1]))
 
+def debug_grid(renderer):
+        bkp_color = renderer.draw_color
+        renderer.draw_color = 'darkslategrey'
 
-def colorize(texture, color):
-    renderer = texture.renderer
-    rect = texture.get_rect()
+        renderer.draw_rect(GRID(0, 0, 16, 16))
 
-    bkp_target = renderer.target
-    bkp_draw_color = renderer.draw_color
+        for x in range(16):
+            for y in range(16):
+                rect = GRID(x, y)
+                renderer.draw_rect(pygame.Rect(*rect))
 
-    result = sdl2.Texture(texture.renderer, rect.size, target=True)
-    result.blend_mode = pygame.BLENDMODE_BLEND
-    renderer.target = result
-    renderer.draw_color = (0x40, 0x40, 0x40, 0)
-    renderer.clear()
-
-    color_texture = sdl2.Texture(renderer, rect.size, target=True)
-    color_texture.blend_mode = pygame.BLEND_RGBA_MULT
-    renderer.target = color_texture
-    renderer.draw_color = color
-    renderer.clear()
-
-    renderer.target = result
-    texture.draw(dstrect=rect)
-    color_texture.draw(dstrect=rect)
-
-    renderer.draw_color = bkp_draw_color
-    renderer.target = bkp_target
-
-    return result
-
+        renderer.draw_color = bkp_color
 
 __all__ = ['to_viewport']
 

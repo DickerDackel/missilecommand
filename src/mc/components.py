@@ -7,7 +7,10 @@ from pgcooldown import LerpThing
 
 
 class Comp(IntEnum):
+    ANCHOR = auto()
     BATTERY_ID = auto()
+    COLOR = auto()
+    EXPLOSION_SCALE = auto()
     ID = auto()
     IS_BATTERY = auto()
     IS_CITY = auto()
@@ -19,6 +22,7 @@ class Comp(IntEnum):
     IS_RUIN = auto()
     IS_SILO = auto()
     IS_TARGET = auto()
+    IS_TEXT = auto()
     LERPTHING = auto()
     LERPTHING_LIST = auto()
     MOMENTUM = auto()
@@ -28,6 +32,7 @@ class Comp(IntEnum):
     SPEED = auto()
     SPRITE = auto()
     TARGET = auto()
+    TEXT = auto()
     TEXTURE = auto()
     TEXTURES = auto()
     TRAIL = auto()
@@ -38,8 +43,12 @@ class Comp(IntEnum):
 class PRSA:
     pos: vec2 = field(default_factory=vec2)
     rotation: float = 0
-    scale: float = 1
+    scale: float | tuple[float, float] = (1, 1)
     alpha: float = 255
+
+    def __post_init__(self):
+        if not isinstance(self.pos, vec2):
+            self.pos = vec2(self.pos)
 
     def __iter__(self):
         yield self.pos

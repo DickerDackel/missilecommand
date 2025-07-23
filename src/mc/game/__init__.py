@@ -8,31 +8,31 @@ import tinyecs as ecs
 import ddframework.cache as cache
 
 from ddframework.app import GameState, StateExit, StackPermissions
+from ddframework.gridlayout import GridLayout
 from ddframework.statemachine import StateMachine
 
 import mc.config as C
 
 from mc.components import Comp
-from mc.systems import (mouse_system,
+from mc.systems import (explosion_system,
+                        mouse_system,
                         move_towards_system,
+                        textlabel_system,
                         texture_system,
                         textures_system,
                         trail_system,
                         trail_eraser_system)
-# from mc.systems import (sys_draw_city,
-#                         sys_draw_texture,
-#                         sys_mouse,
-#                         sys_pos_to_rect)
+from mc.utils import debug_grid
 
-# from mc.game.briefing import Briefing
+from mc.game.briefing import Briefing
 # from mc.game.debriefing import Debriefing
-from mc.game.entities import (mk_battery,
-                              mk_crosshair,
-                              mk_city,
-                              mk_defense,
-                              mk_target)
-# from mc.game.entities import (MissileHead, Trail, Explosion,
-#                               TString, mk_crosshair, mk_city, mk_battery)
+from mc.entities import (mk_battery,
+                         mk_crosshair,
+                         mk_city,
+                         mk_defense,
+                         mk_target,
+                         mk_textlabel)
+# from mc.entities import (MissileHead,
 from mc.game.pause import Pause
 from mc.game.types import GamePhase
 from mc.game.waves import wave_iter
@@ -50,9 +50,10 @@ state_machine.add(GamePhase.DEBRIEFING, GamePhase.SETUP)
 # def get_cities():
 #     return (e[0] for e in ecs.eids_by_cids(Comp.IS_CITY, Comp.ID))
 
-def purge_entities(*components):
-    for eid, _ in ecs.eids_by_cids(*components):
+def purge_entities(property):
+    for eid in ecs.eids_by_property(property):
         ecs.remove_entity(eid)
+
 
 class Game(GameState):
     def __init__(self, app):
@@ -72,31 +73,31 @@ class Game(GameState):
         # self.targets = TGroup()
         # self.explosions = TGroup()
 
-        # self.paused = False
+        self.score = None
+        self.paused = None
+        self.level = None
 
-        # self.level = 0
-        # self.wave = None
         self.wave_iter = None
-        # self.cd_attacks = Cooldown(2, cold=True)
+        self.wave = None
 
-        # self.phase_walker = None
+        self.phase_walker = None
+        self.phase = None
 
-        # self.score = 0
-        # self.score_label = TString(G.MESSAGES['SCORE'][0],
-        #                            str(self.score),
-        #                            color=G.MESSAGES['SCORE'][2],
-        #                            anchor='midleft')
+        self.cd_attacks = None
+        self.score_mult = None
+        self.to_launch = None
 
     def reset(self):
-        ...
-
-        # self.level = 0
+        self.score = 0
+        self.paused = False
+        self.level = 0
+        self.wave = None
         self.wave_iter = wave_iter()
+        self.phase_walker = state_machine.walker()
+        self.phase = next(self.phase_walker)
 
-        # self.phase_walker = state_machine.walker()
-        # self.phase = next(self.phase_walker)
+        # self.cd_attacks = Cooldown(2, cold=True)
 
-        # self.score = 0
 
         ecs.reset()
 
@@ -105,10 +106,10 @@ class Game(GameState):
         self.cities = [mk_city(i, pos) for i, pos in enumerate(C.POS_CITIES)]
         self.silos = [mk_battery(i, pos)[1] for i, pos in enumerate(C.POS_BATTERIES)]
 
+        msg = C.MESSAGES['SCORE']
+        mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid=msg.text)
 
     def setup_wave(self):
-        ...
-
         # self.attacks.empty()
         # self.missiles.empty()
         # self.trails.clear()
@@ -122,15 +123,15 @@ class Game(GameState):
 
         # self.cities = [e for e in get_cities()]
 
-        self.renderer.draw_color = G.COLOR.clear
+        self.renderer.draw_color = C.COLOR.clear
         self.renderer.target = self.trail_canvas
         self.renderer.clear()
         self.renderer.target = None
-        self.renderer.draw_color = G.COLOR.background
+        self.renderer.draw_color = C.COLOR.background
 
         # self.allowed_targets = cycle(chain(self.silos, sample(self.cities, k=3)))
 
-        # self.wave = next(self.wave_iter)
+        self.wave = next(self.wave_iter)
         # self.score_mult = self.level // 2 + 1
         # self.cd_attacks.reset(2)
         # self.to_launch = self.wave.missiles
@@ -154,45 +155,36 @@ class Game(GameState):
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
 
     def update(self, dt):
-        ...
+        if self.paused: return
+        if self.app.is_stacked(self): return
 
-        # ecs.run_system(dt, sys_pos_to_rect, Comp.POS, Comp.RECT)
+        if self.phase is GamePhase.SETUP:
+            self.setup_wave()
+            self.phase = next(self.phase_walker)
 
-        # self.score_label = TString(G.MESSAGES['SCORE'][0],
-        #                            str(self.score),
-        #                            color=G.MESSAGES['SCORE'][2],
-        #                            anchor='midleft')
-        # if self.paused: return
-        # if self.app.is_stacked(self): return
+        elif self.phase is GamePhase.BRIEFING:
+            self.phase = next(self.phase_walker)
+            self.app.push(Briefing(self.app, 1),
+                          passthrough=StackPermissions.DRAW)
 
-        # if self.phase is GamePhase.SETUP:
-        #     self.setup_wave()
-        #     self.phase = next(self.phase_walker)
-
-        # elif self.phase is GamePhase.BRIEFING:
-        #     self.phase = next(self.phase_walker)
-        #     self.app.push(Briefing(self.app, 1),
-        #                   passthrough=StackPermissions.DRAW)
-
-        # elif self.phase is GamePhase.PLAYING:
-        #     self.update_playing_phase(dt)
+        elif self.phase is GamePhase.PLAYING:
+            self.update_playing_phase(dt)
         #     if self.to_launch == 0 and not self.attacks:
         #         self.phase = next(self.phase_walker)
-        self.update_playing_phase(dt)
 
-        # elif self.phase is GamePhase.END_OF_WAVE:
-        #     self.update_playing_phase(dt)
+        elif self.phase is GamePhase.END_OF_WAVE:
+            self.update_playing_phase(dt)
 
         #     if not self.missiles and not self.attacks and not self.explosions:
         #         self.phase = next(self.phase_walker)
 
-        # elif self.phase is GamePhase.DEBRIEFING:
-        #     self.phase = next(self.phase_walker)
+        elif self.phase is GamePhase.DEBRIEFING:
+            self.phase = next(self.phase_walker)
         #     self.app.push(Debriefing(self.app, self, self.silos, self.cities),
         #                   passthrough=StackPermissions.DRAW)
 
-        # elif self.phase is GamePhase.GAMEOVER:
-        #     ...
+        elif self.phase is GamePhase.GAMEOVER:
+            ...
 
 
     def update_playing_phase(self, dt):
@@ -220,25 +212,18 @@ class Game(GameState):
 
         #     self.to_launch -= count
 
-        ecs.run_system(dt, move_towards_system, Comp.IS_MISSILE, Comp.PRSA,
-                       Comp.TARGET, Comp.SPEED, Comp.TRAIL)
+        ecs.run_system(dt, move_towards_system, Comp.PRSA, Comp.TARGET,
+                       Comp.SPEED, Comp.TRAIL,
+                       has_properties={Comp.IS_MISSILE})
         ecs.run_system(0, trail_system, Comp.TRAIL, texture=self.trail_canvas)
-        ecs.run_system(0, trail_eraser_system, Comp.IS_DEAD_TRAIL, Comp.TRAIL,
-                       texture=self.trail_canvas)
+        ecs.run_system(0, trail_eraser_system, Comp.TRAIL,
+                       texture=self.trail_canvas,
+                       has_properties={Comp.IS_DEAD_TRAIL})
+        ecs.run_system(0, explosion_system, Comp.TEXTURES, Comp.PRSA,
+                       Comp.EXPLOSION_SCALE, has_properties={Comp.IS_EXPLOSION})
+
         # for o in self.attacks: o.update(dt)
         # for o in self.missiles: o.update(dt)
-        # for o in self.targets: o.update(dt)
-        # for o in self.trails: o.update(dt)
-        # for o in self.explosions: o.update(dt)
-
-        # dead = [o for o in self.trails if o.parent.explode]
-        # for o in dead:
-        #     o.kill()
-        #     self.trails.remove(o)
-
-        # dead = [o for o in self.targets if o.parent.explode]
-        # for o in dead:
-        #     o.kill()
 
         # dead = [o for o in chain(self.missiles, self.attacks) if o.explode]
         # for o in dead:
@@ -266,29 +251,22 @@ class Game(GameState):
 
 
     def draw(self):
-        ...
+        debug_grid(self.app.renderer)
+
+        # Make mouse work even if stackpermissions forbids update
+        ecs.run_system(0, mouse_system, Comp.PRSA,
+                       remap=self.app.window_to_logical,
+                       has_properties={Comp.WANTS_MOUSE})
 
         ground = cache.get('ground')
         rect = ground.get_rect(midbottom=self.app.logical_rect.midbottom)
         ground.draw(dstrect=rect)
 
+        self.trail_canvas.draw()
         ecs.run_system(0, textures_system, Comp.TEXTURES, Comp.PRSA)
         ecs.run_system(0, texture_system, Comp.TEXTURE, Comp.PRSA)
-        self.trail_canvas.draw()
 
-        # for o in self.cities: o.draw()
-        # for o in self.silos: o.draw()
-
-        # for o in self.trails: o.draw()
-        # self.trail_canvas.draw()
-
-        # for o in self.attacks: o.draw(self.renderer)
-        # for o in self.missiles: o.draw(self.renderer)
-        # for o in self.targets: o.draw()
-
-        # for o in self.explosions: o.draw()
-
-        # self.score_label.draw()
+        ecs.run_system(0, textlabel_system, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
         # self.app.renderer.draw_color = 'grey'
         # self.app.renderer.draw_rect(self.app.logical_rect)
@@ -299,9 +277,6 @@ class Game(GameState):
         #                real_size=self.app.window_rect.size,
         #                virtual_size=self.app.logical_rect.size)
 
-        # Make mouse work even if stackpermissions forbids update
-        ecs.run_system(0, mouse_system, Comp.PRSA, Comp.WANTS_MOUSE, remap=self.app.window_to_logical)
-        ecs.run_system(0, texture_system, Comp.TEXTURE, Comp.PRSA, Comp.WANTS_MOUSE)
 
     def launch_defense(self, launchpad, target):
         if not self.silos[launchpad]: return

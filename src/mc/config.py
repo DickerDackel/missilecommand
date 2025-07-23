@@ -1,10 +1,13 @@
 from enum import IntEnum, auto
 from importlib.resources import files
 from types import SimpleNamespace
+from typing import NamedTuple
 
 import pygame
 
+from ddframework import GridLayout
 from pygame import Vector2 as vec2
+from pygame.typing import Point
 
 ########################################################################
 #     _                _ _           _   _
@@ -22,6 +25,8 @@ FPS = 60
 
 ASSETS = files('mc.assets')
 
+GRID = GridLayout(SCREEN, 16, 16, 8, 8)
+
 ########################################################################
 #   ____
 #  / ___|___  _ __ ___  _ __ ___   ___  _ __
@@ -32,12 +37,14 @@ ASSETS = files('mc.assets')
 ########################################################################
 
 COLOR = SimpleNamespace(
-    ground = 'yellow',
-    enemy_missile = 'red',
+    ground='yellow',
+    enemy_missile='red',
     defense_missile ='blue',
     background='black',
     grid='grey',
+    pause='blue',
     clear=(255, 255, 255, 0),
+    score_color='red'
 )
 
 BASE_FONT = 'DSEG14Classic-Regular.ttf'
@@ -153,9 +160,9 @@ SPRITESHEET = {
     'targets': [pygame.Rect(232, 0, 7, 7), pygame.Rect(240, 0, 7, 7), pygame.Rect(248, 0, 7, 7),
                 pygame.Rect(232, 8, 7, 7), pygame.Rect(240, 8, 7, 7), pygame.Rect(248, 8, 7, 7)],
     'ground': pygame.Rect(0, 16, 256, 32),
-    'explosion': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
-                  pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
-                  pygame.Rect(384, 0, 32, 32), pygame.Rect(416, 0, 32, 32)],
+    'explosions': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
+                   pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
+                   pygame.Rect(384, 0, 32, 32), pygame.Rect(416, 0, 32, 32)],
     'letters': [pygame.Rect(0, 48, 8, 8), pygame.Rect(8, 48, 8, 8),
                 pygame.Rect(16, 48, 8, 8), pygame.Rect(24, 48, 8, 8),
                 pygame.Rect(32, 48, 8, 8), pygame.Rect(40, 48, 8, 8),
@@ -276,10 +283,23 @@ class Events(IntEnum):
 
 # Original y coordinates left in, but since line 0 is at the bottom, all are
 # 240 - y
+
+
+class MessageConfig(NamedTuple):
+    text: str
+    pos: Point
+    anchor: str
+    color: pygame.Color = 'white'
+    scale: tuple[float, float] = (1, 1)
+
+
 MESSAGES = {
-    'PLAYER': ((96, 240 - 144), (1, 1 ), 'blue'),
-    'x POINTS': ((104, 240 - 112), (1, 1), 'blue'),
-    'DEFEND CITIES': ((56, 240 - 56), (1, 1), 'blue'),
-    'BONUS POINTS': ((80, 240 - 160), (1, 1), 'blue'),
-    'SCORE': ((128, 10), (1, 1), 'red'),
+    'PAUSE': MessageConfig('PAUSE', GRID(7, 4, 2, 2).center, 'center', 'blue', (3, 3)),
+    'PLAYER': MessageConfig('PLAYER  ', GRID(7, 4, 2, 2).center, 'center', 'blue'),
+    'PLAYER_NO': MessageConfig('       1', GRID(7, 4, 2, 2).center, 'center', 'red'),
+    'x POINTS': MessageConfig('  x POINTS', GRID.center, 'center', 'blue'),
+    'MULT': MessageConfig('1         ', GRID.center, 'center', 'red'),
+    'DEFEND CITIES': MessageConfig('DEFEND      CITIES', (GRID.centerx, 2 * GRID.height / 3), 'center', 'blue'),
+    'BONUS POINTS': MessageConfig('BONUS POINTS', (80, 240 - 160), 'center', 'blue'),
+    'SCORE': MessageConfig('SCORE', GRID(7, 0, 2, 1).midbottom, 'midbottom', 'red'),
 }

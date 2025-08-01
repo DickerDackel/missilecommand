@@ -66,58 +66,17 @@ class Debriefing(GameState):
         if self.paused: return
 
         if self.phase is DebriefingPhase.SETUP:
-            self.cd_linger_pre.reset()
-            self.phase = next(self.phase_walker)
-
+            self.update_setup_phase(dt)
         elif self.phase is DebriefingPhase.LINGER_PRE:
-            if self.cd_linger_pre.cold:
-                self.cd_missiles.reset()
-                self.phase = next(self.phase_walker)
-
+            self.update_linger_pre_phase(dt)
         elif self.phase is DebriefingPhase.MISSILES:
-            if not self.cd_missiles.cold(): return
-
-            try:
-                missile = next(self.it_missiles)
-            except StopIteration:
-                self.phase = next(self.phase_walker)
-                self.cd_cities.reset()
-            else:
-                self.parent.score += C.Score.UNUSED_MISSILE
-                self.missile_score += C.Score.UNUSED_MISSILE
-                self.missiles_label = TString(C.POS_MISSILES_DEBRIEFING - (30, 0),
-                                              str(self.missile_score),
-                                              anchor='midright', color='red')
-                missile.anchor = 'midleft'
-                missile.pos = self.missile_pos
-                missile.update(dt)
-                self.missile_pos.x += missile.rect.width
-                self.cd_missiles.reset()
-
+            self.update_missiles_phase(dt)
         elif self.phase is DebriefingPhase.CITIES:
-            if not self.cd_cities.cold(): return
-
-            try:
-                city = next(self.it_cities)
-            except StopIteration:
-                self.phase = next(self.phase_walker)
-                self.cd_linger_post.reset()
-            else:
-                self.parent.score += C.Score.CITY
-                self.city_score += C.Score.CITY
-                self.cities_label = TString(C.POS_CITIES_DEBRIEFING - (30, 0),
-                                            str(self.city_score),
-                                            anchor='midright', color='red')
-                city.anchor = 'midleft'
-                city.pos = self.cities_pos
-                city.update(dt)
-                self.cities_pos.x += city.rect.width
-                self.cd_cities.reset()
-
+            self.update_cities_phase(dt)
         elif self.phase is DebriefingPhase.LINGER_POST:
-            if not self.cd_linger_post.cold(): return
-
-            raise StateExit(None)
+            self.update_linger_post_phase(dt)
+        else:
+            raise RuntimeError('state machinen is b0rken')
 
     def draw(self):
         self.bonus_points.draw()
@@ -126,3 +85,57 @@ class Debriefing(GameState):
 
         for o in self.missiles: o.draw()
         for o in self.cities: o.draw()
+
+    def update_setup_phase(self, dt):
+        self.cd_linger_pre.reset()
+        self.phase = next(self.phase_walker)
+
+    def update_linger_pre_phase(self, dt):
+        if self.cd_linger_pre.cold:
+            self.cd_missiles.reset()
+            self.phase = next(self.phase_walker)
+
+    def update_missiles_phase(self, dt):
+        if not self.cd_missiles.cold(): return
+
+        try:
+            missile = next(self.it_missiles)
+        except StopIteration:
+            self.phase = next(self.phase_walker)
+            self.cd_cities.reset()
+        else:
+            self.parent.score += C.Score.UNUSED_MISSILE
+            self.missile_score += C.Score.UNUSED_MISSILE
+            self.missiles_label = TString(C.POS_MISSILES_DEBRIEFING - (30, 0),
+                                          str(self.missile_score),
+                                          anchor='midright', color='red')
+            missile.anchor = 'midleft'
+            missile.pos = self.missile_pos
+            missile.update(dt)
+            self.missile_pos.x += missile.rect.width
+            self.cd_missiles.reset()
+
+    def update_cities_phase(self, dt):
+        if not self.cd_cities.cold(): return
+
+        try:
+            city = next(self.it_cities)
+        except StopIteration:
+            self.phase = next(self.phase_walker)
+            self.cd_linger_post.reset()
+        else:
+            self.parent.score += C.Score.CITY
+            self.city_score += C.Score.CITY
+            self.cities_label = TString(C.POS_CITIES_DEBRIEFING - (30, 0),
+                                        str(self.city_score),
+                                        anchor='midright', color='red')
+            city.anchor = 'midleft'
+            city.pos = self.cities_pos
+            city.update(dt)
+            self.cities_pos.x += city.rect.width
+            self.cd_cities.reset()
+
+    def update_linger_post_phase(self, dt):
+        if not self.cd_linger_post.cold(): return
+
+        raise StateExit(None)

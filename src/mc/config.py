@@ -5,8 +5,9 @@ from typing import NamedTuple
 
 import pygame
 
-from ddframework import GridLayout
-from pygame import Vector2 as vec2
+from ddframework.gridlayout import GridLayout
+from pygame.math import Vector2 as vec2
+from pygame.typing import ColorLike
 from pygame.typing import Point
 
 ########################################################################
@@ -260,12 +261,12 @@ SILO_ATTACKS = 3
 
 
 ########################################################################
-#  _____                 _       
-# | ____|_   _____ _ __ | |_ ___ 
+#  _____                 _
+# | ____|_   _____ _ __ | |_ ___
 # |  _| \ \ / / _ \ '_ \| __/ __|
 # | |___ \ V /  __/ | | | |_\__ \
 # |_____| \_/ \___|_| |_|\__|___/
-#                                
+#
 ########################################################################
 
 class Events(IntEnum):
@@ -273,8 +274,8 @@ class Events(IntEnum):
 
 
 ########################################################################
-# _____         _       
-# |_   _|____  _| |_ ___ 
+# _____         _
+# |_   _|____  _| |_ ___
 #  | |/ _ \ \/ / __/ __|
 #  | |  __/>  <| |_\__ \
 #  |_|\___/_/\_\\__|___/
@@ -289,17 +290,19 @@ class MessageConfig(NamedTuple):
     text: str
     pos: Point
     anchor: str
-    color: pygame.Color = 'white'
+    color: ColorLike = 'white'
     scale: tuple[float, float] = (1, 1)
 
 
 MESSAGES = {
-    'PAUSE': MessageConfig('PAUSE', GRID(7, 4, 2, 2).center, 'center', 'blue', (3, 3)),
-    'PLAYER': MessageConfig('PLAYER  ', GRID(7, 4, 2, 2).center, 'center', 'blue'),
-    'PLAYER_NO': MessageConfig('       1', GRID(7, 4, 2, 2).center, 'center', 'red'),
-    'x POINTS': MessageConfig('  x POINTS', GRID.center, 'center', 'blue'),
-    'MULT': MessageConfig('1         ', GRID.center, 'center', 'red'),
-    'DEFEND CITIES': MessageConfig('DEFEND      CITIES', (GRID.centerx, 2 * GRID.height / 3), 'center', 'blue'),
-    'BONUS POINTS': MessageConfig('BONUS POINTS', (80, 240 - 160), 'center', 'blue'),
-    'SCORE': MessageConfig('SCORE', GRID(7, 0, 2, 1).midbottom, 'midbottom', 'red'),
+    "PAUSE": MessageConfig("PAUSE", GRID(7, 4, 2, 2).center, "center", "blue", (3, 3)),
+    "PLAYER": MessageConfig("PLAYER  ", GRID(7, 4, 2, 2).center, "center", "blue"),
+    "PLAYER_NO": MessageConfig("       1", GRID(7, 4, 2, 2).center, "center", "red"),
+    "x POINTS": MessageConfig("  x POINTS", GRID.center, "center", "blue"),
+    "MULT": MessageConfig("1         ", GRID.center, "center", "red"),
+    "DEFEND CITIES": MessageConfig(
+        "DEFEND      CITIES", (GRID.centerx, 2 * GRID.height / 3), "center", "blue"
+    ),
+    "BONUS POINTS": MessageConfig("BONUS POINTS", (80, 240 - 160), "center", "blue"),
+    "SCORE": MessageConfig("SCORE", GRID(7, 0, 2, 1).midbottom, "midbottom", "red"),
 }

@@ -1,6 +1,12 @@
 # Mine...
 Session.vim
 
+ddframework
+lfo
+pgcooldown
+rpeasings
+tinyecs
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

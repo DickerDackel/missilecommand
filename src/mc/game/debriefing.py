@@ -1,15 +1,17 @@
+import logging
+logging.info(__name__)  # noqa: E402
+
 from itertools import chain
 
 import pygame
 
-from ddframework.app import GameState
+from ddframework.app import App, GameState
 from ddframework.app import StateExit
 from ddframework.statemachine import StateMachine
 from pgcooldown import Cooldown
 
 import mc.config as C
 
-from mc.entities import TString
 from mc.game.types import DebriefingPhase
 
 
@@ -22,9 +24,14 @@ state_machine.add(DebriefingPhase.LINGER_POST, DebriefingPhase.LINGER_PRE)
 
 
 class Debriefing(GameState):
-    def __init__(self, app, parent, silos, cities):
+    def __init__(self, app: App, parent, silos, cities) -> None:
         self.app = app
         self.parent = parent
+
+        # FIXME
+        self.state_label = mk_textlabel('DEBRIEFING',
+                                        self.app.logical_rect.topright,
+                                        'topright', 'white', eid='debriefingstate_label')
 
         self.phase_walker = state_machine.walker()
         self.phase = next(self.phase_walker)
@@ -138,4 +145,5 @@ class Debriefing(GameState):
     def update_linger_post_phase(self, dt):
         if not self.cd_linger_post.cold(): return
 
-        raise StateExit(None)
+        ecs.remove_entity(self.state_label)
+        raise StateExit(-1)

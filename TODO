@@ -1,9 +1,15 @@
- _____ ___  ____   ___  
-|_   _/ _ \|  _ \ / _ \ 
+ _____ ___  ____   ___
+|_   _/ _ \|  _ \ / _ \
   | || | | | | | | | | |
   | || |_| | |_| | |_| |
-  |_| \___/|____/ \___/ 
-                        
+  |_| \___/|____/ \___/
+
+
+Checklist
+    * Logging in all modules
+    * Debug logging in all functions?
+
+    * Import Vector2 from pygame.math instead of pygame
 
 Cache
 Statemachine
@@ -21,11 +27,11 @@ Statemachine
 * Score
     * How score from debriefing to game class?
 
- ____                   
-|  _ \  ___  _ __   ___ 
+ ____
+|  _ \  ___  _ __   ___
 | | | |/ _ \| '_ \ / _ \
 | |_| | (_) | | | |  __/
 |____/ \___/|_| |_|\___|
-                        
+
 * Transparent text
 * Exploding cities

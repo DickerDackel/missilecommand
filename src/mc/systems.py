@@ -1,48 +1,79 @@
+import logging
+logging.info(__name__)  # noqa: E402
+
+from collections.abc import Sequence
 from typing import Callable
 
-import ddframework.cache as cache
 import pygame
 import pygame._sdl2 as sdl2
 import tinyecs as ecs
 
+from ddframework.cache import cache
+from ddframework.dynamicsprite import PRSA
+from pgcooldown import LerpThing
 from pygame import Vector2 as vec2
-from pygame.typing import Point
+
+from pygame.typing import ColorLike, Point
+
+# from ddframework.msgbroker import broker
 
 import mc.config as C
 
-from mc.components import Comp, PRSA
-from mc.entities import mk_explosion, mk_trail_eraser
-from mc.typing import EntityID, Trail
+from mc.game.launchers import mk_explosion, mk_trail_eraser
+from mc.game.types import Comp, EIDs
+from mc.types import EntityID, Momentum, Trail
 
 
-def apply_scale_system(dt: float,
-                       eid: EntityID,
-                       prsa: PRSA,
-                       scale: Callable) -> None:
+def sys_apply_scale(dt: float,
+                    eid: EntityID,
+                    prsa: PRSA,
+                    scale: Callable) -> None:
     PRSA.scale = scale()
 
-def explosion_system(dt: float,
-                     eid: EntityID,
-                     textures: Callable,
-                     prsa: PRSA,
-                     scale: Callable) -> None:
+
+def sys_container(dt: float,
+                  eid: EntityID,
+                  prsa: PRSA,
+                  container: pygame.Rect) -> None:
+    if not container.collidepoint(prsa.pos):
+        ecs.set_property(eid, Comp.IS_DEAD)
+
+
+def sys_explosion(dt: float,
+                  eid: EntityID,
+                  textures: Callable,
+                  prsa: PRSA,
+                  scale: LerpThing) -> None:
     if scale.finished():
         ecs.remove_entity(eid)
         return
 
     prsa.scale = scale()
 
-def mouse_system(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
+
+def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> None:
+    if eid == EIDs.FLYER:
+        print(f'{eid=} : {prsa.pos=}  {momentum=}')
+    prsa.pos += momentum * dt
+
+
+def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
     mp = remap(pygame.mouse.get_pos())
     prsa.pos = vec2(mp)
 
-def move_towards_system(dt: float,
-                        eid: EntityID,
-                        prsa: PRSA,
-                        target: EntityID,
-                        speed: float,
-                        trail: list[tuple[Point, Point]],
-                        *args) -> None:
+
+def sys_move_towards(dt: float,
+                     eid: EntityID,
+                     prsa: PRSA,
+                     target: EntityID,
+                     speed: float,
+                     trail: list[tuple[Point, Point]]) -> None:
+    logging.debug('sys_move_towards')
+    logging.debug(f'    {eid=}')
+    logging.debug(f'    {prsa=}')
+    logging.debug(f'    {target=}')
+    logging.debug(f'    {speed=}')
+    logging.debug(f'    {trail=}')
     tprsa = ecs.comp_of_eid(target, Comp.PRSA)
 
     step = prsa.pos.move_towards(tprsa.pos, speed * dt)
@@ -51,11 +82,21 @@ def move_towards_system(dt: float,
     if prsa.pos == tprsa.pos:
         ecs.remove_entity(eid)
         ecs.remove_entity(target)
-        mk_trail_eraser(trail)
         mk_explosion(tprsa.pos)
+        mk_trail_eraser(trail)
 
-def textlabel_system(dt, eid, text, prsa, anchor, color):
-    font = cache.get('letters')
+
+def sys_shutdown(dt: float, eid: float, callback: Callable) -> None:
+    if isinstance(callback, Sequence):
+        for cb in callback:
+            cb()
+    else:
+        callback()
+
+
+def sys_textlabel(dt: float, eid: EntityID, text: str,
+                  prsa: PRSA, anchor: str, color: ColorLike) -> None:
+    font = cache['letters']
     crect = font[0].get_rect().scale_by(prsa.scale)
     rect = crect.scale_by(len(text), 1)
     setattr(rect, anchor, prsa.pos)
@@ -69,27 +110,49 @@ def textlabel_system(dt, eid, text, prsa, anchor, color):
         letter.color = bkp_color
         crect.midleft = crect.midright
 
-def texture_system(dt: float, eid: EntityID, texture: sdl2.Texture,
-                   prsa: PRSA, *args) -> None:
+
+def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
+                prsa: PRSA) -> None:
     # tpos = round(prsa.pos.x), round(prsa.pos.y)
     # rect = texture.get_rect().scale_by(prsa.scale).move_to(center=tpos)
+    if eid == EIDs.FLYER: print(eid)
     rect = texture.get_rect().scale_by(prsa.scale).move_to(center=prsa.pos)
     bkp_alpha = texture.alpha
 
-    texture.alpha = prsa.alpha
+    texture.alpha = prsa.alpha  # ty: ignore
     texture.draw(dstrect=rect, angle=prsa.rotation)
 
     texture.alpha = bkp_alpha
 
-def textures_system(dt: float, eid: EntityID, textures: Callable,
-                    prsa: PRSA, *args) -> None:
+
+def sys_textures(dt: float, eid: EntityID, textures: Callable,
+                 prsa: PRSA) -> None:
     t = textures()
     ecs.add_component(eid, Comp.TEXTURE, t)
 
-def trail_eraser_system(dt: float,
-                        eid: EntityID,
-                        trail: Trail,
-                        *, texture: sdl2.Texture) -> None:
+
+def sys_trail(dt: float,
+              eid: EntityID,
+              trail: list[tuple[Point, Point]],
+              *, texture: sdl2.Texture) -> None:
+    renderer = texture.renderer
+    bkp_target = renderer.target
+    bkp_color = renderer.draw_color
+
+    renderer.target = texture
+    renderer.draw_color = C.COLOR.defense_missile
+
+    start, goal = trail[-1]
+    renderer.draw_line(start, goal)
+
+    renderer.draw_color = bkp_color
+    renderer.target = bkp_target
+
+
+def sys_trail_eraser(dt: float,
+                     eid: EntityID,
+                     trail: Trail,
+                     *, texture: sdl2.Texture) -> None:
     renderer = texture.renderer
     bkp_target = renderer.target
     bkp_color = renderer.draw_color
@@ -103,23 +166,6 @@ def trail_eraser_system(dt: float,
     renderer.draw_color = bkp_color
     renderer.target = bkp_target
     ecs.remove_entity(eid)
-
-def trail_system(dt: float,
-                 eid: EntityID,
-                 trail: list[tuple[Point, Point]],
-                 *, texture: sdl2.Texture) -> None:
-    renderer = texture.renderer
-    bkp_target = renderer.target
-    bkp_color = renderer.draw_color
-
-    renderer.target = texture
-    renderer.draw_color = C.COLOR.defense_missile
-
-    start, goal = trail[-1]
-    renderer.draw_line(start, goal)
-
-    renderer.draw_color = bkp_color
-    renderer.target = bkp_target
 
 
 # def sys_draw_city(dt, eid, textures, is_ruined, rect):

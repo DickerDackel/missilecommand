@@ -1,3 +1,8 @@
+import logging
+logging.info(__name__)  # noqa: E402
+
+import os.path
+
 from enum import IntEnum, auto
 from importlib.resources import files
 from types import SimpleNamespace
@@ -7,8 +12,7 @@ import pygame
 
 from ddframework.gridlayout import GridLayout
 from pygame.math import Vector2 as vec2
-from pygame.typing import ColorLike
-from pygame.typing import Point
+from pygame.typing import ColorLike, Point
 
 ########################################################################
 #     _                _ _           _   _
@@ -40,23 +44,13 @@ GRID = GridLayout(SCREEN, 16, 16, 8, 8)
 COLOR = SimpleNamespace(
     ground='yellow',
     enemy_missile='red',
-    defense_missile ='blue',
+    defense_missile='blue',
     background='black',
     grid='grey',
     pause='blue',
     clear=(255, 255, 255, 0),
     score_color='red'
 )
-
-BASE_FONT = 'DSEG14Classic-Regular.ttf'
-_font = ASSETS.joinpath(BASE_FONT)
-pygame.font.init()
-FONT = SimpleNamespace(
-    normal=pygame.Font(_font, 8)
-)
-for f in FONT.__dict__.values():
-    f.align = pygame.FONT_CENTER
-
 
 ########################################################################
 #  ____  _            _
@@ -100,7 +94,7 @@ POS_CITIES = [
 ]
 
 POS_MISSILES_DEBRIEFING = vec2(SCREEN.centerx - 15, SCREEN.centery)
-POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3) 
+POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3)
 
 ########################################################################
 #   ____                        ____       _   _   _
@@ -129,6 +123,24 @@ class Score(IntEnum):
     SMART_BOMB = 125
 
 ########################################################################
+#  ____                        _
+# / ___|  ___  _   _ _ __   __| |___
+# \___ \ / _ \| | | | '_ \ / _` / __|
+#  ___) | (_) | |_| | | | | (_| \__ \
+# |____/ \___/ \__,_|_| |_|\__,_|___/
+#
+########################################################################
+
+
+SOUNDS = SimpleNamespace(
+    launch=ASSETS / 'launch.wav',
+    explosion=ASSETS / 'explosion.wav',
+    diiuuu=ASSETS / 'diiuuu.wav',
+    brzzz=ASSETS / 'brzzz.wav',
+    gameover=ASSETS / 'gameover.wav',
+)
+
+########################################################################
 #  ____             _ _
 # / ___| _ __  _ __(_) |_ ___  ___
 # \___ \| '_ \| '__| | __/ _ \/ __|
@@ -137,15 +149,17 @@ class Score(IntEnum):
 #       |_|
 ########################################################################
 
+
 SPRITESHEET = {
     'crosshair': pygame.Rect(0, 0, 7, 7),
-    'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3), pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
+    'missiles': [pygame.Rect(16, 0, 4, 3), pygame.Rect(24, 0, 4, 3),
+                 pygame.Rect(16, 8, 4, 3), pygame.Rect(24, 8, 4, 3)],
     'city': pygame.Rect(32, 0, 22, 12),
     'cities': [pygame.Rect(0, 72, 22, 12), pygame.Rect(32, 72, 22, 12),
                pygame.Rect(64, 72, 22, 12), pygame.Rect(96, 72, 22, 12)],
     'ruin': pygame.Rect(64, 0, 22, 12),
     'ruins': [pygame.Rect(0, 88, 22, 12), pygame.Rect(32, 88, 22, 12),
-               pygame.Rect(64, 88, 22, 12), pygame.Rect(96, 88, 22, 12)],
+              pygame.Rect(64, 88, 22, 12), pygame.Rect(96, 88, 22, 12)],
     'alien_big_green': pygame.Rect(96, 0, 16, 16),
     'alien_big_red': pygame.Rect(112, 0, 16, 16),
     'alien_green': pygame.Rect(128, 0, 16, 16),
@@ -154,12 +168,15 @@ SPRITESHEET = {
     'plane_red': pygame.Rect(176, 0, 16, 16),
     'smartbomb_green': pygame.Rect(192, 0, 16, 16),
     'smartbomb_red': pygame.Rect(200, 0, 16, 16),
-    # 'missile-heads': [pygame.Rect(208, 0, 1, 1), pygame.Rect(216, 0, 1, 1), pygame.Rect(224, 0, 1, 1),
-    #                   pygame.Rect(208, 8, 1, 1), pygame.Rect(216, 8, 1, 1), pygame.Rect(224, 8, 1, 1)],
-    'missiles-heads': [pygame.Rect(128, 72, 3, 3), pygame.Rect(136, 72, 3, 3), pygame.Rect(144, 72, 3, 3),
-                       pygame.Rect(128, 80, 3, 3), pygame.Rect(136, 80, 3, 3), pygame.Rect(144, 80, 3, 3)],
-    'targets': [pygame.Rect(232, 0, 7, 7), pygame.Rect(240, 0, 7, 7), pygame.Rect(248, 0, 7, 7),
-                pygame.Rect(232, 8, 7, 7), pygame.Rect(240, 8, 7, 7), pygame.Rect(248, 8, 7, 7)],
+    # 'missile-heads': [pygame.Rect(208, 0, 1, 1), pygame.Rect(216, 0, 1, 1),
+    #                   pygame.Rect(224, 0, 1, 1), pygame.Rect(208, 8, 1, 1),
+    #                   pygame.Rect(216, 8, 1, 1), pygame.Rect(224, 8, 1, 1)],
+    'missile-heads': [pygame.Rect(128, 72, 3, 3), pygame.Rect(136, 72, 3, 3),
+                      pygame.Rect(144, 72, 3, 3), pygame.Rect(128, 80, 3, 3),
+                      pygame.Rect(136, 80, 3, 3), pygame.Rect(144, 80, 3, 3)],
+    'targets': [pygame.Rect(232, 0, 7, 7), pygame.Rect(240, 0, 7, 7),
+                pygame.Rect(248, 0, 7, 7), pygame.Rect(232, 8, 7, 7),
+                pygame.Rect(240, 8, 7, 7), pygame.Rect(248, 8, 7, 7)],
     'ground': pygame.Rect(0, 16, 256, 32),
     'explosions': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
                    pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
@@ -205,6 +222,7 @@ CHAR_MAP = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7,
             'up': 36, 'down': 37, 'left': 38, 'right': 39, 'copy': 40, 'popy': 41,
             ' ': 42, '.': 43, ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48}
 
+
 ########################################################################
 #
 # | |    _____   _____| |___
@@ -241,19 +259,19 @@ WAVES = [
 
 # For the cooldown below, the same as for the frame delay above applies
 FLYERS = [
-    (0, 0, 0, 60 * 0),
-    (148, 195, 240, 60 * 128),
-    (148, 195, 160, 60 * 96),
-    (132, 163, 128, 60 * 64),
-    (132, 163, 128, 60 * 48),
-    (100, 131, 96, 60 * 32),
-    (100, 131, 64, 60 * 32),
-    (100, 131, 32, 60 * 16),
+    (0, 0, 0, 0),
+    (SCREEN.height - 148, SCREEN.height - 195, 240 / 60, 128 / 60),
+    (SCREEN.height - 148, SCREEN.height - 195, 160 / 60, 96 / 60),
+    (SCREEN.height - 132, SCREEN.height - 163, 128 / 60, 64 / 60),
+    (SCREEN.height - 132, SCREEN.height - 163, 128 / 60, 48 / 60),
+    (SCREEN.height - 100, SCREEN.height - 131,  96 / 60, 32 / 60),
+    (SCREEN.height - 100, SCREEN.height - 131,  64 / 60, 32 / 60),
+    (SCREEN.height - 100, SCREEN.height - 131,  32 / 60, 16 / 60),
 ]
 
 MISSILES_PER_WAVE = 4
 MISSILE_SPLITS = 3
-BOMBER_SPEED = 20
+PLANE_SPEED = 20
 SATELLITE_SPEED = 30
 
 CITY_ATTACKS = 3
@@ -300,9 +318,7 @@ MESSAGES = {
     "PLAYER_NO": MessageConfig("       1", GRID(7, 4, 2, 2).center, "center", "red"),
     "x POINTS": MessageConfig("  x POINTS", GRID.center, "center", "blue"),
     "MULT": MessageConfig("1         ", GRID.center, "center", "red"),
-    "DEFEND CITIES": MessageConfig(
-        "DEFEND      CITIES", (GRID.centerx, 2 * GRID.height / 3), "center", "blue"
-    ),
+    "DEFEND CITIES": MessageConfig("DEFEND      CITIES", (GRID.centerx, 2 * GRID.height / 3), "center", "blue"),  # noqa: E501
     "BONUS POINTS": MessageConfig("BONUS POINTS", (80, 240 - 160), "center", "blue"),
     "SCORE": MessageConfig("SCORE", GRID(7, 0, 2, 1).midbottom, "midbottom", "red"),
 }

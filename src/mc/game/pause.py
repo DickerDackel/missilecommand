@@ -11,6 +11,7 @@ from pgcooldown import Cooldown
 
 import mc.config as C
 
+from mc.launchers import mk_textlabel
 from mc.game.types import Comp
 
 
@@ -36,7 +37,6 @@ class Pause(GameState):
         if e.type == pygame.KEYDOWN and e.key in {pygame.K_p, pygame.K_ESCAPE}:
             ecs.remove_entity(self.state_label)  # FIXME
 
-            print(f'killing {self.labels}')
             for eid in self.labels:
                 ecs.remove_entity(eid)
             raise StateExit(-1)

@@ -14,6 +14,7 @@ import mc.config as C
 
 from mc.game.types import DebriefingPhase
 
+from mc.launchers import mk_textlabel
 
 state_machine = StateMachine()
 state_machine.add(DebriefingPhase.SETUP, DebriefingPhase.LINGER_PRE)

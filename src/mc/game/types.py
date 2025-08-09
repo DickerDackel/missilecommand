@@ -19,13 +19,13 @@ class Comp(IntEnum):
     IS_DEFENSE = auto()
     IS_EXPLOSION = auto()
     IS_FLYER = auto()
+    IS_INCOMING = auto()
     IS_MISSILE = auto()
-    IS_MISSILE_HEAD = auto()
-    IS_MISSILE_TRAIL = auto()
     IS_RUIN = auto()
     IS_SILO = auto()
     IS_TARGET = auto()
     IS_TEXT = auto()
+    IS_TRAIL = auto()
     LERPTHING = auto()
     LERPTHING_LIST = auto()
     MOMENTUM = auto()
@@ -39,7 +39,7 @@ class Comp(IntEnum):
     TARGET = auto()
     TEXT = auto()
     TEXTURE = auto()
-    TEXTURES = auto()
+    TEXTURE_LIST = auto()
     TRAIL = auto()
     WANTS_MOUSE = auto()
     LINGER_POST = auto()
@@ -64,3 +64,7 @@ class GamePhase(IntEnum):
     END_OF_WAVE = auto()
     DEBRIEFING = auto()
     GAMEOVER = auto()
+
+
+class Messages(IntEnum):
+    EXPLOSION = auto()

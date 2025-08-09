@@ -22,6 +22,7 @@ import mc.config as C
 from mc.game.launchers import mk_explosion, mk_trail_eraser
 from mc.game.types import Comp, EIDs
 from mc.types import EntityID, Momentum, Trail
+from mc.utils import play_sound
 
 
 def sys_apply_scale(dt: float,
@@ -51,9 +52,34 @@ def sys_explosion(dt: float,
     prsa.scale = scale()
 
 
+def sys_dont_overshoot(dt: float, eid: EntityID,
+                       prsa: PRSA, momentum: vec2, target: vec2) -> None:
+    delta = target - prsa.pos
+    dot = momentum * delta
+
+    if not delta or delta.length() < momentum.length() and dot < 0:
+        prsa.pos = target
+        ecs.add_component(eid, Comp.IS_DEAD, True)
+
+
+def sys_is_dead(dt, eid):
+    if ecs.eid_has(Comp.SHUTDOWN):
+        shutdown = ecs.comp_of_eid(Comp.SHUTDOWN)
+        shutdown(eid)
+    ecs.remove_entity(eid)
+
+
+def sys_detonate_missile(dt: float,
+                         eid: EntityID,
+                         prsa: PRSA,
+                         trail: Trail,
+                         is_dead: bool) -> None:
+    mk_explosion(prsa.pos)
+    mk_trail_eraser(trail)
+    play_sound(cache['sounds']['explosion'], 3)
+
+
 def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> None:
-    if eid == EIDs.FLYER:
-        print(f'{eid=} : {prsa.pos=}  {momentum=}')
     prsa.pos += momentum * dt
 
 
@@ -62,37 +88,23 @@ def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
     prsa.pos = vec2(mp)
 
 
-def sys_move_towards(dt: float,
-                     eid: EntityID,
-                     prsa: PRSA,
-                     target: EntityID,
-                     speed: float,
-                     trail: list[tuple[Point, Point]]) -> None:
-    logging.debug('sys_move_towards')
-    logging.debug(f'    {eid=}')
-    logging.debug(f'    {prsa=}')
-    logging.debug(f'    {target=}')
-    logging.debug(f'    {speed=}')
-    logging.debug(f'    {trail=}')
-    tprsa = ecs.comp_of_eid(target, Comp.PRSA)
+def sys_shutdown(dt: float, eid: float, is_dead: bool) -> None:
+    """Call all shutdown callbacks.  Then remove the entity"""
 
-    step = prsa.pos.move_towards(tprsa.pos, speed * dt)
-    trail.append((prsa.pos, step))
-    prsa.pos = step
-    if prsa.pos == tprsa.pos:
-        ecs.remove_entity(eid)
-        ecs.remove_entity(target)
-        mk_explosion(tprsa.pos)
-        mk_trail_eraser(trail)
+    if ecs.eid_has(eid, Comp.SHUTDOWN):
+        callbacks = ecs.comp_of_eid(eid, Comp.SHUTDOWN)
+        if isinstance(callbacks, Sequence):
+            for cb in callbacks:
+                cb(eid)
+        else:
+            callbacks(eid)
+
+    ecs.remove_entity(eid)
 
 
-def sys_shutdown(dt: float, eid: float, callback: Callable) -> None:
-    if isinstance(callback, Sequence):
-        for cb in callback:
-            cb()
-    else:
-        callback()
-
+def sys_target(dt: float, eid: EntityID, prsa: PRSA, target: vec2):
+    if prsa.pos == target:
+        ecs.add_component(eid, Comp.IS_DEAD, True)
 
 def sys_textlabel(dt: float, eid: EntityID, text: str,
                   prsa: PRSA, anchor: str, color: ColorLike) -> None:
@@ -113,9 +125,10 @@ def sys_textlabel(dt: float, eid: EntityID, text: str,
 
 def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
                 prsa: PRSA) -> None:
+    """Render the current texture following the settings in prsa."""
+    # FIXME unneeded?
     # tpos = round(prsa.pos.x), round(prsa.pos.y)
     # rect = texture.get_rect().scale_by(prsa.scale).move_to(center=tpos)
-    if eid == EIDs.FLYER: print(eid)
     rect = texture.get_rect().scale_by(prsa.scale).move_to(center=prsa.pos)
     bkp_alpha = texture.alpha
 
@@ -125,10 +138,9 @@ def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
     texture.alpha = bkp_alpha
 
 
-def sys_textures(dt: float, eid: EntityID, textures: Callable,
-                 prsa: PRSA) -> None:
-    t = textures()
-    ecs.add_component(eid, Comp.TEXTURE, t)
+def sys_texture_from_texture_list(dt: float, eid: EntityID, textures: Callable) -> None:
+    """Update the current texture from an automatic image cycle."""
+    ecs.add_component(eid, Comp.TEXTURE, textures())
 
 
 def sys_trail(dt: float,
@@ -153,6 +165,7 @@ def sys_trail_eraser(dt: float,
                      eid: EntityID,
                      trail: Trail,
                      *, texture: sdl2.Texture) -> None:
+
     renderer = texture.renderer
     bkp_target = renderer.target
     bkp_color = renderer.draw_color
@@ -168,14 +181,16 @@ def sys_trail_eraser(dt: float,
     ecs.remove_entity(eid)
 
 
+def sys_update_trail(dt: float, eid: EntityID, prsa: PRSA, trail: Trail):
+    previous = trail[-1][1]
+    trail.append((previous, prsa.pos.copy()))
+
+
 # def sys_draw_city(dt, eid, textures, is_ruined, rect):
 #     sys_draw_texture(dt, eid, textures[is_ruined], rect)
 
 # def sys_draw_texture(dt, eid, texture, rect):
 #     texture.draw(dstrect=rect)
-
-# def momentum_system(dt, eid, rsap, momentum):
-#     rsap.pos += momentum * dt
 
 # def sys_pos_to_rect(dt, eid, rsap, rect):
 #     anchor = rect.anchor if hasattr(rect, 'anchor') else 'center'
@@ -194,8 +209,3 @@ def sys_trail_eraser(dt: float,
 
 # def sys_trail(dt, eid, start, parent, trail, *, renderer, canvas):
 #     ppos = ecs.comp_of_eid(parent, Comp.RSAP)
-
-
-# __all__ = ['momentum_system', 'sys_draw_city', 'sys_draw_texture',
-#            'sys_lerpthing_list', 'sys_missilehead', 'sys_mouse',
-#            'sys_pos_to_rect', 'sys_trail']

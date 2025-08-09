@@ -4,10 +4,15 @@ logging.info(__name__)  # noqa: E402
 import pygame
 import tinyecs as ecs
 
-from ddframework.app import App, GameState, StateExit
 from pgcooldown import Cooldown
 
+from ddframework.app import App, GameState, StateExit
+from ddframework.cache import cache
+
 import mc.config as C
+
+from mc.launchers import mk_textlabel
+from mc.utils import play_sound
 
 
 class Briefing(GameState):
@@ -18,7 +23,6 @@ class Briefing(GameState):
                                         self.app.logical_rect.topright,
                                         'topright', 'white', eid='briefingstate_label')
 
-        self.cd = Cooldown(3)
         self.labels = []
 
         for t in ['PLAYER', 'DEFEND CITIES', 'x POINTS']:
@@ -34,7 +38,9 @@ class Briefing(GameState):
         mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid='MULT')
         self.labels.append('MULT')
 
-        self.cd = Cooldown(3)
+        self.cd_state = Cooldown(5)
+        self.cd_sound = Cooldown(0.4)
+        self.sounds_pending = 3
 
     def teardown(self) -> None:
         ecs.remove_entity(self.state_label)
@@ -48,9 +54,14 @@ class Briefing(GameState):
             raise StateExit(-1)
 
     def update(self, dt: float) -> None:
-        if self.cd.cold():
+        if self.cd_state.cold():
             self.teardown()
             raise StateExit(-1)
+
+        if self.cd_sound.cold() and self.sounds_pending:
+            play_sound(cache['sounds']['diiuuu'])
+            self.sounds_pending -= 1
+            self.cd_sound.reset()
 
     def draw(self) -> None:
         ...  # FIXME

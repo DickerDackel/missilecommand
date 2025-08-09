@@ -1,9 +1,14 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
-from pygame.typing import Point
+import pygame
+import pygame._sdl2 as sdl2
+
+from pygame.typing import ColorLike, Point
 
 from pgcooldown import remap
+
+import mc.config as C
 
 
 def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int, int]) -> Point:
@@ -11,4 +16,27 @@ def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int,
             remap(0, real_size[1], 0, virtual_size[1], pos[1]))
 
 
-__all__ = ['to_viewport']
+def cls(texture: sdl2.Texture, color: ColorLike = 'black') -> None:
+    """clear the given texture"""
+    renderer = texture.renderer
+    bkp_target = renderer.target
+    bkp_color = renderer.draw_color
+
+    renderer.target = texture
+    renderer.draw_color = color
+    renderer.clear()
+
+    renderer.target = bkp_target
+    renderer.draw_color = bkp_color
+
+
+def play_sound(sound: pygame.mixer.Sound,
+               max_instances: int = 0) -> None:
+    if not C.PLAY_AUDIO: return
+
+    if max_instances and sound.get_num_channels() > max_instances:
+        return
+
+    sound.play()
+
+__all__ = ['to_viewport', 'cls']

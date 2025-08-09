@@ -2,6 +2,7 @@
 
 # Must follow after loading of ddframework.app
 import logging
+logging.basicConfig(level=logging.DEBUG)  # noqa: E402
 logging.info(__name__)  # noqa: E402
 
 from pathlib import Path
@@ -18,7 +19,15 @@ import mc.config as C
 
 from mc.game import Game
 
+
 pygame.init()
+
+
+def load_sounds(assets: Path) -> None:
+    sounds = ('brzzz.wav', 'diiuuu.wav', 'explosion.wav', 'gameover.wav', 'launch.wav')
+
+    cache['sounds'] = {fname.stem: pygame.mixer.Sound(fname)
+                       for fname in (assets / f for f in sounds)}
 
 
 def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:

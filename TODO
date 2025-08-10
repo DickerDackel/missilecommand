@@ -9,29 +9,21 @@ Checklist
     * Logging in all modules
     * Debug logging in all functions?
 
-    * Import Vector2 from pygame.math instead of pygame
+    * Import Vector2 as vec2 from pygame.math instead of pygame
 
-Cache
-Statemachine
+    * cleanup all imports (unused, order)
+
+* rename sys_texture -> sys_render_texture
 
 * create canvas for xor effect of explosions
 
 * Flyers
+    Flyers spawn missile drops
 * Smart bombs
+* Missiles forking
 
-* Exploding silos
-* Preserve damaged cities
 * Bonus city
 * Total Score
 
 * Score
     * How score from debriefing to game class?
-
- ____
-|  _ \  ___  _ __   ___
-| | | |/ _ \| '_ \ / _ \
-| |_| | (_) | | | |  __/
-|____/ \___/|_| |_|\___|
-
-* Transparent text
-* Exploding cities

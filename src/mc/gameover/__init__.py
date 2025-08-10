@@ -16,7 +16,7 @@ from mc.systems import sys_textlabel
 from mc.types import Comp
 
 
-class Demo(GameState):
+class Gameover(GameState):
     def __init__(self, app: 'App') -> None:
         self.app: App = app
 
@@ -25,10 +25,11 @@ class Demo(GameState):
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
+        print('Entering Gameover State')
         self.state_label = mk_textlabel(
-            'DEMO',
+            'GAME OVER',
             self.app.logical_rect.center,
-            'center', 'white', scale=2)
+            'center', 'white', scale=3)
 
         self.cd_state = Cooldown(5)
 

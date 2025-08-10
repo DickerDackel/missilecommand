@@ -17,7 +17,12 @@ from ddframework.statemachine import StateMachine
 
 import mc.config as C
 
+from mc.splash import Splash
+from mc.title import Title
+from mc.demo import Demo
+from mc.highscores import Highscores
 from mc.game import Game
+from mc.gameover import Gameover
 
 
 pygame.init()
@@ -53,10 +58,22 @@ def main() -> None:
     load_sounds(C.ASSETS)
     load_spritesheet(app.renderer, C.ASSETS.joinpath('spritesheet.png'))
 
-    states = SimpleNamespace(game=Game(app))
+    states = SimpleNamespace(
+        splash=Splash(app),
+        title=Title(app),
+        demo=Demo(app),
+        highscores=Highscores(app),
+        game=Game(app),
+        gameover=Gameover(app),
+    )
     sm = StateMachine()
-    sm.add(states.game, states.game)
-    walker = sm.walker(states.game)
+    sm.add(states.splash, states.title)
+    sm.add(states.title, states.demo, states.game)
+    sm.add(states.demo, states.highscores, states.game)
+    sm.add(states.highscores, states.title, states.game)
+    sm.add(states.game, states.gameover)
+    sm.add(states.gameover, states.highscores)
+    walker = sm.walker(states.splash)
 
     app.run(walker)
 

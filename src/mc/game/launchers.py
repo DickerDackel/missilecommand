@@ -8,7 +8,7 @@ import pygame
 import tinyecs as ecs
 
 from pygame.math import Vector2 as vec2
-from pygame.typing import Point
+from pygame.typing import ColorLike, Point
 
 from pgcooldown import Cooldown, LerpThing
 
@@ -18,8 +18,7 @@ from ddframework.autosequence import AutoSequence
 
 import mc.config as C
 
-from mc.game.types import Comp, EIDs
-from mc.types import Container, EntityID, Momentum, Trail
+from mc.types import Comp, Container, EntityID, Momentum, Prop, Trail
 
 
 def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
@@ -30,48 +29,49 @@ def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
         pos: The placement of the battery
 
     Returns:
-        entitiy IDs  for 15 silos in total
+        list[EntityID] containing all silos
     """
 
     rect = pygame.Rect(0, 0, 10, 10).move_to(center=pos)
 
     eid = f'battery-{battery_id}'
     ecs.create_entity(eid)
-    ecs.set_property(eid, Comp.IS_BATTERY)
+    ecs.set_property(eid, Prop.IS_BATTERY)
     ecs.add_component(eid, Comp.ID, battery_id)
-    ecs.add_component(eid, Comp.RECT, rect)
+    ecs.add_component(eid, Comp.HITBOX, rect)
 
-    no_missiles = len(C.SILO_OFFSETS)
-    missiles = [mk_silo(battery_id * no_missiles + i,
-                        battery_id,
-                        pos + C.BATTERY_SILO_OFFSET + offset)
-                for i, offset in enumerate(C.SILO_OFFSETS)]
+    no_silos = len(C.SILO_OFFSETS)
+    silos = [mk_silo(battery_id * no_silos + i,
+                     battery_id,
+                     pos + C.BATTERY_SILO_OFFSET + offset)
+             for i, offset in enumerate(C.SILO_OFFSETS)]
 
-    return missiles
+    return silos
 
 
 def mk_city(city_id: int, pos: Point) -> EntityID:
+    """Create a city entity"""
     textures = cache['cities']
     auto_sequence = AutoSequence(textures, 10)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
-    eid = f'city-{city_id}'
+    eid = city_id
     eid = ecs.create_entity(eid)
-    ecs.set_property(eid, Comp.IS_CITY)
-    ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
+    ecs.set_property(eid, Prop.IS_CITY)
     ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
+    ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
 
     return eid
 
 
 def mk_ruin(city_id: int, pos: Point) -> EntityID:
     textures = cache['ruins']
-    auto_sequence = AutoSequence(textures, 10)
+    auto_sequence = AutoSequence(textures, 3)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
-    eid = f'city-{city_id}'
+    eid = city_id
     eid = ecs.create_entity(eid)
-    ecs.set_property(eid, Comp.IS_RUIN)
+    ecs.set_property(eid, Prop.IS_RUIN)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
     ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
 
@@ -86,33 +86,17 @@ def mk_crosshair() -> EntityID:
     return eid
 
 
-def mk_defense(pos: Point, target: EntityID, speed: float) -> EntityID:
-    textures = cache['missiles-heads']
-    auto_sequence = AutoSequence(textures, 1)
-
-    eid = ecs.create_entity()
-    ecs.set_property(eid, Comp.IS_DEFENSE)
-    ecs.set_property(eid, Comp.IS_MISSILE)
-    ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
-    ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
-    ecs.add_component(eid, Comp.TARGET, target)
-    ecs.add_component(eid, Comp.SPEED, speed)
-    ecs.add_component(eid, Comp.TRAIL, [(pos, pos)])
-
-    return eid
-
-
 def mk_explosion(pos: Point) -> EntityID:
     scale = LerpThing(0.1, 1, 0.5, repeat=2, loops=2)
 
     textures = cache['explosions'].copy()
     shuffle(textures)
-    auto_sequence = AutoSequence(textures, 0.5)
+    auto_sequence = AutoSequence(textures, C.EXPLOSION_DURATION)
 
     prsa = PRSA(vec2(pos), scale=0.1)
 
     eid = ecs.create_entity()
-    ecs.set_property(eid, Comp.IS_EXPLOSION)
+    ecs.set_property(eid, Prop.IS_EXPLOSION)
     ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
     ecs.add_component(eid, Comp.EXPLOSION_SCALE, scale)
@@ -120,7 +104,7 @@ def mk_explosion(pos: Point) -> EntityID:
     return eid
 
 
-def mk_flyer(min_height: float, max_height: float, fire_cooldown: float,
+def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown: float,
              container: Container, shutdown_callback: Callable) -> EntityID:
     kind = choice(('alien', 'plane'))
     color = choice(('red', 'green'))
@@ -129,14 +113,14 @@ def mk_flyer(min_height: float, max_height: float, fire_cooldown: float,
     height = randint(max_height, min_height)
 
     prsa = PRSA(pos=vec2(-16, height))
-    eid = ecs.create_entity(EIDs.FLYER)
-    ecs.set_property(eid, Comp.IS_FLYER)
+    ecs.create_entity(eid)
+    ecs.set_property(eid, Prop.IS_FLYER)
     ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.TEXTURE, texture)
     ecs.add_component(eid, Comp.FLYER_FIRE_COOLDOWN, Cooldown(fire_cooldown))
     ecs.add_component(eid, Comp.MOMENTUM, Momentum(speed, 0))
     ecs.add_component(eid, Comp.CONTAINER, container)
-    ecs.add_component(eid, Comp.NOTIFY_DEAD, shutdown_callback)
+    ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
 
     return eid
 
@@ -148,15 +132,16 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     auto_sequence = AutoSequence(textures, 1)
     trail = [(start, start)]
 
+    logging.debug(f'{start=}  {dest=}')
     try:
         momentum = (dest - start).normalize() * speed
     except ValueError:
         momentum = vec2()
 
     eid = ecs.create_entity()
-    ecs.set_property(eid, Comp.IS_MISSILE)
-    ecs.set_property(eid, Comp.IS_TRAIL)
-    ecs.set_property(eid, Comp.IS_INCOMING if incoming else Comp.IS_DEFENSE)
+    ecs.set_property(eid, Prop.IS_MISSILE)
+    ecs.set_property(eid, Prop.IS_TRAIL)
+    ecs.set_property(eid, Prop.IS_INCOMING if incoming else Prop.IS_DEFENSE)
     ecs.add_component(eid, Comp.PRSA, PRSA(start.copy()))
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
@@ -174,7 +159,7 @@ def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
 
     eid = f'silo-{silo_id}'
     ecs.create_entity(eid)
-    ecs.set_property(eid, Comp.IS_SILO)
+    ecs.set_property(eid, Prop.IS_SILO)
     ecs.add_component(eid, Comp.ID, silo_id)
     ecs.add_component(eid, Comp.BATTERY_ID, battery_id)
     ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
@@ -187,38 +172,30 @@ def mk_target(eid: EntityID, pos: Point) -> EntityID:
     textures = cache['targets']
     auto_sequence = AutoSequence(textures, 1)
 
-    ecs.set_property(eid, Comp.IS_TARGET)
+    ecs.set_property(eid, Prop.IS_TARGET)
     ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
 
     return eid
 
 
+def mk_textlabel(text: str, pos: Point, anchor: str,
+                 color: ColorLike, scale: tuple[float, float] = (1, 1),
+                 eid: str | None = None) -> EntityID:
+    eid = ecs.create_entity(eid)
+
+    ecs.set_property(eid, Prop.IS_TEXT)
+    ecs.add_component(eid, Comp.TEXT, text)
+    ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos), scale=scale))
+    ecs.add_component(eid, Comp.ANCHOR, anchor)
+    ecs.add_component(eid, Comp.COLOR, color)
+
+    return eid
+
+
 def mk_trail_eraser(trail: Trail) -> None:
     eid = ecs.create_entity()
-    ecs.set_property(eid, Comp.IS_DEAD_TRAIL)
+    ecs.set_property(eid, Prop.IS_DEAD_TRAIL)
     ecs.add_component(eid, Comp.TRAIL, trail)
-
-
-########################################################################
-#   ___  _     _
-#  / _ \| | __| |
-# | | | | |/ _` |
-# | |_| | | (_| |
-#  \___/|_|\__,_|
-#
-########################################################################
-
-
-def mk_ruin(ruin_id: int, pos: Point) -> EntityID:
-    textures = cache['ruins']
-    auto_sequence = AutoSequence(textures, 10)
-    auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
-
-    eid = ecs.create_entity()
-    ecs.set_property(eid, Comp.IS_RUIN)
-    ecs.add_component(eid, Comp.ID, ruin_id)
-    ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
-    ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
 
     return eid

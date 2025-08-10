@@ -1,8 +1,6 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
-import os.path
-
 from enum import IntEnum, auto
 from importlib.resources import files
 from types import SimpleNamespace
@@ -32,7 +30,7 @@ ASSETS = files('mc.assets')
 
 GRID = GridLayout(SCREEN, 16, 16, 8, 8)
 
-PLAY_AUDIO = True
+PLAY_AUDIO = False
 
 ########################################################################
 #   ____
@@ -61,7 +59,7 @@ COLOR = SimpleNamespace(
 # |  __/| | (_| | (__| | | | | (_| |
 # |_|   |_|\__,_|\___|_|_| |_|\__, |
 #                             |___/
-########################################################################
+#####################################################################)))
 
 POS_GROUND = SCREEN.midbottom
 
@@ -95,6 +93,17 @@ POS_CITIES = [
     vec2(206, SCREEN.bottom - 8 - 8 - 6),
 ]
 
+HITBOX_CITY = [
+    pygame.Rect(0, 0, 22, 12).move_to(center=POS_CITIES[i])
+    for i in range(len(POS_CITIES))
+]
+
+HITBOX_BATTERIES = [
+    pygame.Rect(0, 0, 16, 4).move_to(center=POS_BATTERIES[i])
+    for i in range(len(POS_BATTERIES))
+]
+
+
 POS_MISSILES_DEBRIEFING = vec2(SCREEN.centerx - 15, SCREEN.centery)
 POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3)
 
@@ -105,7 +114,9 @@ POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3)
 # | |_| | (_| | | | | | |  __/  ___) |  __/ |_| |_| | | | | (_| \__ \
 #  \____|\__,_|_| |_| |_|\___| |____/ \___|\__|\__|_|_| |_|\__, |___/
 #                                                          |___/
-########################################################################
+#######################################################################)
+
+EXPLOSION_DURATION = 0.5
 
 KEY_SILO_MAP = {
     pygame.K_q: 0,

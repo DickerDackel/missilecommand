@@ -10,7 +10,7 @@ import tinyecs as ecs
 
 from ddframework.cache import cache
 from ddframework.dynamicsprite import PRSA
-from pgcooldown import LerpThing
+from pgcooldown import Cooldown, LerpThing
 from pygame import Vector2 as vec2
 
 from pygame.typing import ColorLike, Point
@@ -19,9 +19,8 @@ from pygame.typing import ColorLike, Point
 
 import mc.config as C
 
-from mc.game.launchers import mk_explosion, mk_trail_eraser
-from mc.game.types import Comp, EIDs
-from mc.types import EntityID, Momentum, Trail
+from mc.launchers import mk_explosion, mk_trail_eraser
+from mc.types import Comp, EntityID, Momentum, Prop, Trail
 from mc.utils import play_sound
 
 
@@ -37,7 +36,7 @@ def sys_container(dt: float,
                   prsa: PRSA,
                   container: pygame.Rect) -> None:
     if not container.collidepoint(prsa.pos):
-        ecs.set_property(eid, Comp.IS_DEAD)
+        ecs.set_property(eid, Prop.IS_DEAD)
 
 
 def sys_explosion(dt: float,
@@ -59,10 +58,10 @@ def sys_dont_overshoot(dt: float, eid: EntityID,
 
     if not delta or delta.length() < momentum.length() and dot < 0:
         prsa.pos = target
-        ecs.add_component(eid, Comp.IS_DEAD, True)
+        ecs.add_component(eid, Prop.IS_DEAD, True)
 
 
-def sys_is_dead(dt, eid):
+def sys_is_dead(dt: float, eid: EntityID) -> None:
     if ecs.eid_has(Comp.SHUTDOWN):
         shutdown = ecs.comp_of_eid(Comp.SHUTDOWN)
         shutdown(eid)
@@ -79,17 +78,25 @@ def sys_detonate_missile(dt: float,
     play_sound(cache['sounds']['explosion'], 3)
 
 
+def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
+    """Flags entity for culling after lifetime runs out."""
+    if lifetime.cold():
+        ecs.add_component(eid, Prop.IS_DEAD, True)
+
+
 def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> None:
+    """Apply a static momentum to the position, a.k.a. float."""
     prsa.pos += momentum * dt
 
 
 def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
+    """Apply mouse position to prsa.pos"""
     mp = remap(pygame.mouse.get_pos())
     prsa.pos = vec2(mp)
 
 
 def sys_shutdown(dt: float, eid: float, is_dead: bool) -> None:
-    """Call all shutdown callbacks.  Then remove the entity"""
+    """Call all shutdown callbacks and remove the entity"""
 
     if ecs.eid_has(eid, Comp.SHUTDOWN):
         callbacks = ecs.comp_of_eid(eid, Comp.SHUTDOWN)
@@ -102,9 +109,11 @@ def sys_shutdown(dt: float, eid: float, is_dead: bool) -> None:
     ecs.remove_entity(eid)
 
 
-def sys_target(dt: float, eid: EntityID, prsa: PRSA, target: vec2):
+def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> None:
+    """Flag the entity for culling if it has reached target."""
     if prsa.pos == target:
-        ecs.add_component(eid, Comp.IS_DEAD, True)
+        ecs.add_component(eid, Prop.IS_DEAD, True)
+
 
 def sys_textlabel(dt: float, eid: EntityID, text: str,
                   prsa: PRSA, anchor: str, color: ColorLike) -> None:
@@ -129,7 +138,13 @@ def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
     # FIXME unneeded?
     # tpos = round(prsa.pos.x), round(prsa.pos.y)
     # rect = texture.get_rect().scale_by(prsa.scale).move_to(center=tpos)
-    rect = texture.get_rect().scale_by(prsa.scale).move_to(center=prsa.pos)
+    rect = texture.get_rect().scale_by(prsa.scale)
+    if ecs.has(eid, Comp.ANCHOR):
+        anchor = ecs.comps_of_eid(Comp.ANCHOR)
+        setattr(rect, anchor, prsa.pos)
+    else:
+        rect.center = prsa.pos
+
     bkp_alpha = texture.alpha
 
     texture.alpha = prsa.alpha  # ty: ignore
@@ -181,7 +196,7 @@ def sys_trail_eraser(dt: float,
     ecs.remove_entity(eid)
 
 
-def sys_update_trail(dt: float, eid: EntityID, prsa: PRSA, trail: Trail):
+def sys_update_trail(dt: float, eid: EntityID, prsa: PRSA, trail: Trail) -> None:
     previous = trail[-1][1]
     trail.append((previous, prsa.pos.copy()))
 

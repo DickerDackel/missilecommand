@@ -2,7 +2,7 @@ import logging
 logging.info(__name__)  # noqa: E402
 
 from itertools import chain, cycle
-from random import randint
+from random import randint, shuffle
 from typing import Any, Hashable
 
 import pygame
@@ -20,28 +20,28 @@ from ddframework.statemachine import StateMachine
 
 import mc.config as C
 
-from mc.game.types import Comp, EIDs
-from mc.game.launchers import (mk_battery, mk_city, mk_crosshair,
-                               mk_explosion, mk_flyer, mk_missile, mk_ruin,
-                               mk_target, mk_trail_eraser)
 from mc.game.briefing import Briefing
 # from mc.game.debriefing import Debriefing
 from mc.game.pause import Pause
-from mc.game.types import GamePhase
+from mc.game.types import EIDs, GamePhase
 from mc.game.waves import wave_iter
 # from mc.sprite import TGroup
-from mc.launchers import mk_textlabel
+from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_flyer,
+                          mk_missile, mk_ruin, mk_target, mk_textlabel,
+                          mk_trail_eraser)
 from mc.systems import (sys_container, sys_detonate_missile,
-                        sys_dont_overshoot, sys_explosion, sys_momentum,
-                        sys_mouse, sys_shutdown, sys_target, sys_textlabel,
-                        sys_texture, sys_texture_from_texture_list,
-                        sys_trail_eraser, sys_trail, sys_update_trail)
-from mc.types import EntityID
+                        sys_dont_overshoot, sys_explosion, sys_lifetime,
+                        sys_momentum, sys_mouse, sys_shutdown,
+                        sys_target_reached, sys_textlabel, sys_texture,
+                        sys_texture_from_texture_list, sys_trail_eraser,
+                        sys_trail, sys_update_trail)
+from mc.game.types import EIDs
+from mc.types import Comp, EntityID, Prop
 from mc.utils import cls, play_sound, to_viewport
 
 
 def get_cities() -> list[EntityID]:
-    return (e for e in ecs.eids_by_property(Comp.IS_CITY))
+    return (e for e in ecs.eids_by_property(Prop.IS_CITY))
 
 
 def purge_entities(property: Hashable) -> None:
@@ -77,6 +77,7 @@ class Game(GameState):
         self.phases.add(GamePhase.PLAYING, GamePhase.END_OF_WAVE, GamePhase.GAMEOVER)
         self.phases.add(GamePhase.END_OF_WAVE, GamePhase.DEBRIEFING)
         self.phases.add(GamePhase.DEBRIEFING, GamePhase.SETUP)
+        self.phases.add(GamePhase.GAMEOVER, None)
         self.phase_walker = None
         self.phase = None
 
@@ -95,7 +96,7 @@ class Game(GameState):
         self.score_mult = None
 
         self.cities = None
-        self.silos = None
+        self.batteries = None
         self.missiles = None
         self.allowed_targets = None
 
@@ -109,12 +110,12 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
 
         self.cities = [True] * 6
-        self.silos = [True] * 3
+        self.batteries = [True] * 3
 
         self.cd_incoming = Cooldown(2, cold=True)
 
         ecs.reset()
-        ecs.create_archetype(Comp.PRSA, Comp.TRAIL)
+        ecs.create_archetype(Comp.PRSA)
         ecs.create_archetype(Comp.PRSA, Comp.TEXTURE, Comp.EXPLOSION_SCALE)
 
         mk_crosshair()
@@ -132,39 +133,29 @@ class Game(GameState):
         # self.missiles.empty()
         # self.targets.empty()
         # self.explosions.empty()
-        # Nope!  purge_entities(Comp.IS_CITY)
-        purge_entities(Comp.IS_SILO)
+        # Nope!  purge_entities(Prop.IS_CITY)
+        purge_entities(Prop.IS_SILO)
 
-        self.silos = [mk_battery(i, pos) for i, pos in enumerate(C.POS_BATTERIES)]
+        cls(self.trail_canvas, C.COLOR.clear)
 
-        for i, city in enumerate(self.cities):
+        self.batteries = [mk_battery(i, pos) for i, pos in enumerate(C.POS_BATTERIES)]
+
+        for city, alive in enumerate(self.cities):
             pos = C.POS_CITIES[city]
-            if city:
+            if alive:
                 mk_city(f'city-{city}', pos)
             else:
                 mk_ruin(f'ruin-{city}', pos)
 
-        remaining_cities = [i for i, c in enumerate(self.cities) if c]
-        for city in remaining_cities:
-            pos = C.POS_CITIES[city]
-            mk_city(f'city-{city}', pos)
-
-        # remaining cities can be < 3, so cycle over it
-        # batteries are always 3 at start of level
-        # zip city cycle and batteries, then flatten this list to get
-        #   alternating missiles and batteries
-        # missile command docs say, each wave will drop on the same 6 targets
-        # The number of missile drops per wave is higher than 6, so cycle over
-        #   the `remaining` list
-        # Due to the interval between missile launches, it won't be necessary
-        #   to update this cycle with destroyed cities
-        city_positions = cycle(pos for i, pos in enumerate(C.POS_CITIES) if self.cities[i])
+        remaining_cities = [i for i in range(len(self.cities)) if self.cities[i]]
+        shuffle(remaining_cities)
+        target_cities = cycle((C.POS_CITIES[_] for _ in remaining_cities[0:3]))
         battery_positions = C.POS_BATTERIES
-        merged = zip(city_positions, battery_positions)
-        flattened = chain.from_iterable(merged)
+        logging.debug(f'{C.POS_BATTERIES=}')
+        merged = zip(target_cities, battery_positions)
+        flattened = list(chain.from_iterable(merged))
+        logging.debug(f'{flattened=}')
         self.allowed_targets = cycle(flattened)
-
-        cls(self.trail_canvas, C.COLOR.clear)
 
         self.score_mult = self.level // 2 + 1
 
@@ -195,22 +186,23 @@ class Game(GameState):
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
             elif e.key == pygame.K_n:
                 self.phase = next(self.phase_walker)
-            elif e.key == pygame.K_SPACE:
-                # FIXME
-                for i in range(64):
-                    x1 = randint(0, self.app.logical_rect.width)
-                    x2 = randint(0, self.app.logical_rect.width)
-                    mk_missile(vec2(x1, 0),
-                               vec2(x2, self.app.logical_rect.bottom),
-                               20,
-                               incoming=True)
+            elif e.key == pygame.K_d:
+                from pprint import pprint
+                pprint(ecs.eidx)
+                pprint(ecs.cidx)
+                pprint(ecs.archetype)
+                pprint(ecs.plist)
+            elif e.key == pygame.K_x:
+                raise SystemExit
 
     def update(self, dt: float) -> None:
         if self.paused: return
         if self.app.is_stacked(self): return
 
+        logging.debug(f'Phase handler is {self.phase_handlers[self.phase]}  ({self.phase=})')
         update_fn = self.phase_handlers[self.phase]
         update_fn(dt)
+        logging.debug(f'Back from {update_fn=}')
         fps = self.app.clock.get_fps()
         entities = len(ecs.eidx)
         self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}'
@@ -224,26 +216,20 @@ class Game(GameState):
         self.app.push(Briefing(self.app, 1), passthrough=StackPermissions.DRAW)
 
     def phase_playing_update(self, dt: float) -> None:
+        if not any(self.cities):
+            logging.debug(f'Leaving {self.phase=}')
+            self.phase = self.phase_walker.send(1)
+            return
 
-        if self.incoming_left == 0 and not self.incoming:
+        explosions = ecs.eids_by_property(Prop.IS_EXPLOSION)
+        incoming = ecs.eids_by_property(Prop.IS_INCOMING)
+        if self.incoming_left == 0 and len(incoming) == 0 and len(explosions) == 0:
             self.phase = next(self.phase_walker)
             return
 
-        def attack_shutdown_callback(eid: EntityID) -> None:
-            self.incoming.remove(eid)
-
         if self.cd_incoming.cold():
             self.cd_incoming.reset()
-
-            count = min(C.MISSILES_PER_WAVE, self.incoming_left)
-            for i in range(count):
-                self.incoming_left -= 1
-
-                start = vec2(randint(0, self.app.logical_rect.width), -16)
-                target = next(self.allowed_targets)
-                speed = self.wave.missile_speed
-                eid = mk_missile(start, target, speed, incoming=True)
-                self.incoming.append(eid)
+            self.launch_incoming_wave()
 
         if (self.wave.flyer_cooldown
             and not ecs.has(EIDs.FLYER)
@@ -252,81 +238,86 @@ class Game(GameState):
             def shutdown(eid: EntityID) -> None:
                 self.cd_flyer.reset()
 
-            mk_flyer(self.wave.flyer_min_height, self.wave.flyer_max_height,
-                     self.wave.flyer_fire_cooldown, shutdown)
+            mk_flyer(EIDs.FLYER, self.wave.flyer_min_height, self.wave.flyer_max_height,
+                     self.wave.flyer_fire_cooldown, self.app.logical_rect,
+                     shutdown)
 
         # All for missiles
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
-        ecs.run_system(dt, sys_target, Comp.PRSA, Comp.TARGET)
+        ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
         ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL,
-                       Comp.IS_DEAD)
+                       Prop.IS_DEAD)
 
         ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
         ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
                        texture=self.trail_canvas,
-                       has_properties={Comp.IS_DEAD_TRAIL})
+                       has_properties={Prop.IS_DEAD_TRAIL})
 
         ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA,
-                       Comp.EXPLOSION_SCALE, has_properties={Comp.IS_EXPLOSION})
+                       Comp.EXPLOSION_SCALE, has_properties={Prop.IS_EXPLOSION})
 
         ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
+        ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
+        ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
 
-        ecs.run_system(dt, sys_shutdown, Comp.IS_DEAD)
+        self.do_collisions()
 
+    def do_collisions(self):
         # collisions
-        missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Comp.IS_MISSILE, Comp.IS_INCOMING})
-        explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.TEXTURE, Comp.EXPLOSION_SCALE,
-                                            has_properties={Comp.IS_EXPLOSION})
-
+        missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
         killed = set()
-        for e_eid, (e_prsa, e_texture, e_scale) in explosions:
-            e_pos = e_prsa.pos
-            for m_eid, (m_prsa, m_trail) in missiles:
+        for m_eid, (m_prsa, *_) in missiles:
+            m_pos = m_prsa.pos
+
+            def kill_missile(m_eid):
+                ecs.add_component(m_eid, Prop.IS_DEAD, True)
+                killed.add(m_eid)
+
+            explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.TEXTURE, Comp.EXPLOSION_SCALE,
+                                                has_properties={Prop.IS_EXPLOSION})
+            # missile vs. explosions
+            for e_eid, (e_prsa, e_texture, e_scale) in explosions:
                 if m_eid in killed: continue
-                m_pos = m_prsa.pos
+
+                e_pos = e_prsa.pos
                 delta = e_pos - m_pos
                 if delta.length() < e_scale() * e_texture.width / 2:
-                    ecs.add_component(m_eid, Comp.IS_DEAD, True)
+                    kill_missile(m_eid)
+
+            # missile vs. cities
+            for i, c in enumerate(self.cities):
+                if not c: continue
+
+                if C.HITBOX_CITY[i].collidepoint(m_pos):
+                    kill_missile(m_eid)
+                    self.cities[i] = False
+                    ecs.remove_entity(f'city-{i}')
+                    mk_ruin(f'city-{i}', C.POS_CITIES[i])
+
+            # missile vs. batteries
+            for i, battery in enumerate(self.batteries):
+                if not battery:
+                    continue
+
+                if C.HITBOX_BATTERIES[i].collidepoint(m_pos):
                     killed.add(m_eid)
 
-
-        # dead = [o for o in chain(self.missiles, self.incoming) if o.explode]
-        # for o in dead:
-        #     self.launch_explosion(o.pos)
-        #     o.kill()
-
-        # collisions = pygame.sprite.groupcollide(self.explosions,
-        #                                         # self.incoming,
-        #                                         False, False,
-        #                                         collided=Explosion.collidepoint)
-        # for explosion, missiles in collisions.items():
-        #     for m in missiles:
-        #         m.explode = True
-
-        # def pointcollide(left, right):
-        #     return left.rect.collidepoint(right.pos)
-
-        # collisions = pygame.sprite.groupcollide(self.cities, self.incoming,
-        #                                         False, False,
-        #                                         collided=pointcollide)
-        # # FIXME
-        # # for city, missiles in collisions.items():
-        # #     city.ruined = True
-        # #     for m in missiles:
-        # #         m.explode = True
-
-        #     if not self.missiles and not self.incoming and not self.explosions:
-        #         self.phase = next(self.phase_walker)
+                    for silo in self.batteries[i]:
+                        kill_missile(m_eid)
+                        ecs.add_component(silo, Comp.LIFETIME,
+                                          Cooldown(C.EXPLOSION_DURATION))
+                    self.batteries[i].clear()
 
     def phase_debriefing_update(self, dt: float) -> None:
         self.phase = next(self.phase_walker)
-        # self.app.push(Debriefing(self.app, self, self.silos, self.cities),
+        # self.app.push(Debriefing(self.app, self, self.batteries, self.cities),
         #               passthrough=StackPermissions.DRAW)
 
     def phase_gameover_update(self, dt: float) -> None:
-        ...
+        print('gameover raising SystemExit')
+        raise StateExit
 
     def draw(self) -> None:
         debug_grid(self.app.renderer, C.GRID)
@@ -346,21 +337,28 @@ class Game(GameState):
 
         ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
+        renderer = self.app.renderer
+        for b in C.HITBOX_BATTERIES:
+            bkp_color = renderer.draw_color
+            renderer.draw_color = 'red'
+            renderer.draw_rect(b)
+            renderer.draw_color = bkp_color
+
         # self.app.renderer.draw_color = 'grey'
         # self.app.renderer.draw_rect(self.app.logical_rect)
 
-        # ecs.run_system(0, sys_draw_city, Comp.TEXTURES, Comp.IS_RUIN, Comp.RECT)
+        # ecs.run_system(0, sys_draw_city, Comp.TEXTURES, Prop.IS_RUIN, Comp.RECT)
 
         # ecs.run_system(0, sys_mouse, Comp.POS, Comp.RECT, Comp.TEXTURE, Comp.WANTS_MOUSE,
         #                real_size=self.app.window_rect.size,
         #                virtual_size=self.app.logical_rect.size)
 
     def launch_defense(self, launchpad: int, target: Point) -> None:
-        if not self.silos[launchpad]:
+        if not self.batteries[launchpad]:
             play_sound(cache['sounds']['brzzz'])
             return
 
-        silo = self.silos[launchpad].pop()
+        silo = self.batteries[launchpad].pop()
         ecs.remove_entity(silo)
 
         start = C.POS_BATTERIES[launchpad]
@@ -376,10 +374,27 @@ class Game(GameState):
         mk_missile(start, dest, speed, cb_shutdown, incoming=False)
         play_sound(cache['sounds']['launch'], 3)
 
+    def launch_incoming_wave(self) -> None:
+        count = min(C.MISSILES_PER_WAVE, self.incoming_left)
+
+        def attack_shutdown_callback(eid: EntityID) -> None:
+            self.incoming.remove(eid)
+
+        for i in range(count):
+            self.incoming_left -= 1
+
+            start = vec2(randint(0, self.app.logical_rect.width), -16)
+            target = next(self.allowed_targets)
+            speed = self.wave.missile_speed
+            speed = 200
+            eid = mk_missile(start, target, speed, incoming=True,
+                             shutdown_callback=attack_shutdown_callback)
+            self.incoming.append(eid)
+
         # mk_defense(pos, target_eid, speed)
 
     # def try_missile_launch(self, launchpad, target):
-    #     if not self.silos[launchpad].missiles: return
+    #     if not self.batteries[launchpad].missiles: return
 
     #     missile = MissileHead(start, target, speed)
     #     self.targets.add(Target(target, missile))

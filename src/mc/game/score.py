@@ -14,6 +14,7 @@ class Score:
         broker.register(C.Events.ADD_SCORE, self.add)
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
+        ecs.reset()
         self.score = 0
 
     def add(self, value: int) -> None:

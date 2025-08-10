@@ -38,7 +38,7 @@ class Briefing(GameState):
         mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid='MULT')
         self.labels.append('MULT')
 
-        self.cd_state = Cooldown(5)
+        self.cd_state = Cooldown(3)
         self.cd_sound = Cooldown(0.4)
         self.sounds_pending = 3
 

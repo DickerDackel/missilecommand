@@ -49,7 +49,8 @@ COLOR = SimpleNamespace(
     grid='grey',
     pause='blue',
     clear=(255, 255, 255, 0),
-    score_color='red'
+    score_color='red',
+    gameover='#df3e23',
 )
 
 ########################################################################
@@ -176,6 +177,10 @@ SPRITESHEET = {
     'explosions': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
                    pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
                    pygame.Rect(384, 0, 32, 32), pygame.Rect(416, 0, 32, 32)],
+    'gameover-small': [pygame.Rect(256, 32, 32, 32), pygame.Rect(288, 32, 32, 32),
+                       pygame.Rect(320, 32, 32, 32), pygame.Rect(352, 32, 32, 32),
+                       pygame.Rect(384, 32, 32, 32), pygame.Rect(416, 32, 32, 32)],
+    'gameover': pygame.Rect(256, 64, 128, 128),
     'letters': [pygame.Rect(0, 48, 8, 8), pygame.Rect(8, 48, 8, 8),
                 pygame.Rect(16, 48, 8, 8), pygame.Rect(24, 48, 8, 8),
                 pygame.Rect(32, 48, 8, 8), pygame.Rect(40, 48, 8, 8),

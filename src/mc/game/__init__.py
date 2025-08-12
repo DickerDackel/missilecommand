@@ -116,7 +116,7 @@ class Game(GameState):
 
         ecs.reset()
         ecs.create_archetype(Comp.PRSA)
-        ecs.create_archetype(Comp.PRSA, Comp.TEXTURE, Comp.EXPLOSION_SCALE)
+        ecs.create_archetype(Comp.PRSA, Comp.TEXTURE, Comp.SCALE)
 
         mk_crosshair()
 
@@ -151,10 +151,8 @@ class Game(GameState):
         shuffle(remaining_cities)
         target_cities = cycle((C.POS_CITIES[_] for _ in remaining_cities[0:3]))
         battery_positions = C.POS_BATTERIES
-        logging.debug(f'{C.POS_BATTERIES=}')
         merged = zip(target_cities, battery_positions)
         flattened = list(chain.from_iterable(merged))
-        logging.debug(f'{flattened=}')
         self.allowed_targets = cycle(flattened)
 
         self.score_mult = self.level // 2 + 1
@@ -199,10 +197,8 @@ class Game(GameState):
         if self.paused: return
         if self.app.is_stacked(self): return
 
-        logging.debug(f'Phase handler is {self.phase_handlers[self.phase]}  ({self.phase=})')
         update_fn = self.phase_handlers[self.phase]
         update_fn(dt)
-        logging.debug(f'Back from {update_fn=}')
         fps = self.app.clock.get_fps()
         entities = len(ecs.eidx)
         self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}'
@@ -217,7 +213,6 @@ class Game(GameState):
 
     def phase_playing_update(self, dt: float) -> None:
         if not any(self.cities):
-            logging.debug(f'Leaving {self.phase=}')
             self.phase = self.phase_walker.send(1)
             return
 
@@ -256,7 +251,7 @@ class Game(GameState):
                        has_properties={Prop.IS_DEAD_TRAIL})
 
         ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA,
-                       Comp.EXPLOSION_SCALE, has_properties={Prop.IS_EXPLOSION})
+                       Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
 
         ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
         ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
@@ -275,7 +270,7 @@ class Game(GameState):
                 ecs.add_component(m_eid, Prop.IS_DEAD, True)
                 killed.add(m_eid)
 
-            explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.TEXTURE, Comp.EXPLOSION_SCALE,
+            explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.TEXTURE, Comp.SCALE,
                                                 has_properties={Prop.IS_EXPLOSION})
             # missile vs. explosions
             for e_eid, (e_prsa, e_texture, e_scale) in explosions:
@@ -316,7 +311,6 @@ class Game(GameState):
         #               passthrough=StackPermissions.DRAW)
 
     def phase_gameover_update(self, dt: float) -> None:
-        print('gameover raising SystemExit')
         raise StateExit
 
     def draw(self) -> None:

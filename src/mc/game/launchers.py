@@ -99,7 +99,7 @@ def mk_explosion(pos: Point) -> EntityID:
     ecs.set_property(eid, Prop.IS_EXPLOSION)
     ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
-    ecs.add_component(eid, Comp.EXPLOSION_SCALE, scale)
+    ecs.add_component(eid, Comp.SCALE, scale)
 
     return eid
 
@@ -132,7 +132,6 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     auto_sequence = AutoSequence(textures, 1)
     trail = [(start, start)]
 
-    logging.debug(f'{start=}  {dest=}')
     try:
         momentum = (dest - start).normalize() * speed
     except ValueError:

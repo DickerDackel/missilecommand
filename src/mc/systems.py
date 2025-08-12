@@ -28,7 +28,15 @@ def sys_apply_scale(dt: float,
                     eid: EntityID,
                     prsa: PRSA,
                     scale: Callable) -> None:
-    PRSA.scale = scale()
+    prsa.scale = scale()
+    print(f'apply_scale: {prsa.scale=}  {scale()=}')
+
+
+def sys_colorize(dt: float,
+                 eid: EntityID,
+                 texture: sdl2.Texture,
+                 color: ColorLike) -> None:
+    texture.color = color
 
 
 def sys_container(dt: float,
@@ -147,6 +155,7 @@ def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
 
     bkp_alpha = texture.alpha
 
+    print(f'sys_texture: {rect=}  {prsa.scale=}')
     texture.alpha = prsa.alpha  # ty: ignore
     texture.draw(dstrect=rect, angle=prsa.rotation)
 
@@ -156,6 +165,7 @@ def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
 def sys_texture_from_texture_list(dt: float, eid: EntityID, textures: Callable) -> None:
     """Update the current texture from an automatic image cycle."""
     ecs.add_component(eid, Comp.TEXTURE, textures())
+    print('texture_from_texture_list')
 
 
 def sys_trail(dt: float,
@@ -199,28 +209,3 @@ def sys_trail_eraser(dt: float,
 def sys_update_trail(dt: float, eid: EntityID, prsa: PRSA, trail: Trail) -> None:
     previous = trail[-1][1]
     trail.append((previous, prsa.pos.copy()))
-
-
-# def sys_draw_city(dt, eid, textures, is_ruined, rect):
-#     sys_draw_texture(dt, eid, textures[is_ruined], rect)
-
-# def sys_draw_texture(dt, eid, texture, rect):
-#     texture.draw(dstrect=rect)
-
-# def sys_pos_to_rect(dt, eid, rsap, rect):
-#     anchor = rect.anchor if hasattr(rect, 'anchor') else 'center'
-#     setattr(rect, anchor, rsap.pos)
-
-# def sys_missilehead(dt, eid, rsap, target, speed):
-#     distance = target - rsap.pos
-#     step = speed * dt
-#     if distance.length() <= step:
-#         dest = distance
-#         ecs.add_component(eid, Comp.EXPLODE, True)
-#     else:
-#         dest = distance.normalize() * step
-
-#     rsap.pos += step
-
-# def sys_trail(dt, eid, start, parent, trail, *, renderer, canvas):
-#     ppos = ecs.comp_of_eid(parent, Comp.RSAP)

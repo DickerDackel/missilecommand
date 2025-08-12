@@ -2,9 +2,12 @@
 
 # Must follow after loading of ddframework.app
 import logging
-logging.basicConfig(level=logging.DEBUG)  # noqa: E402
+logging.basicConfig(level=logging.INFO)  # noqa: E402
 logging.info(__name__)  # noqa: E402
 
+import sys
+
+from argparse import ArgumentParser
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -51,6 +54,20 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
 
 
 def main() -> None:
+    cmdline = ArgumentParser(description=C.TITLE)
+    cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
+    opts = cmdline.parse_args(sys.argv[1:])
+
+    log_level = [
+        logging.NOTSET,
+        logging.DEBUG,
+        logging.INFO,
+        logging.WARNING,
+        logging.ERROR,
+        logging.CRITICAL,
+    ][max(min(0, opts.verbose), 5)]
+    logging.basicConfig(level=log_level)  # noqa: E402
+
     w = pygame.Window(size=(1024, 960))
     app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     pygame.mouse.set_visible(False)
@@ -66,6 +83,7 @@ def main() -> None:
         game=Game(app),
         gameover=Gameover(app),
     )
+
     sm = StateMachine()
     sm.add(states.splash, states.title)
     sm.add(states.title, states.demo, states.game)
@@ -73,9 +91,10 @@ def main() -> None:
     sm.add(states.highscores, states.title, states.game)
     sm.add(states.game, states.gameover)
     sm.add(states.gameover, states.highscores)
-    walker = sm.walker(states.splash)
+    # walker = sm.walker(states.splash)
+    walker = sm.walker(states.gameover)
 
-    app.run(walker)
+    app.run(walker, verbose=opts.verbose)
 
 
 if __name__ == "__main__":

@@ -43,15 +43,16 @@ class Comp(StrEnum):
 
     # Actual objects
     CONTAINER = auto()  # Rect
-    EXPLOSION_SCALE = auto()  # LerpThing, sys_apply_scale
     FLYER_FIRE_COOLDOWN = auto()
     HITBOX = auto()
     LIFETIME = auto()  # Cooldown, sys_lifetime
     MOMENTUM = auto()  # sys_momentum
     PRSA = auto()
+    SCALE = auto()  # LerpThing, sys_apply_scale
     SHUTDOWN = auto()
     TARGET = auto()  # sys_target_reached - A target for a sprite or aiming
     TEXT = auto()  # sys_textlabel - A text label for the sprite based font
+    TEXT_CURTAIN = auto()
     TEXTURE = auto()  # sys_texture, sys_texture_from_texture_list - Exactly what it says
     TEXTURE_LIST = auto()  # sys_textures - An AutoSequence for textures
     TRAIL = auto()  # sys_trail, sys_update_trail, sys_trail_eraser

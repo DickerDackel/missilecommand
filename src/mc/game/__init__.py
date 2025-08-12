@@ -193,7 +193,7 @@ class Game(GameState):
                 pprint(ecs.archetype)
                 pprint(ecs.plist)
             elif e.key == pygame.K_x:
-                raise SystemExit
+                raise StateExit(-1)
 
     def update(self, dt: float) -> None:
         if self.paused: return

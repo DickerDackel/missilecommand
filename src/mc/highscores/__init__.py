@@ -37,10 +37,10 @@ class Highscores(GameState):
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         if e.type == pygame.QUIT:
-            raise SystemExit
+            raise StateExit(-1)
         elif e.type == pygame.KEYDOWN:
             if e.key == pygame.K_ESCAPE:
-                raise SystemExit
+                raise StateExit(-1)
             elif e.key == pygame.K_SPACE:
                 self.teardown()
                 raise StateExit

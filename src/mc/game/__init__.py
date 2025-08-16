@@ -3,14 +3,14 @@ logging.info(__name__)  # noqa: E402
 
 from itertools import chain, cycle
 from random import randint, shuffle
-from typing import Any, Hashable
+from typing import Any
 
 import pygame
 import pygame._sdl2 as sdl2
 import tinyecs as ecs
 
 from pgcooldown import Cooldown
-from pygame import Vector2 as vec2
+from pygame.math import Vector2 as vec2
 from pygame.typing import Point
 
 from ddframework.app import App, GameState, StateExit, StackPermissions
@@ -27,26 +27,19 @@ from mc.game.types import EIDs, GamePhase
 from mc.game.waves import wave_iter
 # from mc.sprite import TGroup
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_flyer,
-                          mk_missile, mk_ruin, mk_target, mk_textlabel,
-                          mk_trail_eraser)
+                          mk_missile, mk_ruin, mk_score_label, mk_target)
 from mc.systems import (sys_container, sys_detonate_missile,
                         sys_dont_overshoot, sys_explosion, sys_lifetime,
                         sys_momentum, sys_mouse, sys_shutdown,
-                        sys_target_reached, sys_textlabel, sys_texture,
+                        sys_target_reached, sys_textlabel, sys_draw_texture,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
-from mc.game.types import EIDs
 from mc.types import Comp, EntityID, Prop
-from mc.utils import cls, play_sound, to_viewport
+from mc.utils import cls, play_sound, purge_entities, to_viewport
 
 
 def get_cities() -> list[EntityID]:
     return (e for e in ecs.eids_by_property(Prop.IS_CITY))
-
-
-def purge_entities(property: Hashable) -> None:
-    for eid in ecs.eids_by_property(property):
-        ecs.remove_entity(eid)
 
 
 class Game(GameState):
@@ -121,7 +114,7 @@ class Game(GameState):
         mk_crosshair()
 
         msg = C.MESSAGES['SCORE']
-        mk_textlabel(f'{self.score:5d}', msg.pos, msg.anchor, msg.color, eid=msg.text)
+        mk_score_label(f'{self.score:5d}', msg.pos, msg.anchor, msg.color, eid=msg.text)
 
         self.cd_flyer = None
 
@@ -129,11 +122,10 @@ class Game(GameState):
             self.cd_flyer.reset()
 
     def setup_wave(self) -> None:
-        # self.incoming.empty()
-        # self.missiles.empty()
-        # self.targets.empty()
-        # self.explosions.empty()
-        # Nope!  purge_entities(Prop.IS_CITY)
+        purge_entities(Prop.IS_BATTERY)
+        purge_entities(Prop.IS_CITY)
+        purge_entities(Prop.IS_EXPLOSION)
+        purge_entities(Prop.IS_FLYER)
         purge_entities(Prop.IS_SILO)
 
         cls(self.trail_canvas, C.COLOR.clear)
@@ -311,6 +303,7 @@ class Game(GameState):
         #               passthrough=StackPermissions.DRAW)
 
     def phase_gameover_update(self, dt: float) -> None:
+        logging.debug('phase_gameover_update')
         raise StateExit
 
     def draw(self) -> None:
@@ -327,7 +320,7 @@ class Game(GameState):
 
         self.trail_canvas.draw()
         ecs.run_system(0, sys_texture_from_texture_list, Comp.TEXTURE_LIST)
-        ecs.run_system(0, sys_texture, Comp.TEXTURE, Comp.PRSA)
+        ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
         ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 

@@ -5,25 +5,27 @@
   |_| \___/|____/ \___/
 
 
-Checklist
-    * Logging in all modules
+## Checklist
+    * Sane and useful logging in all modules
     * Debug logging in all functions?
-
-    * Import Vector2 as vec2 from pygame.math instead of pygame
-
     * cleanup all imports (unused, order)
 
-* rename sys_texture -> sys_render_texture
+## States
+    * Highscore
+    * EnterHighscore
+    * Demo
+    * Score
+	* How score from debriefing to game class?
 
-* create canvas for xor effect of explosions
+## FX
+    * create canvas for xor effect of explosions
+    * particle effect instead of trail eraser?
 
-* Flyers
-    Flyers spawn missile drops
-* Smart bombs
-* Missiles forking
+## Gameplay
+    * Flyers
+	Flyers spawn missile drops
+    * Smart bombs
+    * Missiles forking
 
-* Bonus city
-* Total Score
-
-* Score
-    * How score from debriefing to game class?
+    * Bonus city
+    * Total Score

@@ -29,7 +29,7 @@ class Splash(GameState):
             self.app.logical_rect.center,
             'center', 'white', scale=2)
 
-        self.cd_state = Cooldown(5)
+        self.cd_state = Cooldown(3)
 
     def restart(self, from_state: 'GameState', result: Any) -> None:
         pass

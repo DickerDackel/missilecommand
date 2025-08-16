@@ -30,7 +30,7 @@ ASSETS = files('mc.assets')
 
 GRID = GridLayout(SCREEN, 16, 16, 8, 8)
 
-PLAY_AUDIO = False
+PLAY_AUDIO = True
 
 ########################################################################
 #   ____
@@ -118,6 +118,7 @@ POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3)
 #######################################################################)
 
 EXPLOSION_DURATION = 0.5
+EXPLOSION_COLORS = ('white', '#ffd541', '#a6fcdb', '#df3e23', '#20d6c7', '#d6f264')
 
 KEY_SILO_MAP = {
     pygame.K_q: 0,
@@ -164,9 +165,6 @@ SPRITESHEET = {
     'plane_red': pygame.Rect(176, 0, 16, 16),
     'smartbomb_green': pygame.Rect(192, 0, 16, 16),
     'smartbomb_red': pygame.Rect(200, 0, 16, 16),
-    # 'missile-heads': [pygame.Rect(208, 0, 1, 1), pygame.Rect(216, 0, 1, 1),
-    #                   pygame.Rect(224, 0, 1, 1), pygame.Rect(208, 8, 1, 1),
-    #                   pygame.Rect(216, 8, 1, 1), pygame.Rect(224, 8, 1, 1)],
     'missile-heads': [pygame.Rect(128, 72, 3, 3), pygame.Rect(136, 72, 3, 3),
                       pygame.Rect(144, 72, 3, 3), pygame.Rect(128, 80, 3, 3),
                       pygame.Rect(136, 80, 3, 3), pygame.Rect(144, 80, 3, 3)],

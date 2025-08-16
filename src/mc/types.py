@@ -24,7 +24,9 @@ class Prop(StrEnum):
     IS_DEFENSE = auto()  # opposite of IS_INCOMING
     IS_EXPLOSION = auto()  # Yeah...
     IS_FLYER = auto()  # Plane/Satellite thingy
+    IS_GAMEOVER = auto()  # stuff added by the gameover state
     IS_INCOMING = auto()  # opposite of IS_DEFENSE
+    IS_INFRASTRUCTURE = auto()  # mouse cursor, score, ...
     IS_MISSILE = auto()  # Missile head in flight
     IS_RUIN = auto()  # Damaged city
     IS_SILO = auto()  # Missile head not launched
@@ -35,13 +37,14 @@ class Prop(StrEnum):
 
 class Comp(StrEnum):
     # Immutables
-    ANCHOR = auto()  # sys_textlabel, sys_texture
+    ANCHOR = auto()  # sys_textlabel, sys_draw_texture
     BATTERY_ID = auto()  # To identify which battery a silo belongs to
     COLOR = auto()  # sys_textlabel
     ID = auto()  # General id, always belongs to the entity
     WANTS_MOUSE = auto()  # sys_mouse, bool - for entities that want mouse position in prsa.pos
 
     # Actual objects
+    COLOR_CYCLE = auto()
     CONTAINER = auto()  # Rect
     FLYER_FIRE_COOLDOWN = auto()
     HITBOX = auto()
@@ -52,7 +55,8 @@ class Comp(StrEnum):
     SHUTDOWN = auto()
     TARGET = auto()  # sys_target_reached - A target for a sprite or aiming
     TEXT = auto()  # sys_textlabel - A text label for the sprite based font
-    TEXT_CURTAIN = auto()
-    TEXTURE = auto()  # sys_texture, sys_texture_from_texture_list - Exactly what it says
-    TEXTURE_LIST = auto()  # sys_textures - An AutoSequence for textures
+    TEXT_LIST = auto()
+    TEXT_SEQUENCE = auto()
+    TEXTURE = auto()  # sys_draw_texture, sys_texture_from_texture_list - Exactly what it says
+    TEXTURE_LIST = auto()  # sys_draw_texture - An AutoSequence for textures
     TRAIL = auto()  # sys_trail, sys_update_trail, sys_trail_eraser

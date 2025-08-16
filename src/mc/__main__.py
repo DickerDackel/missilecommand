@@ -56,6 +56,7 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
 def main() -> None:
     cmdline = ArgumentParser(description=C.TITLE)
     cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
+    cmdline.add_argument('-s', '--stats', action='store_true', default=0, help='Show statistics on exit')
     opts = cmdline.parse_args(sys.argv[1:])
 
     log_level = [
@@ -65,7 +66,7 @@ def main() -> None:
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
-    ][max(min(0, opts.verbose), 5)]
+    ][max(min(5, opts.verbose), 0)]
     logging.basicConfig(level=log_level)  # noqa: E402
 
     w = pygame.Window(size=(1024, 960))
@@ -91,10 +92,9 @@ def main() -> None:
     sm.add(states.highscores, states.title, states.game)
     sm.add(states.game, states.gameover)
     sm.add(states.gameover, states.highscores)
-    # walker = sm.walker(states.splash)
-    walker = sm.walker(states.gameover)
+    walker = sm.walker(states.splash)
 
-    app.run(walker, verbose=opts.verbose)
+    app.run(walker, verbose=opts.verbose, stats=opts.stats)
 
 
 if __name__ == "__main__":

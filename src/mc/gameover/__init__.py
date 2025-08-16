@@ -8,21 +8,24 @@ import pygame
 import tinyecs as ecs
 
 from ddframework.app import App, GameState, StateExit
+from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
-from ddframework.dynamicsprite import PRSA
 from ddframework.statemachine import StateMachine
 from pgcooldown import Cooldown, LerpThing
-from pygame import Vector2 as vec2
+from pygame.math import Vector2 as vec2
+from rpeasings import in_quad
 
 import mc.config as C
 
-from mc.launchers import mk_textlabel
-from mc.systems import (sys_apply_scale, sys_textcurtain, sys_textlabel,
-                        sys_texture, sys_texture_from_texture_list)
-from mc.types import Comp
+from mc.launchers import mk_gameover_explosion, mk_gameover_text
+from mc.systems import (sys_apply_scale, sys_colorcycle, sys_colorize,
+                        sys_textcurtain, sys_textlabel, sys_draw_texture)
+from mc.types import Comp, Prop
+from mc.utils import play_sound, purge_entities
 
 EXPLOSION_EID = 'explosion'
 TEXT_EID = 'text'
+
 
 class GameoverPhase(StrEnum):
     SETUP = auto()
@@ -33,6 +36,17 @@ class GameoverPhase(StrEnum):
 
 
 class Gameover(GameState):
+    # Yes, this could be generated.  Would be less readable and not worth the
+    # effort.  Not even after also writing this comment.
+    texts = ('       ',
+             'T      ',
+             'TH     ',
+             'THE    ',
+             'THE    ',
+             'THE E  ',
+             'THE EN ',
+             'THE END')
+
     def __init__(self, app: 'App') -> None:
         self.app: App = app
 
@@ -42,8 +56,8 @@ class Gameover(GameState):
         self.sm.add(GameoverPhase.TEXT, GameoverPhase.SHRINKING)
         self.sm.add(GameoverPhase.SHRINKING, GameoverPhase.LINGERING)
         self.sm.add(GameoverPhase.LINGERING, None)
-        self.phase_walker = self.sm.walker()
-        self.phase = next(self.phase_walker)
+        self.phase_walker = None
+        self.phase = None
 
         self.phase_handlers = {
             GameoverPhase.SETUP: self.phase_setup_update,
@@ -53,27 +67,14 @@ class Gameover(GameState):
             GameoverPhase.LINGERING: self.phase_lingering_update,
         }
 
-        self.cd_linger = Cooldown(3)
-        self.it_text = iter(('       ',
-                             'TH     ',
-                             'THE    ',
-                             'THE    ',
-                             'THE E  ',
-                             'THE EN ',
-                             'THE END'))
-        self.cd_it_text = Cooldown(1)
+        self.cd_linger = Cooldown(1.5)
+        self.the_end = AutoSequence(self.texts, 2, repeat=0, loops=1)
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
 
-        texture = cache['gameover']
-        prsa = PRSA(pos=vec2(self.app.logical_rect.center))
-        scale = LerpThing(0.1, self.app.logical_rect.height / 128, 1.5, repeat=0)
-
-        eid = ecs.create_entity(EXPLOSION_EID)
-        ecs.add_component(eid, Comp.TEXTURE, texture)
-        ecs.add_component(eid, Comp.PRSA, prsa)
-        ecs.add_component(eid, Comp.SCALE, scale)
+        self.phase_walker = self.sm.walker()
+        self.phase = next(self.phase_walker)
 
     def restart(self, from_state: 'GameState', result: Any) -> None:
         pass
@@ -92,51 +93,53 @@ class Gameover(GameState):
 
     def update(self, dt: float) -> None:
         update_fn = self.phase_handlers[self.phase]
-        print(self.phase)
+        print(f'gameover update ({update_fn})')
         update_fn(dt)
-        print('return')
+
+        ecs.run_system(dt, sys_colorcycle, Comp.COLOR_CYCLE)
+        ecs.run_system(dt, sys_colorize, Comp.TEXTURE, Comp.COLOR)
 
     def phase_setup_update(self, dt: float) -> None:
+        play_sound(cache['sounds']['gameover'])
+        mk_gameover_explosion(pos=vec2(self.app.logical_rect.center),
+                              scale=self.app.logical_rect.height / 128,
+                              eid=EXPLOSION_EID)
+
         self.phase = next(self.phase_walker)
 
     def phase_growing_update(self, dt: float) -> None:
-        print('inside growing')
         scale = ecs.comp_of_eid(EXPLOSION_EID, Comp.SCALE)
         if scale.finished():
-            mk_textlabel('THE END',
-                         self.app.logical_rect.center,
-                         'center', 'yellow',
-                         scale=(3, 6), eid=TEXT_EID)
-
-            curtain = LerpThing(0, 1, 0.5, repeat=0)
-
-            ecs.add_component(TEXT_EID, Comp.TEXT_CURTAIN, curtain)
-            ecs.add_component(TEXT_EID, Comp.ANCHOR, 'midleft')
-
-            self.cd_it_text.reset()
-
             self.phase = next(self.phase_walker)
+
+            self.the_end.reset(0.5)
+            mk_gameover_text(self.the_end, self.the_end(),
+                             self.app.logical_rect.center, 'center',
+                             C.COLOR.gameover, scale=(3, 19), eid=TEXT_EID)
+
             return
 
         ecs.run_system(dt, sys_apply_scale, Comp.PRSA, Comp.SCALE)
 
     def phase_text_update(self, dt: float) -> None:
-        scale = ecs.comp_of_eid(TEXT_EID, Comp.TEXT_CURTAIN)
-        if scale.finished():
-            scale = LerpThing(self.app.logical_rect.height / 128, 0.01, 1.5, repeat=0)
+        if self.the_end.lt.finished():
+            scale = LerpThing(self.app.logical_rect.height / 128, 0.1, 1.5, repeat=0, ease=in_quad)
+            ecs.add_component(EXPLOSION_EID, Comp.SCALE, scale)
             self.phase = next(self.phase_walker)
             return
 
-        # ecs.run_system(dt, sys_apply_scale, Comp.PRSA, Comp.SCALE, )
-
+        ecs.run_system(dt, sys_textcurtain, Comp.TEXT_SEQUENCE)
 
     def phase_shrinking_update(self, dt: float) -> None:
         scale = ecs.comp_of_eid(EXPLOSION_EID, Comp.SCALE)
         if scale.finished():
+            ecs.remove_entity(EXPLOSION_EID)
             self.cd_linger.reset()
-
             self.phase = next(self.phase_walker)
+
             return
+
+        ecs.run_system(dt, sys_apply_scale, Comp.PRSA, Comp.SCALE)
 
     def phase_lingering_update(self, dt: float) -> None:
         if self.cd_linger.cold():
@@ -146,11 +149,9 @@ class Gameover(GameState):
         self.app.renderer.draw_color = C.COLOR.gameover
         self.app.renderer.clear()
 
-        ecs.run_system(0, sys_texture, Comp.TEXTURE, Comp.PRSA)
-        # ecs.run_system(0, sys_curtain, Comp.TEXTURE, Comp.PRSA, Comp.SCALE)
-        ecs.run_system(0, sys_textcurtain, Comp.TEXT, Comp.PRSA, Comp.ANCHOR,
-                       Comp.COLOR, Comp.TEXT_CURTAIN)
+        ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
+        ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def teardown(self) -> None:
-        ecs.remove_entity(self.state_label)
+        purge_entities(Prop.IS_GAMEOVER)
         raise StateExit

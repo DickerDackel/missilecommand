@@ -3,6 +3,7 @@ logging.info(__name__)  # noqa: E402
 
 from collections.abc import Callable
 from random import choice, randint, random, shuffle
+from typing import Any
 
 import pygame
 import tinyecs as ecs
@@ -15,6 +16,7 @@ from pgcooldown import Cooldown, LerpThing
 from ddframework.cache import cache as cache
 from ddframework.dynamicsprite import PRSA
 from ddframework.autosequence import AutoSequence
+from rpeasings import out_quad
 
 import mc.config as C
 
@@ -64,21 +66,10 @@ def mk_city(city_id: int, pos: Point) -> EntityID:
     return eid
 
 
-def mk_ruin(city_id: int, pos: Point) -> EntityID:
-    textures = cache['ruins']
-    auto_sequence = AutoSequence(textures, 3)
-    auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
-
-    eid = city_id
-    eid = ecs.create_entity(eid)
-    ecs.set_property(eid, Prop.IS_RUIN)
-    ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
-    ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
-
-
 def mk_crosshair() -> EntityID:
     eid = 'player'
     ecs.create_entity(eid)
+    ecs.set_property(eid, Prop.IS_INFRASTRUCTURE)
     ecs.set_property(eid, Comp.WANTS_MOUSE)
     ecs.add_component(eid, Comp.TEXTURE, cache['crosshair'])
     ecs.add_component(eid, Comp.PRSA, PRSA())
@@ -125,6 +116,32 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
     return eid
 
 
+def mk_gameover_explosion(pos: Point, scale: float, eid: EntityID) -> EntityID:
+    texture = cache['gameover']
+    prsa = PRSA(pos=vec2(pos))
+    renderer = texture.renderer
+    scl = renderer.logical_size[1] / C.SPRITESHEET['gameover'].height
+    scale = LerpThing(0.1, scl, 1.5, repeat=0, ease=out_quad)
+    colors = AutoSequence(C.EXPLOSION_COLORS, 0.1, repeat=1)
+
+    ecs.create_entity(eid)
+    ecs.set_property(eid, Prop.IS_EXPLOSION)
+    ecs.add_component(eid, Comp.TEXTURE, texture)
+    ecs.add_component(eid, Comp.PRSA, prsa)
+    ecs.add_component(eid, Comp.SCALE, scale)
+    ecs.add_component(eid, Comp.COLOR_CYCLE, colors)
+
+    return eid
+
+
+def mk_gameover_text(the_end: AutoSequence, *args: Any, **kwargs: dict[str, Any]) -> EntityID:
+    eid = mk_textlabel(*args, **kwargs)
+    ecs.set_property(eid, Prop.IS_GAMEOVER)
+    ecs.add_component(eid, Comp.TEXT_SEQUENCE, the_end)
+
+    return eid
+
+
 def mk_missile(start: vec2, dest: vec2, speed: float,
                shutdown_callback: Callable | None = None,
                *, incoming: bool) -> None:
@@ -148,6 +165,25 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     ecs.add_component(eid, Comp.TRAIL, trail)
     if shutdown_callback is not None:
         ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
+
+    return eid
+
+
+def mk_ruin(city_id: int, pos: Point) -> EntityID:
+    textures = cache['ruins']
+    auto_sequence = AutoSequence(textures, 3)
+    auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
+
+    eid = city_id
+    eid = ecs.create_entity(eid)
+    ecs.set_property(eid, Prop.IS_RUIN)
+    ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
+    ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
+
+
+def mk_score_label(*args: Any, **kwargs: Any) -> EntityID:
+    eid = mk_textlabel(*args, **kwargs)
+    ecs.set_property(eid, Prop.IS_INFRASTRUCTURE)
 
     return eid
 

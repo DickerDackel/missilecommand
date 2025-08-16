@@ -1,19 +1,17 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
+from typing import Hashable
+
 import pygame
 import pygame._sdl2 as sdl2
+import tinyecs as ecs
 
 from pygame.typing import ColorLike, Point
 
 from pgcooldown import remap
 
 import mc.config as C
-
-
-def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int, int]) -> Point:
-    return (remap(0, real_size[0], 0, virtual_size[0], pos[0]),
-            remap(0, real_size[1], 0, virtual_size[1], pos[1]))
 
 
 def cls(texture: sdl2.Texture, color: ColorLike = 'black') -> None:
@@ -39,4 +37,15 @@ def play_sound(sound: pygame.mixer.Sound,
 
     sound.play()
 
-__all__ = ['to_viewport', 'cls']
+
+def purge_entities(property: Hashable) -> None:
+    for eid in ecs.eids_by_property(property):
+        ecs.remove_entity(eid)
+
+
+def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int, int]) -> Point:
+    return (remap(0, real_size[0], 0, virtual_size[0], pos[0]),
+            remap(0, real_size[1], 0, virtual_size[1], pos[1]))
+
+
+__all__ = ['cls', 'play_sound', 'purge_entities', 'to_viewport']

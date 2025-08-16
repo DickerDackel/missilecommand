@@ -8,10 +8,11 @@ import pygame
 import pygame._sdl2 as sdl2
 import tinyecs as ecs
 
+from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
 from ddframework.dynamicsprite import PRSA
 from pgcooldown import Cooldown, LerpThing
-from pygame import Vector2 as vec2
+from pygame.math import Vector2 as vec2
 
 from pygame.typing import ColorLike, Point
 
@@ -29,7 +30,6 @@ def sys_apply_scale(dt: float,
                     prsa: PRSA,
                     scale: Callable) -> None:
     prsa.scale = scale()
-    print(f'apply_scale: {prsa.scale=}  {scale()=}')
 
 
 def sys_colorize(dt: float,
@@ -37,6 +37,12 @@ def sys_colorize(dt: float,
                  texture: sdl2.Texture,
                  color: ColorLike) -> None:
     texture.color = color
+
+
+def sys_colorcycle(dt: float,
+                   eid: EntityID,
+                   colors: AutoSequence) -> None:
+    ecs.add_component(eid, Comp.COLOR, colors())
 
 
 def sys_container(dt: float,
@@ -123,6 +129,10 @@ def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> No
         ecs.add_component(eid, Prop.IS_DEAD, True)
 
 
+def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
+    ecs.add_component(eid, Comp.TEXT, text_sequence())
+
+
 def sys_textlabel(dt: float, eid: EntityID, text: str,
                   prsa: PRSA, anchor: str, color: ColorLike) -> None:
     font = cache['letters']
@@ -140,7 +150,7 @@ def sys_textlabel(dt: float, eid: EntityID, text: str,
         crect.midleft = crect.midright
 
 
-def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
+def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
                 prsa: PRSA) -> None:
     """Render the current texture following the settings in prsa."""
     # FIXME unneeded?
@@ -155,7 +165,6 @@ def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
 
     bkp_alpha = texture.alpha
 
-    print(f'sys_texture: {rect=}  {prsa.scale=}')
     texture.alpha = prsa.alpha  # ty: ignore
     texture.draw(dstrect=rect, angle=prsa.rotation)
 
@@ -165,7 +174,6 @@ def sys_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
 def sys_texture_from_texture_list(dt: float, eid: EntityID, textures: Callable) -> None:
     """Update the current texture from an automatic image cycle."""
     ecs.add_component(eid, Comp.TEXTURE, textures())
-    print('texture_from_texture_list')
 
 
 def sys_trail(dt: float,

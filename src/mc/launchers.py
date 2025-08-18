@@ -21,6 +21,7 @@ from rpeasings import out_quad
 import mc.config as C
 
 from mc.types import Comp, Container, EntityID, Momentum, Prop, Trail
+from mc.utils import play_sound
 
 
 def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
@@ -107,6 +108,12 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
     mask = cache['masks'][f'{kind}_{color}']
     speed = C.PLANE_SPEED if kind == 'plane' else C.SATELLITE_SPEED
     height = randint(max_height, min_height)
+    sound = play_sound(cache['sounds']['flyer'], loops=-1)
+
+    def stop_sound(eid):
+        sound.stop()
+
+    shutdown = (shutdown_callback, stop_sound)
 
     prsa = PRSA(pos=vec2(-16, height))
     ecs.create_entity(eid)
@@ -118,7 +125,8 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
     ecs.add_component(eid, Comp.FLYER_FIRE_COOLDOWN, Cooldown(fire_cooldown))
     ecs.add_component(eid, Comp.MOMENTUM, Momentum(speed, 0))
     ecs.add_component(eid, Comp.CONTAINER, container)
-    ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
+    ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
+    ecs.add_component(eid, Comp.SOUND, sound)
 
     return eid
 

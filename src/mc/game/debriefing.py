@@ -4,9 +4,11 @@ logging.info(__name__)  # noqa: E402
 from enum import StrEnum, auto
 from itertools import chain
 
+import pygame
 import tinyecs as ecs
 
 from ddframework.app import App, GameState, StateExit
+from ddframework.cache import cache
 from ddframework.statemachine import StateMachine
 from pgcooldown import Cooldown
 from pygame import Vector2 as vec2
@@ -15,6 +17,7 @@ import mc.config as C
 
 from mc.launchers import mk_textlabel
 from mc.types import Comp
+from mc.utils import play_sound
 
 
 class StatePhase(StrEnum):
@@ -69,15 +72,16 @@ class Debriefing(GameState):
         mk_textlabel('   0', C.POS_CITIES_SCORE_DEBRIEFING, 'midright', 'red', (1, 1), EIDs.CITIES_LABEL)
 
         self.cd_linger_pre = Cooldown(2)
-        self.cd_missiles = Cooldown(0.075)
-        self.cd_cities = Cooldown(0.3)
         self.cd_linger_post = Cooldown(3)
+        self.cd_count = Cooldown(0.1)
 
         self.missile_score = 0
         self.city_score = 0
 
     def dispatch_events(self, e):
-        pass
+        if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
+                or e.type == pygame.QUIT):
+            self.teardown()
 
     def update(self, dt):
         update_fn = self.phase_handlers[self.phase]
@@ -89,17 +93,17 @@ class Debriefing(GameState):
 
     def phase_linger_pre_update(self, dt):
         if self.cd_linger_pre.cold():
-            self.cd_missiles.reset()
+            self.cd_count.reset(0.1)
             self.phase = next(self.phase_walker)
 
     def phase_missiles_update(self, dt):
-        if not self.cd_missiles.cold(): return
+        if not self.cd_count.cold(): return
 
         try:
             eid = next(self.it_missiles)
         except StopIteration:
             self.phase = next(self.phase_walker)
-            self.cd_cities.reset()
+            self.cd_count.reset(0.275)
         else:
             self.parent.score += C.Score.UNUSED_MISSILE
             ecs.add_component(self.parent_score_eid, Comp.TEXT, str(self.parent.score))
@@ -111,10 +115,11 @@ class Debriefing(GameState):
             prsa.pos = self.missile_pos.copy()
             self.missile_pos.x += C.SPRITESHEET['missiles'][0].width
             ecs.add_component(eid, Comp.ANCHOR, 'midleft')
-            self.cd_missiles.reset()
+            play_sound(cache['sounds']['silo-count'])
+            self.cd_count.reset()
 
     def phase_cities_update(self, dt):
-        if not self.cd_cities.cold(): return
+        if not self.cd_count.cold(): return
 
         try:
             eid = next(self.it_cities)
@@ -132,11 +137,14 @@ class Debriefing(GameState):
             prsa.pos = self.cities_pos.copy()
             self.cities_pos.x += C.SPRITESHEET['small-cities'][0].width * 1.2
             ecs.add_component(eid, Comp.ANCHOR, 'midleft')
-            self.cd_cities.reset()
+            play_sound(cache['sounds']['silo-count'])
+            self.cd_count.reset()
 
     def phase_linger_post_update(self, dt):
         if not self.cd_linger_post.cold(): return
+        self.teardown()
 
+    def teardown(self):
         ecs.remove_entity(EIDs.BONUS_POINTS)
         ecs.remove_entity(EIDs.MISSILES_LABEL)
         ecs.remove_entity(EIDs.CITIES_LABEL)

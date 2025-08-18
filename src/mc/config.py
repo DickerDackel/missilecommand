@@ -30,7 +30,7 @@ ASSETS = files('mc.assets')
 
 GRID = GridLayout(SCREEN, 16, 16, 8, 8)
 
-PLAY_AUDIO = False
+PLAY_AUDIO = True
 
 ########################################################################
 #   ____

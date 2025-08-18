@@ -35,7 +35,7 @@ class Briefing(GameState):
         self.labels.append('MULT')
 
         self.cd_state = Cooldown(3)
-        self.cd_sound = Cooldown(0.4)
+        self.cd_sound = Cooldown(0.35)
         self.sounds_pending = cities
 
     def teardown(self) -> None:

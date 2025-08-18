@@ -42,13 +42,15 @@ def debug_rect(renderer, rect, color='red'):
 
 
 def play_sound(sound: pygame.mixer.Sound,
-               max_instances: int = 0) -> None:
+               max_instances: int = 0, *args, **kwargs) -> None:
     if not C.PLAY_AUDIO: return
 
     if max_instances and sound.get_num_channels() > max_instances:
         return
 
-    sound.play()
+    sound.play(*args, **kwargs)
+
+    return sound
 
 
 def purge_entities(property: Hashable) -> None:

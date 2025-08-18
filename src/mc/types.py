@@ -17,7 +17,6 @@ Trail = list[tuple[Point, Point]]
 
 class Prop(StrEnum):
     # Flags
-    IS_SATELLITE = auto()  # Flyer is an alien
     IS_BATTERY = auto()  # Batteries contain silos (unlaunched missiles)
     IS_CITY = auto()  # This is a city
     IS_DEAD = auto()  # This object is dead and will be culled by a system
@@ -32,6 +31,7 @@ class Prop(StrEnum):
     IS_MISSILE = auto()  # Missile head in flight
     IS_PLANE = auto()  # Flyer is a plane
     IS_RUIN = auto()  # Damaged city
+    IS_SATELLITE = auto()  # Flyer is an alien
     IS_SILO = auto()  # Missile head not launched
     IS_TARGET = auto()  # Crosshair after mouse click
     IS_TEXT = auto()  # Any text label
@@ -57,6 +57,7 @@ class Comp(StrEnum):
     PRSA = auto()
     SCALE = auto()  # LerpThing, sys_apply_scale
     SHUTDOWN = auto()
+    SOUND = auto()
     TARGET = auto()  # sys_target_reached - A target for a sprite or aiming
     TEXT = auto()  # sys_textlabel - A text label for the sprite based font
     TEXT_LIST = auto()

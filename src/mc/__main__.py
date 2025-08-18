@@ -31,7 +31,8 @@ pygame.init()
 
 
 def load_sounds(assets: Path) -> None:
-    sounds = ('brzzz.wav', 'diiuuu.wav', 'explosion.wav', 'gameover.wav', 'launch.wav')
+    sounds = ('brzzz.wav', 'diiuuu.wav', 'explosion.wav', 'flyer.wav',
+              'gameover.wav', 'launch.wav', 'silo-count.wav')
 
     cache['sounds'] = {fname.stem: pygame.mixer.Sound(fname)
                        for fname in (assets / f for f in sounds)}

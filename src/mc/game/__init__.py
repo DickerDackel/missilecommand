@@ -182,8 +182,8 @@ class Game(GameState):
                                  self.app.window_rect.size,
                                  self.app.logical_rect.size)
 
-        if (e.type == pygame.QUIT
-                or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
+        if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
+                or e.type == pygame.QUIT):
             raise StateExit(-1)
         elif e.type == pygame.KEYDOWN and self.phase == StatePhase.PLAYING:
             if e.key in C.KEY_SILO_MAP:
@@ -249,26 +249,7 @@ class Game(GameState):
                      self.wave.flyer_fire_cooldown, self.app.logical_rect.inflate(32, 32),
                      shutdown)
 
-        # All for missiles
-        ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
-        ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
-        ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
-        ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
-        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD)
-
-        ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
-        ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
-                       texture=self.trail_canvas,
-                       has_properties={Prop.IS_DEAD_TRAIL})
-
-        ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA,
-                       Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
-
-        ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
-        ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
-        ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
-
-        self.do_collisions()
+        self.run_game_systems(dt)
 
     def phase_linger_update(self, dt: float) -> None:
         # if no more missiles are flying
@@ -289,25 +270,7 @@ class Game(GameState):
                 self.app.push(Debriefing(self.app, self, EIDs.SCORE, self.batteries, self.cities),
                               passthrough=StackPermissions.DRAW)
 
-        # All for missiles
-        ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
-        ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
-        ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
-        ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
-        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD)
-
-        ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
-        ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
-                       texture=self.trail_canvas,
-                       has_properties={Prop.IS_DEAD_TRAIL})
-
-        ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA,
-                       Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
-
-        ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
-        ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
-        ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
-
+        self.run_game_systems(dt)
         self.do_collisions()
 
     def phase_debriefing_update(self, dt: float) -> None:
@@ -374,6 +337,24 @@ class Game(GameState):
                              shutdown_callback=attack_shutdown_callback)
             self.incoming.append(eid)
 
+    def run_game_systems(self, dt):
+        ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
+        ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
+        ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
+        ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
+        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD)
+        ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
+        ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
+                       texture=self.trail_canvas,
+                       has_properties={Prop.IS_DEAD_TRAIL})
+        ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA,
+                       Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
+        ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
+        ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
+        ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
+
+        self.do_collisions()
+
     def do_collisions(self) -> None:
         explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                             has_properties={Prop.IS_EXPLOSION})
@@ -398,6 +379,10 @@ class Game(GameState):
 
                 if f_mask.overlap(scaled_mask, offset) is None:
                     continue
+
+                sound = ecs.comp_of_eid(f_eid, Comp.SOUND)
+                ecs.remove_component(f_eid, Comp.SOUND)
+                sound.stop()
 
                 ecs.set_property(f_eid, Prop.IS_DEAD_FLYER)
                 ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))

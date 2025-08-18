@@ -74,7 +74,6 @@ def mk_crosshair() -> EntityID:
     ecs.set_property(eid, Comp.WANTS_MOUSE)
     ecs.add_component(eid, Comp.TEXTURE, cache['textures']['crosshair'])
     ecs.add_component(eid, Comp.PRSA, PRSA(pos=pos))
-    ecs.add_component(eid, Comp.CONSTRAINT, C.CROSSHAIR_CONSTRAINT)
 
     return eid
 

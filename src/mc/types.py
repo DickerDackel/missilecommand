@@ -49,7 +49,6 @@ class Comp(StrEnum):
     # Actual objects
     COLOR_CYCLE = auto()
     CONTAINER = auto()  # Rect
-    CONSTRAINT = auto()
     FLYER_FIRE_COOLDOWN = auto()
     HITBOX = auto()
     LIFETIME = auto()  # Cooldown, sys_lifetime

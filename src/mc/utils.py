@@ -61,4 +61,4 @@ def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int,
             remap(0, real_size[1], 0, virtual_size[1], pos[1]))
 
 
-__all__ = ['cls', 'constraint_mouse', 'debug_rect', 'play_sound', 'purge_entities', 'to_viewport']
+__all__ = ['cls', 'debug_rect', 'play_sound', 'purge_entities', 'to_viewport']

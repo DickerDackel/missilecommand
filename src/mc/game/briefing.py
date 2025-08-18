@@ -17,7 +17,6 @@ from mc.utils import play_sound
 
 class Briefing(GameState):
     def __init__(self, app: App, mult: float, cities: int) -> None:
-        print(f'{mult=}')
         self.app = app
 
         self.labels = []

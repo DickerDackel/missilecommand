@@ -15,6 +15,7 @@ from mc.launchers import mk_textlabel
 from mc.systems import sys_textlabel
 from mc.types import Comp
 
+
 class Splash(GameState):
     def __init__(self, app: 'App') -> None:
         self.app: App = app
@@ -40,6 +41,10 @@ class Splash(GameState):
         elif e.type == pygame.KEYDOWN:
             if e.key == pygame.K_ESCAPE:
                 raise StateExit(-1)
+            # FIXME -->
+            elif e.key == pygame.K_q:
+                raise StateExit
+            # FIXME <--
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():

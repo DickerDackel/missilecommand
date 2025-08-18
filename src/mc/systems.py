@@ -151,11 +151,12 @@ def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
     # tpos = round(prsa.pos.x), round(prsa.pos.y)
     # rect = texture.get_rect().scale_by(prsa.scale).move_to(center=tpos)
     rect = texture.get_rect().scale_by(prsa.scale)
-    if ecs.has(eid, Comp.ANCHOR):
-        anchor = ecs.comps_of_eid(Comp.ANCHOR)
-        setattr(rect, anchor, prsa.pos)
-    else:
-        rect.center = prsa.pos
+    try:
+        anchor = ecs.comp_of_eid(eid, Comp.ANCHOR)
+    except ecs.UnknownComponentError:
+        anchor = 'center'
+
+    setattr(rect, anchor, prsa.pos)
 
     bkp_alpha = texture.alpha
 

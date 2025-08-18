@@ -93,7 +93,6 @@ class Gameover(GameState):
 
     def update(self, dt: float) -> None:
         update_fn = self.phase_handlers[self.phase]
-        print(f'gameover update ({update_fn})')
         update_fn(dt)
 
         ecs.run_system(dt, sys_colorcycle, Comp.COLOR_CYCLE)

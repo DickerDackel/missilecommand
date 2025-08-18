@@ -53,7 +53,7 @@ def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
 
 def mk_city(city_id: int, pos: Point) -> EntityID:
     """Create a city entity"""
-    textures = cache['textures']['cities']
+    textures = cache['textures']['small-cities']
     auto_sequence = AutoSequence(textures, 10)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
@@ -178,7 +178,7 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
 
 
 def mk_ruin(city_id: int, pos: Point) -> EntityID:
-    textures = cache['textures']['ruins']
+    textures = cache['textures']['small-ruins']
     auto_sequence = AutoSequence(textures, 3)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 

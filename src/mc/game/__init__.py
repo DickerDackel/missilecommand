@@ -26,7 +26,6 @@ import mc.config as C
 from mc.game.briefing import Briefing
 from mc.game.debriefing import Debriefing
 from mc.game.pause import Pause
-from mc.game.types import EIDs
 from mc.game.waves import wave_iter
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
@@ -42,13 +41,19 @@ from mc.utils import (cls, constraint_mouse, debug_rect, play_sound,
                       purge_entities, to_viewport)
 
 
-class GamePhase(StrEnum):
+class StatePhase(StrEnum):
     SETUP = auto()
     BRIEFING = auto()
     PLAYING = auto()
     LINGER = auto()
     DEBRIEFING = auto()
     GAMEOVER = auto()
+
+
+class EIDs(StrEnum):
+    FLYER = auto()
+    PLAYER = auto()
+    SCORE = auto()
 
 
 class Game(GameState):
@@ -74,22 +79,22 @@ class Game(GameState):
         self.wave = None
 
         self.phases = StateMachine()
-        self.phases.add(GamePhase.SETUP, GamePhase.BRIEFING)
-        self.phases.add(GamePhase.BRIEFING, GamePhase.PLAYING)
-        self.phases.add(GamePhase.PLAYING, GamePhase.LINGER)
-        self.phases.add(GamePhase.LINGER, GamePhase.DEBRIEFING, GamePhase.GAMEOVER)
-        self.phases.add(GamePhase.DEBRIEFING, GamePhase.SETUP)
-        self.phases.add(GamePhase.GAMEOVER, None)
+        self.phases.add(StatePhase.SETUP, StatePhase.BRIEFING)
+        self.phases.add(StatePhase.BRIEFING, StatePhase.PLAYING)
+        self.phases.add(StatePhase.PLAYING, StatePhase.LINGER)
+        self.phases.add(StatePhase.LINGER, StatePhase.DEBRIEFING, StatePhase.GAMEOVER)
+        self.phases.add(StatePhase.DEBRIEFING, StatePhase.SETUP)
+        self.phases.add(StatePhase.GAMEOVER, None)
         self.phase_walker = None
         self.phase = None
 
         self.phase_handlers = {
-            GamePhase.SETUP: self.phase_setup_update,
-            GamePhase.BRIEFING: self.phase_briefing_update,
-            GamePhase.PLAYING: self.phase_playing_update,
-            GamePhase.LINGER: self.phase_linger_update,
-            GamePhase.DEBRIEFING: self.phase_debriefing_update,
-            GamePhase.GAMEOVER: self.phase_gameover_update,
+            StatePhase.SETUP: self.phase_setup_update,
+            StatePhase.BRIEFING: self.phase_briefing_update,
+            StatePhase.PLAYING: self.phase_playing_update,
+            StatePhase.LINGER: self.phase_linger_update,
+            StatePhase.DEBRIEFING: self.phase_debriefing_update,
+            StatePhase.GAMEOVER: self.phase_gameover_update,
         }
 
         self.incoming_left = None
@@ -103,11 +108,9 @@ class Game(GameState):
         self.allowed_targets = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
-        print(self.app.window.mouse_rect)
-
         self.score = 0
         self.paused = False
-        self.level = 0
+        self.level = -1
         self.wave = None
         self.wave_iter = wave_iter()
         self.phase_walker = self.phases.walker()
@@ -125,17 +128,14 @@ class Game(GameState):
         mk_crosshair()
 
         msg = C.MESSAGES['SCORE']
-        mk_score_label(f'{self.score:5d}', msg.pos, msg.anchor, msg.color, eid=msg.text)
+        mk_score_label(f'{self.score:5d}', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
 
         self.cd_flyer = None
 
         def reset_cd_flyer() -> None:
             self.cd_flyer.reset()
 
-        self.ding = 0
-
     def setup_wave(self) -> None:
-        self.ding += 1
         purge_entities(Prop.IS_BATTERY)
         purge_entities(Prop.IS_CITY)
         purge_entities(Prop.IS_EXPLOSION)
@@ -163,9 +163,10 @@ class Game(GameState):
         flattened = list(chain.from_iterable(merged))
         self.allowed_targets = cycle(flattened)
 
-        self.score_mult = self.level // 2 + 1
-
         self.wave = next(self.wave_iter)
+        self.level += 1
+
+        self.score_mult = self.level // 2 + 1
 
         self.incoming_left = self.wave.missiles
         self.incoming = []
@@ -184,7 +185,7 @@ class Game(GameState):
         if (e.type == pygame.QUIT
                 or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
             raise StateExit(-1)
-        elif e.type == pygame.KEYDOWN and self.phase == GamePhase.PLAYING:
+        elif e.type == pygame.KEYDOWN and self.phase == StatePhase.PLAYING:
             if e.key in C.KEY_SILO_MAP:
                 launchpad = C.KEY_SILO_MAP[e.key]
                 self.launch_defense(launchpad, self.mouse)
@@ -285,7 +286,7 @@ class Game(GameState):
                 self.phase = self.phase_walker.send(1)
             else:
                 self.phase = next(self.phase_walker)
-                self.app.push(Debriefing(self.app, self, self.batteries, self.cities),
+                self.app.push(Debriefing(self.app, self, EIDs.SCORE, self.batteries, self.cities),
                               passthrough=StackPermissions.DRAW)
 
         # All for missiles
@@ -368,15 +369,12 @@ class Game(GameState):
             start = vec2(randint(0, self.app.logical_rect.width), -16)
             target = next(self.allowed_targets)
             speed = self.wave.missile_speed
+            # speed = 200  # FIXME
             eid = mk_missile(start, target, speed, incoming=True,
                              shutdown_callback=attack_shutdown_callback)
             self.incoming.append(eid)
 
     def do_collisions(self) -> None:
-        def kill_entity(eid: EntityID) -> None:
-            ecs.add_component(eid, Prop.IS_DEAD, True)
-            return eid
-
         explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                             has_properties={Prop.IS_EXPLOSION})
         # There is actually only max 1 flyer at any given time, but in case
@@ -390,10 +388,6 @@ class Game(GameState):
 
             f_pos = f_prsa.pos
 
-            # FIXME
-            f_rect = f_mask.get_rect(center=f_pos)
-            debug_rect(self.app.renderer, f_rect, 'red')
-
             for e_eid, (e_prsa, e_mask, e_scale) in explosions:
                 e_pos = e_prsa.pos
                 offset = e_pos - f_pos
@@ -402,11 +396,7 @@ class Game(GameState):
                 size = vec2(e_mask.get_size())
                 scaled_mask = e_mask.scale(size * scale)
 
-                # FIXME
-                e_rect = scaled_mask.get_rect(center=e_pos)
-                debug_rect(self.app.renderer, e_rect, 'cyan')
-
-                if (collision := f_mask.overlap(scaled_mask, offset)) is None:
+                if f_mask.overlap(scaled_mask, offset) is None:
                     continue
 
                 ecs.set_property(f_eid, Prop.IS_DEAD_FLYER)
@@ -419,7 +409,6 @@ class Game(GameState):
                 base_score = C.Score.SATELLITE if is_satellite else C.Score.PLANE
                 self.score += self.score_mult * base_score
 
-                # kill_entity(f_eid)
                 break
 
         for m_eid, (m_prsa, *_) in missiles:
@@ -434,7 +423,7 @@ class Game(GameState):
                 if delta.length() > e_scale() * width / 2:
                     continue
 
-                kill_entity(m_eid)
+                ecs.add_component(m_eid, Prop.IS_DEAD, True)
                 self.score += self.score_mult * C.Score.MISSILE
                 break
 
@@ -445,7 +434,7 @@ class Game(GameState):
                 if not C.HITBOX_CITY[i].collidepoint(m_pos):
                     continue
 
-                kill_entity(m_eid)
+                ecs.add_component(m_eid, Prop.IS_DEAD, True)
                 self.cities[i] = False
                 ecs.remove_entity(f'city-{i}')
                 mk_ruin(f'city-{i}', C.POS_CITIES[i])
@@ -458,8 +447,10 @@ class Game(GameState):
                     continue
 
                 for silo in self.batteries[i]:
-                    kill_entity(m_eid)
+                    ecs.add_component(m_eid, Prop.IS_DEAD, True)
                     ecs.add_component(silo, Comp.LIFETIME,
                                       Cooldown(C.EXPLOSION_DURATION))
                 self.batteries[i].clear()
                 break
+
+        ecs.add_component(EIDs.SCORE, Comp.TEXT, str(self.score))

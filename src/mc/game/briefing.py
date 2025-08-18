@@ -17,11 +17,8 @@ from mc.utils import play_sound
 
 class Briefing(GameState):
     def __init__(self, app: App, mult: float, cities: int) -> None:
+        print(f'{mult=}')
         self.app = app
-
-        self.state_label = mk_textlabel('BRIEFING',
-                                        self.app.logical_rect.topright,
-                                        'topright', 'white', eid='briefingstate_label')
 
         self.labels = []
 
@@ -35,7 +32,7 @@ class Briefing(GameState):
         self.labels.append('PLAYER_NO')
 
         msg = C.MESSAGES['MULT']
-        mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid='MULT')
+        mk_textlabel(f'{mult}{msg.text[1:]}', msg.pos, msg.anchor, msg.color, eid='MULT')
         self.labels.append('MULT')
 
         self.cd_state = Cooldown(3)
@@ -43,8 +40,6 @@ class Briefing(GameState):
         self.sounds_pending = cities
 
     def teardown(self) -> None:
-        ecs.remove_entity(self.state_label)
-
         for t in self.labels:
             ecs.remove_entity(t)
 

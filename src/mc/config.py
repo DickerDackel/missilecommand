@@ -107,8 +107,10 @@ HITBOX_BATTERIES = [
 ]
 
 
-POS_MISSILES_DEBRIEFING = vec2(SCREEN.centerx - 15, SCREEN.centery)
-POS_CITIES_DEBRIEFING = vec2(SCREEN.centerx - 15, 2 * SCREEN.height / 3)
+POS_MISSILES_DEBRIEFING = vec2(GRID(8, 7, 1, 1).midleft)
+POS_CITIES_DEBRIEFING = vec2(GRID(8, 10, 1, 1).midleft)
+POS_MISSILES_SCORE_DEBRIEFING = vec2(GRID(6, 7, 1, 1).midright)
+POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(6, 10, 1, 1).midright)
 
 ########################################################################
 #   ____                        ____       _   _   _
@@ -156,9 +158,13 @@ SPRITESHEET = {
     'city': pygame.Rect(32, 0, 22, 12),
     'cities': [pygame.Rect(0, 72, 22, 12), pygame.Rect(32, 72, 22, 12),
                pygame.Rect(64, 72, 22, 12), pygame.Rect(96, 72, 22, 12)],
+    'small-cities': [pygame.Rect(0, 104, 16, 9), pygame.Rect(16, 104, 16, 9),
+                     pygame.Rect(32, 104, 16, 9), pygame.Rect(48, 104, 16, 9)], 
     'ruin': pygame.Rect(64, 0, 22, 12),
     'ruins': [pygame.Rect(0, 88, 22, 12), pygame.Rect(32, 88, 22, 12),
               pygame.Rect(64, 88, 22, 12), pygame.Rect(96, 88, 22, 12)],
+    'small-ruins': [pygame.Rect(0, 120, 16, 9), pygame.Rect(16, 120, 16, 9),
+                    pygame.Rect(32, 120, 16, 9), pygame.Rect(48, 120, 16, 9)], 
     'alien_big_green': pygame.Rect(96, 0, 16, 16),
     'alien_big_red': pygame.Rect(112, 0, 16, 16),
     'alien_green': pygame.Rect(128, 0, 16, 16),
@@ -236,6 +242,7 @@ CHAR_MAP = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7,
 # frames.  I wanted to preserve the original values and thus added the `60 * `
 # to convert it into pixels/s
 WAVES = [
+    (1, 60 / 4.8125, 0),  # FIXME
     (12, 60 / 4.8125, 0),
     (15, 60 / 2.875, 0),
     (18, 60 / 1.75, 0),
@@ -320,5 +327,5 @@ MESSAGES = {
     "MULT": MessageConfig("1         ", GRID.center, "center", "red"),
     "DEFEND CITIES": MessageConfig("DEFEND      CITIES", (GRID.centerx, 2 * GRID.height / 3), "center", "blue"),  # noqa: E501
     "BONUS POINTS": MessageConfig("BONUS POINTS", (80, 240 - 160), "center", "blue"),
-    "SCORE": MessageConfig("SCORE", GRID(7, 0, 2, 1).midbottom, "midbottom", "red"),
+    "SCORE": MessageConfig("SCORE", GRID(3, 0, 2, 1).midright, "midright", "red"),
 }

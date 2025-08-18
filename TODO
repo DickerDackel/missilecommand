@@ -10,6 +10,12 @@
     * Debug logging in all functions?
     * cleanup all imports (unused, order)
 
+
+## Misc
+
+    * Shaders?!?  Shockwave?  CRT?  Glow effects?  Explosion
+
+
 ## States
     * Highscore
     * EnterHighscore
@@ -17,15 +23,20 @@
     * Score
 	* How score from debriefing to game class?
 
+
 ## FX
     * create canvas for xor effect of explosions
     * particle effect instead of trail eraser?
+
 
 ## Gameplay
     * Flyers
 	Flyers spawn missile drops
     * Smart bombs
     * Missiles forking
+    * Flyer collisions + Score
 
     * Bonus city
     * Total Score
+
+    * Let missiles impact before gameover state

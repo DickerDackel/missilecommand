@@ -65,7 +65,7 @@ def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
 
 def mk_city(city_id: int, pos: Point) -> EntityID:
     """Create a city entity"""
-    textures = cache['cities']
+    textures = cache['textures']['cities']
     auto_sequence = AutoSequence(textures, 10)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
@@ -79,7 +79,7 @@ def mk_city(city_id: int, pos: Point) -> EntityID:
 
 
 def mk_ruin(city_id: int, pos: Point) -> EntityID:
-    textures = cache['ruins']
+    textures = cache['textures']['ruins']
     auto_sequence = AutoSequence(textures, 3)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
@@ -94,7 +94,7 @@ def mk_crosshair() -> EntityID:
     eid = 'player'
     ecs.create_entity(eid)
     ecs.set_property(eid, Comp.WANTS_MOUSE)
-    ecs.add_component(eid, Comp.TEXTURE, cache['crosshair'])
+    ecs.add_component(eid, Comp.TEXTURE, cache['textures']['crosshair'])
     ecs.add_component(eid, Comp.PRSA, PRSA())
 
     return eid
@@ -103,7 +103,7 @@ def mk_crosshair() -> EntityID:
 def mk_explosion(pos: Point) -> EntityID:
     scale = LerpThing(0.1, 1, 0.5, repeat=2, loops=2)
 
-    textures = cache['explosions'].copy()
+    textures = cache['textures']['explosions'].copy()
     shuffle(textures)
     auto_sequence = AutoSequence(textures, C.EXPLOSION_DURATION)
 
@@ -122,7 +122,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
              container: Container, shutdown_callback: Callable) -> EntityID:
     kind = choice(('alien', 'plane'))
     color = choice(('red', 'green'))
-    texture = cache[f'{kind}_{color}']
+    texture = cache['textures'][f'{kind}_{color}']
     speed = C.PLANE_SPEED if kind == 'plane' else C.SATELLITE_SPEED
     height = randint(max_height, min_height)
 
@@ -142,7 +142,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
 def mk_missile(start: vec2, dest: vec2, speed: float,
                shutdown_callback: Callable | None = None,
                *, incoming: bool) -> None:
-    textures = cache['missile-heads']
+    textures = cache['textures']['missile-heads']
     auto_sequence = AutoSequence(textures, 1)
     trail = [(start, start)]
 
@@ -167,7 +167,7 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
 
 
 def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
-    textures = cache['missiles']
+    textures = cache['textures']['missiles']
     auto_sequence = AutoSequence(textures, 1)
 
     eid = f'silo-{silo_id}'
@@ -182,7 +182,7 @@ def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
 
 
 def mk_target(eid: EntityID, pos: Point) -> EntityID:
-    textures = cache['targets']
+    textures = cache['textures']['targets']
     auto_sequence = AutoSequence(textures, 1)
 
     ecs.set_property(eid, Prop.IS_TARGET)

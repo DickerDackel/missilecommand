@@ -2,7 +2,6 @@
 
 # Must follow after loading of ddframework.app
 import logging
-logging.basicConfig(level=logging.INFO)  # noqa: E402
 logging.info(__name__)  # noqa: E402
 
 import sys
@@ -42,31 +41,40 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
     def ss2t(i: pygame.Surface, r: pygame.Rect) -> sdl2.Texture:
         return sdl2.Texture.from_surface(renderer, i.subsurface(r))
 
+    def ss2m(i: pygame.Surface, r: pygame.Rect) -> pygame.mask.Mask:
+        return pygame.mask.from_surface(i.subsurface(r))
+
     spritesheet = pygame.image.load(fname)
-    cache['spritesheet'] = sdl2.Texture.from_surface(renderer, spritesheet)
+    cache['textures']['spritesheet'] = sdl2.Texture.from_surface(renderer, spritesheet)
 
     for k, v in C.SPRITESHEET.items():  # noqa: bad-assignment
         if isinstance(v, (list, tuple)):
-            images = [ss2t(spritesheet, img) for img in v]
-            cache[k] = images
+            images = [ss2t(spritesheet, rect) for rect in v]
+            masks = [ss2m(spritesheet, rect) for rect in v]
+            cache['textures'][k] = images
+            cache['masks'][k] = masks
         else:
-            cache[k] = ss2t(spritesheet, v)
+            cache['textures'][k] = ss2t(spritesheet, v)
+            cache['masks'][k] = ss2m(spritesheet, v)
 
 
 def main() -> None:
     cmdline = ArgumentParser(description=C.TITLE)
     cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
-    cmdline.add_argument('-s', '--stats', action='store_true', default=0, help='Show statistics on exit')
+    cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')
+    cmdline.add_argument('-S', '--stats', action='store_true', default=0, help='Show statistics on exit')
+    cmdline.add_argument('-P', '--perftrace', action='store_true', default=0, help='Show live performance data')
     opts = cmdline.parse_args(sys.argv[1:])
+    opts.verbose = max(min(opts.verbose, 3), 0)
+    opts.quiet = max(min(opts.quiet, 2), 0)
 
     log_level = [
-        logging.NOTSET,
         logging.DEBUG,
         logging.INFO,
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
-    ][max(min(5, opts.verbose), 0)]
+    ][2 - opts.verbose + opts.quiet]
     logging.basicConfig(level=log_level)  # noqa: E402
 
     w = pygame.Window(size=(1024, 960))
@@ -94,7 +102,7 @@ def main() -> None:
     sm.add(states.gameover, states.highscores)
     walker = sm.walker(states.splash)
 
-    app.run(walker, verbose=opts.verbose, stats=opts.stats)
+    app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
 
 
 if __name__ == "__main__":

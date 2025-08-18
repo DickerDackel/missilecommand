@@ -16,7 +16,7 @@ from mc.utils import play_sound
 
 
 class Briefing(GameState):
-    def __init__(self, app: App, mult: float) -> None:
+    def __init__(self, app: App, mult: float, cities: int) -> None:
         self.app = app
 
         self.state_label = mk_textlabel('BRIEFING',
@@ -40,7 +40,7 @@ class Briefing(GameState):
 
         self.cd_state = Cooldown(3)
         self.cd_sound = Cooldown(0.4)
-        self.sounds_pending = 3
+        self.sounds_pending = cities
 
     def teardown(self) -> None:
         ecs.remove_entity(self.state_label)

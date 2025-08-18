@@ -50,6 +50,7 @@ def sys_container(dt: float,
                   prsa: PRSA,
                   container: pygame.Rect) -> None:
     if not container.collidepoint(prsa.pos):
+        ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
 
 
@@ -73,13 +74,6 @@ def sys_dont_overshoot(dt: float, eid: EntityID,
     if not delta or delta.length() < momentum.length() and dot < 0:
         prsa.pos = target
         ecs.add_component(eid, Prop.IS_DEAD, True)
-
-
-def sys_is_dead(dt: float, eid: EntityID) -> None:
-    if ecs.eid_has(Comp.SHUTDOWN):
-        shutdown = ecs.comp_of_eid(Comp.SHUTDOWN)
-        shutdown(eid)
-    ecs.remove_entity(eid)
 
 
 def sys_detonate_missile(dt: float,
@@ -135,7 +129,7 @@ def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
 
 def sys_textlabel(dt: float, eid: EntityID, text: str,
                   prsa: PRSA, anchor: str, color: ColorLike) -> None:
-    font = cache['letters']
+    font = cache['textures']['letters']
     crect = font[0].get_rect().scale_by(prsa.scale)
     rect = crect.scale_by(len(text), 1)
     setattr(rect, anchor, prsa.pos)

@@ -53,7 +53,7 @@ def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
 
 def mk_city(city_id: int, pos: Point) -> EntityID:
     """Create a city entity"""
-    textures = cache['cities']
+    textures = cache['textures']['cities']
     auto_sequence = AutoSequence(textures, 10)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
@@ -68,19 +68,23 @@ def mk_city(city_id: int, pos: Point) -> EntityID:
 
 def mk_crosshair() -> EntityID:
     eid = 'player'
+    pos = vec2(pygame.mouse.get_pos())
     ecs.create_entity(eid)
     ecs.set_property(eid, Prop.IS_INFRASTRUCTURE)
     ecs.set_property(eid, Comp.WANTS_MOUSE)
-    ecs.add_component(eid, Comp.TEXTURE, cache['crosshair'])
-    ecs.add_component(eid, Comp.PRSA, PRSA())
+    ecs.add_component(eid, Comp.TEXTURE, cache['textures']['crosshair'])
+    ecs.add_component(eid, Comp.PRSA, PRSA(pos=pos))
+    ecs.add_component(eid, Comp.CONSTRAINT, C.CROSSHAIR_CONSTRAINT)
 
     return eid
 
 
 def mk_explosion(pos: Point) -> EntityID:
-    scale = LerpThing(0.1, 1, 0.5, repeat=2, loops=2)
+    scale = LerpThing(0.1, 1, C.EXPLOSION_DURATION, repeat=2, loops=2)
 
-    textures = cache['explosions'].copy()
+    textures = cache['textures']['explosions'].copy()
+    mask = cache['masks']['explosions'][0]
+
     shuffle(textures)
     auto_sequence = AutoSequence(textures, C.EXPLOSION_DURATION)
 
@@ -91,6 +95,7 @@ def mk_explosion(pos: Point) -> EntityID:
     ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
     ecs.add_component(eid, Comp.SCALE, scale)
+    ecs.add_component(eid, Comp.MASK, mask)
 
     return eid
 
@@ -99,15 +104,18 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
              container: Container, shutdown_callback: Callable) -> EntityID:
     kind = choice(('alien', 'plane'))
     color = choice(('red', 'green'))
-    texture = cache[f'{kind}_{color}']
+    texture = cache['textures'][f'{kind}_{color}']
+    mask = cache['masks'][f'{kind}_{color}']
     speed = C.PLANE_SPEED if kind == 'plane' else C.SATELLITE_SPEED
     height = randint(max_height, min_height)
 
     prsa = PRSA(pos=vec2(-16, height))
     ecs.create_entity(eid)
     ecs.set_property(eid, Prop.IS_FLYER)
+    ecs.set_property(eid, Prop.IS_PLANE if kind == 'plane' else Prop.IS_SATELLITE)
     ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.TEXTURE, texture)
+    ecs.add_component(eid, Comp.MASK, mask)
     ecs.add_component(eid, Comp.FLYER_FIRE_COOLDOWN, Cooldown(fire_cooldown))
     ecs.add_component(eid, Comp.MOMENTUM, Momentum(speed, 0))
     ecs.add_component(eid, Comp.CONTAINER, container)
@@ -117,7 +125,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
 
 
 def mk_gameover_explosion(pos: Point, scale: float, eid: EntityID) -> EntityID:
-    texture = cache['gameover']
+    texture = cache['textures']['gameover']
     prsa = PRSA(pos=vec2(pos))
     renderer = texture.renderer
     scl = renderer.logical_size[1] / C.SPRITESHEET['gameover'].height
@@ -145,7 +153,7 @@ def mk_gameover_text(the_end: AutoSequence, *args: Any, **kwargs: dict[str, Any]
 def mk_missile(start: vec2, dest: vec2, speed: float,
                shutdown_callback: Callable | None = None,
                *, incoming: bool) -> None:
-    textures = cache['missile-heads']
+    textures = cache['textures']['missile-heads']
     auto_sequence = AutoSequence(textures, 1)
     trail = [(start, start)]
 
@@ -170,7 +178,7 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
 
 
 def mk_ruin(city_id: int, pos: Point) -> EntityID:
-    textures = cache['ruins']
+    textures = cache['textures']['ruins']
     auto_sequence = AutoSequence(textures, 3)
     auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
 
@@ -189,7 +197,7 @@ def mk_score_label(*args: Any, **kwargs: Any) -> EntityID:
 
 
 def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
-    textures = cache['missiles']
+    textures = cache['textures']['missiles']
     auto_sequence = AutoSequence(textures, 1)
 
     eid = f'silo-{silo_id}'
@@ -204,7 +212,7 @@ def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
 
 
 def mk_target(eid: EntityID, pos: Point) -> EntityID:
-    textures = cache['targets']
+    textures = cache['textures']['targets']
     auto_sequence = AutoSequence(textures, 1)
 
     ecs.set_property(eid, Prop.IS_TARGET)

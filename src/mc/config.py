@@ -30,7 +30,7 @@ ASSETS = files('mc.assets')
 
 GRID = GridLayout(SCREEN, 16, 16, 8, 8)
 
-PLAY_AUDIO = True
+PLAY_AUDIO = False
 
 ########################################################################
 #   ____
@@ -61,6 +61,8 @@ COLOR = SimpleNamespace(
 # |_|   |_|\__,_|\___|_|_| |_|\__, |
 #                             |___/
 #####################################################################)))
+
+CROSSHAIR_CONSTRAINT = pygame.Rect(0, 0, 256, 200).move_to(midtop=SCREEN.midtop)
 
 POS_GROUND = SCREEN.midbottom
 

@@ -19,10 +19,11 @@ license = "MIT"
 license-files = ["LICENSE"]
 
 dependencies = [
-    "pygame-ce",
-    "pgcooldown",
-    "tinyecs",
     "ddframework @ git+https://github.com/dickerdackel/ddframework",
+    "pgcooldown",
+    "pygame-ce",
+    "rpeasings",
+    "tinyecs",
 ]
 
 [project.scripts]

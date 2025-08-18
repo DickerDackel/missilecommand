@@ -28,6 +28,19 @@ def cls(texture: sdl2.Texture, color: ColorLike = 'black') -> None:
     renderer.draw_color = bkp_color
 
 
+def constraint_mouse(window, renderer, rect):
+    sclx, scly = renderer.scale
+    m_rect = rect.scale_by(sclx, scly).move_to(topleft=(0, 0))
+    window.mouse_rect = m_rect
+
+
+def debug_rect(renderer, rect, color='red'):
+    bkp_color = renderer.draw_color
+    renderer.draw_color = color
+    renderer.draw_rect(rect)
+    renderer.draw_color = bkp_color
+
+
 def play_sound(sound: pygame.mixer.Sound,
                max_instances: int = 0) -> None:
     if not C.PLAY_AUDIO: return
@@ -48,4 +61,4 @@ def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int,
             remap(0, real_size[1], 0, virtual_size[1], pos[1]))
 
 
-__all__ = ['cls', 'play_sound', 'purge_entities', 'to_viewport']
+__all__ = ['cls', 'constraint_mouse', 'debug_rect', 'play_sound', 'purge_entities', 'to_viewport']

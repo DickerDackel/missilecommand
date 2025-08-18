@@ -17,10 +17,12 @@ Trail = list[tuple[Point, Point]]
 
 class Prop(StrEnum):
     # Flags
+    IS_SATELLITE = auto()  # Flyer is an alien
     IS_BATTERY = auto()  # Batteries contain silos (unlaunched missiles)
     IS_CITY = auto()  # This is a city
     IS_DEAD = auto()  # This object is dead and will be culled by a system
     IS_DEAD_TRAIL = auto()  # FIXME, probably redundant?
+    IS_DEAD_FLYER = auto()  # Flyer is dead but still rendered
     IS_DEFENSE = auto()  # opposite of IS_INCOMING
     IS_EXPLOSION = auto()  # Yeah...
     IS_FLYER = auto()  # Plane/Satellite thingy
@@ -28,6 +30,7 @@ class Prop(StrEnum):
     IS_INCOMING = auto()  # opposite of IS_DEFENSE
     IS_INFRASTRUCTURE = auto()  # mouse cursor, score, ...
     IS_MISSILE = auto()  # Missile head in flight
+    IS_PLANE = auto()  # Flyer is a plane
     IS_RUIN = auto()  # Damaged city
     IS_SILO = auto()  # Missile head not launched
     IS_TARGET = auto()  # Crosshair after mouse click
@@ -46,9 +49,11 @@ class Comp(StrEnum):
     # Actual objects
     COLOR_CYCLE = auto()
     CONTAINER = auto()  # Rect
+    CONSTRAINT = auto()
     FLYER_FIRE_COOLDOWN = auto()
     HITBOX = auto()
     LIFETIME = auto()  # Cooldown, sys_lifetime
+    MASK = auto()  # sprite mask for collision checks
     MOMENTUM = auto()  # sys_momentum
     PRSA = auto()
     SCALE = auto()  # LerpThing, sys_apply_scale

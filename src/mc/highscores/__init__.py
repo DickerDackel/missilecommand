@@ -8,27 +8,47 @@ import tinyecs as ecs
 
 from pgcooldown import Cooldown
 from ddframework.app import App, GameState, StateExit
+from ddframework.cache import cache
 
 import mc.config as C
 
-from mc.launchers import mk_textlabel
-from mc.systems import sys_textlabel
+from mc.highscoretable import highscoretable
+from mc.launchers import mk_textlabel, mk_texture
+from mc.systems import sys_draw_texture, sys_textlabel
 from mc.types import Comp
 
 
 class Highscores(GameState):
     def __init__(self, app: 'App') -> None:
         self.app: App = app
-
-        self.state_label = None
-        self.cd_state = None
+        self.entities = []
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
-        self.state_label = mk_textlabel(
-            'HIGHSCORES',
-            self.app.logical_rect.center,
-            'center', 'white', scale=2)
+
+        msg = C.MESSAGES['HIGH SCORES']
+        self.entities.append(mk_textlabel(*msg))
+
+        msg = C.MESSAGES['BONUS CITY EVERY POINTS']
+        self.entities.append(mk_textlabel(*msg))
+        self.entities.append(mk_textlabel(*msg))
+        ecs.add_component(self.entities[-1], Comp.COLOR, C.COLOR.special_text)
+        ecs.add_component(self.entities[-1], Comp.TEXT, '                 10000       ')
+
+        msg = C.MESSAGES['DEFEND']
+        self.entities.append(mk_textlabel(*msg))
+
+        msg = C.MESSAGES['CITIES']
+        self.entities.append(mk_textlabel(*msg))
+
+        for y, (score, initials) in enumerate(highscoretable):
+            msg = C.MessageConfig(f'{initials} {score:8}',
+                                  C.GRID(15, y + 4, 2, 1).center,
+                                  'center',
+                                  C.COLOR.special_text)
+            self.entities.append(mk_textlabel(*msg))
+
+        self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
 
         self.cd_state = Cooldown(5)
 
@@ -55,7 +75,10 @@ class Highscores(GameState):
         self.app.renderer.draw_color = C.COLOR.background
         self.app.renderer.clear()
         ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
+        ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self) -> None:
-        ecs.remove_entity(self.state_label)
+        for l in self.entities:
+            ecs.remove_entity(l)
+
         raise StateExit

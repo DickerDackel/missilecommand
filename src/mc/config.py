@@ -28,7 +28,7 @@ FPS = 60
 
 ASSETS = files('mc.assets')
 
-GRID = GridLayout(SCREEN, 16, 16, 8, 8)
+GRID = GridLayout(SCREEN, 31, 26, 0, 0)
 
 PLAY_AUDIO = True
 
@@ -144,6 +144,8 @@ class Score(IntEnum):
     SATELLITE = 100
     SMART_BOMB = 125
 
+HIGHSCORE_ENTRY_SCROLL_COOLDOWN = 0.125
+
 ########################################################################
 #  ____             _ _
 # / ___| _ __  _ __(_) |_ ___  ___
@@ -223,13 +225,14 @@ SPRITESHEET = {
     'yellow': pygame.Rect(40, 64, 8, 8),
 }
 
-CHAR_MAP = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7,
-            'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14,
-            'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21,
-            'W': 22, 'X': 23, 'Y': 24, 'Z': 25, '0': 26, '1': 27, '2': 28,
-            '3': 29, '4': 30, '5': 31, '6': 32, '7': 33, '8': 34, '9': 35,
-            'up': 36, 'down': 37, 'left': 38, 'right': 39, 'copy': 40, 'popy': 41,
-            ' ': 42, '.': 43, ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48, 'space': 49}
+CHAR_MAP = {' ': 42,
+            'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7,
+            'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P':
+            15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22,
+            'X': 23, 'Y': 24, 'Z': 25, '0': 26, '1': 27, '2': 28, '3': 29,
+            '4': 30, '5': 31, '6': 32, '7': 33, '8': 34, '9': 35, 'up': 36,
+            'down': 37, 'left': 38, 'right': 39, 'copy': 40, 'popy': 41, '.': 43,
+            ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48}
 
 
 ########################################################################
@@ -310,10 +313,6 @@ class Events(IntEnum):
 #
 ########################################################################
 
-# Original y coordinates left in, but since line 0 is at the bottom, all are
-# 240 - y
-
-
 class MessageConfig(NamedTuple):
     text: str
     pos: Point
@@ -323,12 +322,15 @@ class MessageConfig(NamedTuple):
 
 
 MESSAGES = {
-    "PAUSE": MessageConfig("PAUSE", GRID(7, 4, 2, 2).center, "center", "blue", (3, 3)),
-    "PLAYER": MessageConfig("PLAYER  ", GRID(7, 4, 2, 2).center, "center", "blue"),
-    "PLAYER_NO": MessageConfig("       1", GRID(7, 4, 2, 2).center, "center", "red"),
-    "x POINTS": MessageConfig("  x POINTS", GRID.center, "center", "blue"),
-    "MULT": MessageConfig("1         ", GRID.center, "center", "red"),
-    "DEFEND CITIES": MessageConfig("DEFEND      CITIES", (GRID.centerx, 2 * GRID.height / 3), "center", "blue"),  # noqa: E501
-    "BONUS POINTS": MessageConfig("BONUS POINTS", (80, 240 - 160), "center", "blue"),
-    "SCORE": MessageConfig("SCORE", GRID(3, 0, 2, 1).midright, "midright", "red"),
+    'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),
+    'PLAYER': MessageConfig('PLAYER  ', GRID(15, 8, 2, 2).center, 'center', COLOR.normal_text),
+    'PLAYER_NO': MessageConfig('       1', GRID(15, 8, 2, 2).center, 'center', COLOR.special_text),
+    'x POINTS': MessageConfig('  x POINTS', GRID(15, 11, 2, 2).center, 'center', COLOR.normal_text),
+    'MULT': MessageConfig('1         ', GRID(15, 11, 2, 2).center, 'center', COLOR.special_text),
+    'DEFEND': MessageConfig('DEFEND', GRID(9, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
+    'CITIES': MessageConfig('CITIES', GRID(21, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
+    'BONUS POINTS': MessageConfig('BONUS POINTS', (15, ), 'center', COLOR.normal_text),
+    'SCORE': MessageConfig('SCORE', GRID(3, 0, 2, 1).midright, 'midright', COLOR.special_text),
+    'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
+    'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text)
 }

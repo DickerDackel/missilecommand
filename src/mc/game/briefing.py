@@ -19,27 +19,27 @@ class Briefing(GameState):
     def __init__(self, app: App, mult: float, cities: int) -> None:
         self.app = app
 
-        self.labels = []
+        self.entities = []
 
-        for t in ['PLAYER', 'DEFEND CITIES', 'x POINTS']:
+        for t in ['PLAYER', 'DEFEND', 'CITIES', 'x POINTS']:
             msg = C.MESSAGES[t]
-            eid = mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid=msg.text)
-            self.labels.append(eid)
+            eid = mk_textlabel(*msg)
+            self.entities.append(eid)
 
         msg = C.MESSAGES['PLAYER_NO']
         mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid='PLAYER_NO')
-        self.labels.append('PLAYER_NO')
+        self.entities.append('PLAYER_NO')
 
         msg = C.MESSAGES['MULT']
         mk_textlabel(f'{mult}{msg.text[1:]}', msg.pos, msg.anchor, msg.color, eid='MULT')
-        self.labels.append('MULT')
+        self.entities.append('MULT')
 
         self.cd_state = Cooldown(3)
         self.cd_sound = Cooldown(0.35)
         self.sounds_pending = cities
 
     def teardown(self) -> None:
-        for t in self.labels:
+        for t in self.entities:
             ecs.remove_entity(t)
 
     def dispatch_events(self, e: pygame.event.Event) -> None:

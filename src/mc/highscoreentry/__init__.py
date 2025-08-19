@@ -15,10 +15,7 @@ from mc.launchers import mk_textlabel
 from mc.types import Comp
 from mc.systems import sys_draw_texture, sys_textlabel
 
-LETTERS = ('space', 'BS', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-           'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-           '.', '!', '?')
+LETTERS = [k for k in C.CHAR_MAP.keys() if len(k) == 1]  # Don't use the sym names like 'copy' here
 
 class HighscoreEntry(GameState):
     def __init__(self, app: App) -> None:
@@ -49,22 +46,37 @@ class HighscoreEntry(GameState):
         pos = vec2(C.GRID(7, 9, 2, 1).center)
         self.labels.append(mk_textlabel('PRESS ANY FIRE SWITCH TO SELECT', pos, 'center', C.COLOR.normal_text))
 
-        self.cd = Cooldown(10)
-
-        self.entry = ['space', 'space', 'space']
-        self.letter_idx = [0, 0, 0]
+        self.entry = [LETTERS[0]] * 3
+        self.letter_idx = 0
         self.entry_no = 0
+        self.cd_scroll = Cooldown(C.HIGHSCORE_ENTRY_SCROLL_COOLDOWN)
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
                 or e.type == pygame.QUIT):
             self.teardown()
+
+        if e.type == pygame.KEYDOWN and e.key in {pygame.K_q, pygame.K_w, pygame.K_e}:
+            self.entry_no += 1
+            print(self.entry_no)
+            if self.entry_no >= len(self.entry):
+                return
+
+            self.entry[self.entry_no] = LETTERS[self.letter_idx]
+
         elif e.type == pygame.MOUSEWHEEL:
-            print(e)
+            if self.cd_scroll.cold():
+                self.cd_scroll.reset()
+                self.letter_idx = (self.letter_idx + e.y) % len(LETTERS)
+            self.entry[self.entry_no] = LETTERS[self.letter_idx]
+            print(self.letter_idx)
 
     def update(self, dt: float) -> None:
-        if self.cd.cold():
+        if self.entry_no >= len(self.entry):
+            print(f'HIGHSCORE: {"".join(self.entry)}')
             self.teardown()
+
+        ecs.add_component('entry', Comp.TEXT, ''.join(self.entry))
 
     def draw(self) -> None:
         ground = cache['textures']['ground']

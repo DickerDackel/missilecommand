@@ -37,6 +37,9 @@ def load_sounds(assets: Path) -> None:
 
     cache['sounds'] = {fname.stem: pygame.mixer.Sound(fname)
                        for fname in (assets / f for f in sounds)}
+    # FIXME
+    for s in cache['sounds'].values():
+        s.set_volume(0.1)
 
 
 def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
@@ -104,7 +107,7 @@ def main() -> None:
     sm.add(states.game, states.gameover)
     sm.add(states.gameover, states.highscores, states.highscoreentry)
     sm.add(states.highscoreentry, states.highscores)
-    walker = sm.walker(states.highscoreentry)
+    walker = sm.walker(states.splash)
 
     app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
 

@@ -51,6 +51,9 @@ COLOR = SimpleNamespace(
     clear=(255, 255, 255, 0),
     score_color='red',
     gameover='#df3e23',
+    normal_text='blue',
+    special_text='red',
+    initials='yellow',
 )
 
 ########################################################################

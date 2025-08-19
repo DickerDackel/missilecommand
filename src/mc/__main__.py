@@ -23,6 +23,7 @@ from mc.splash import Splash
 from mc.title import Title
 from mc.demo import Demo
 from mc.highscores import Highscores
+from mc.highscoreentry import HighscoreEntry
 from mc.game import Game
 from mc.gameover import Gameover
 
@@ -90,6 +91,7 @@ def main() -> None:
         title=Title(app),
         demo=Demo(app),
         highscores=Highscores(app),
+        highscoreentry=HighscoreEntry(app),
         game=Game(app),
         gameover=Gameover(app),
     )
@@ -100,8 +102,9 @@ def main() -> None:
     sm.add(states.demo, states.highscores, states.game)
     sm.add(states.highscores, states.title, states.game)
     sm.add(states.game, states.gameover)
-    sm.add(states.gameover, states.highscores)
-    walker = sm.walker(states.splash)
+    sm.add(states.gameover, states.highscores, states.highscoreentry)
+    sm.add(states.highscoreentry, states.highscores)
+    walker = sm.walker(states.highscoreentry)
 
     app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
 

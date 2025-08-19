@@ -2,7 +2,6 @@ import logging
 logging.info(__name__)  # noqa: E402
 
 from enum import StrEnum, auto
-from functools import partial
 from itertools import chain, cycle
 from random import randint, shuffle
 from typing import Any
@@ -12,7 +11,6 @@ import pygame._sdl2 as sdl2
 import tinyecs as ecs
 
 from pgcooldown import Cooldown
-from pyfiglet import figlet_format
 from pygame.math import Vector2 as vec2
 from pygame.typing import Point
 
@@ -37,8 +35,7 @@ from mc.systems import (sys_container, sys_detonate_missile,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
 from mc.types import Comp, EntityID, Prop
-from mc.utils import (cls, constraint_mouse, debug_rect, play_sound,
-                      purge_entities, to_viewport)
+from mc.utils import (cls, play_sound, purge_entities, to_viewport)
 
 
 class StatePhase(StrEnum):

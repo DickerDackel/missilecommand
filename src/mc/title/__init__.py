@@ -20,15 +20,19 @@ class Title(GameState):
     def __init__(self, app: 'App') -> None:
         self.app: App = app
 
-        self.state_label = None
+        self.entities = None
         self.cd_state = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
-        self.state_label = mk_textlabel(
-            'MISSILE COMMAND',
-            self.app.logical_rect.center,
-            'center', 'white', scale=2)
+
+        self.entities = []
+
+        msg = C.MESSAGES['title']['MISSILE']
+        self.entities.append(mk_textlabel(*msg))
+
+        msg = C.MESSAGES['title']['COMMAND']
+        self.entities.append(mk_textlabel(*msg))
 
         self.cd_state = Cooldown(5)
 
@@ -57,5 +61,5 @@ class Title(GameState):
         ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def teardown(self) -> None:
-        ecs.remove_entity(self.state_label)
+        ecs.reset()
         raise StateExit

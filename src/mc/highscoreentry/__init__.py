@@ -23,9 +23,6 @@ class HighscoreEntry(GameState):
 
         self.labels = []
 
-        ground = cache['textures']['ground']
-        rect = ground.get_rect(midbottom=self.app.logical_rect.midbottom)
-        ground.draw(dstrect=rect)
 
         pos = vec2(C.GRID(7, 3, 2, 1).center)
         self.labels.append(mk_textlabel('   ', pos, 'center', C.COLOR.initials, eid='entry'))
@@ -45,6 +42,7 @@ class HighscoreEntry(GameState):
 
         pos = vec2(C.GRID(7, 9, 2, 1).center)
         self.labels.append(mk_textlabel('PRESS ANY FIRE SWITCH TO SELECT', pos, 'center', C.COLOR.normal_text))
+        self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
 
         self.entry = [LETTERS[0]] * 3
         self.letter_idx = 0
@@ -79,11 +77,6 @@ class HighscoreEntry(GameState):
         ecs.add_component('entry', Comp.TEXT, ''.join(self.entry))
 
     def draw(self) -> None:
-        ground = cache['textures']['ground']
-        rect = ground.get_rect(midbottom=self.app.logical_rect.midbottom)
-        ground.draw(dstrect=rect)
-
-        r = ground.renderer
         bkp = r.draw_color
         r.draw_color = 'red'
         r.draw_rect(C.GRID(7, 3, 2, 1))

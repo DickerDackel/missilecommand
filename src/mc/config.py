@@ -43,18 +43,17 @@ PLAY_AUDIO = True
 ########################################################################
 
 COLOR = SimpleNamespace(
-    ground='yellow',
-    enemy_missile='red',
-    defense_missile='blue',
     background='black',
-    grid='grey',
-    pause='blue',
     clear=(255, 255, 255, 0),
-    score_color='red',
+    defense_missile='blue',
+    enemy_missile='red',
     gameover='#df3e23',
-    normal_text='blue',
-    special_text='red',
+    grid='grey',
     initials='yellow',
+    normal_text='blue',
+    score_color='red',
+    special_text='red',
+    title='white'
 )
 
 ########################################################################

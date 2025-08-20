@@ -15,6 +15,7 @@ from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel, mk_texture
 from mc.systems import sys_draw_texture, sys_textlabel
 from mc.types import Comp
+from mc.utils import play_sound
 
 LETTERS = [k for k in C.CHAR_MAP.keys() if len(k) == 1]  # Don't use the sym names like 'copy' here
 
@@ -57,6 +58,7 @@ class HighscoreEntry(GameState):
             self.teardown()
 
         if e.type == pygame.KEYDOWN and e.key in {pygame.K_q, pygame.K_w, pygame.K_e}:
+            play_sound(cache['sounds']['diiuuu'])
             self.entry_no += 1
             if self.entry_no >= len(self.entry):
                 return
@@ -67,6 +69,7 @@ class HighscoreEntry(GameState):
             if self.cd_scroll.cold():
                 self.cd_scroll.reset()
                 self.letter_idx = (self.letter_idx + e.y) % len(LETTERS)
+                play_sound(cache['sounds']['silo-count'])
             self.entry[self.entry_no] = LETTERS[self.letter_idx]
 
     def update(self, dt: float) -> None:

@@ -1,12 +1,24 @@
-# Mine...
+# Mine > -----------------------------------------------------------------
+
+# python files in top directory are never part of the project
+/*.py
+
+# I often name profile results like this
+*.out
+
+# Too big
+Research
+
 Session.vim
 
+# Local clones of my various libs
+complib
 ddframework
 lfo
 pgcooldown
 rpeasings
 tinyecs
-Research
+# < Mine -----------------------------------------------------------------
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

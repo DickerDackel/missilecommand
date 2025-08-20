@@ -25,6 +25,7 @@ from mc.game.briefing import Briefing
 from mc.game.debriefing import Debriefing
 from mc.game.pause import Pause
 from mc.game.waves import wave_iter
+from mc.highscoretable import highscoretable
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
                           mk_target)
@@ -42,6 +43,7 @@ class StatePhase(StrEnum):
     SETUP = auto()
     BRIEFING = auto()
     PLAYING = auto()
+    PRE_LINGER = auto()
     LINGER = auto()
     DEBRIEFING = auto()
     GAMEOVER = auto()
@@ -78,7 +80,8 @@ class Game(GameState):
         self.phases = StateMachine()
         self.phases.add(StatePhase.SETUP, StatePhase.BRIEFING)
         self.phases.add(StatePhase.BRIEFING, StatePhase.PLAYING)
-        self.phases.add(StatePhase.PLAYING, StatePhase.LINGER)
+        self.phases.add(StatePhase.PLAYING, StatePhase.PRE_LINGER)
+        self.phases.add(StatePhase.PRE_LINGER, StatePhase.LINGER)
         self.phases.add(StatePhase.LINGER, StatePhase.DEBRIEFING, StatePhase.GAMEOVER)
         self.phases.add(StatePhase.DEBRIEFING, StatePhase.SETUP)
         self.phases.add(StatePhase.GAMEOVER, None)
@@ -89,6 +92,7 @@ class Game(GameState):
             StatePhase.SETUP: self.phase_setup_update,
             StatePhase.BRIEFING: self.phase_briefing_update,
             StatePhase.PLAYING: self.phase_playing_update,
+            StatePhase.PRE_LINGER: self.phase_pre_linger_update,
             StatePhase.LINGER: self.phase_linger_update,
             StatePhase.DEBRIEFING: self.phase_debriefing_update,
             StatePhase.GAMEOVER: self.phase_gameover_update,
@@ -248,6 +252,15 @@ class Game(GameState):
 
         self.run_game_systems(dt)
 
+    def phase_pre_linger_update(self, dt: float) -> None:
+        missiles = ecs.eids_by_property(Prop.IS_MISSILE)
+        flyers = ecs.eids_by_property(Prop.IS_FLYER)
+        for eid in chain(missiles, flyers):
+            momentum = ecs.comp_of_eid(eid, Comp.MOMENTUM)
+            momentum *= 2
+
+        self.phase = next(self.phase_walker)
+
     def phase_linger_update(self, dt: float) -> None:
         # if no more missiles are flying
         #     and no defenses are flying
@@ -276,6 +289,10 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
 
     def phase_gameover_update(self, dt: float) -> None:
+        self.score += 10000  # FIXME
+        if self.score > highscoretable[0][0]:
+            raise StateExit(1, self.score)
+
         raise StateExit
 
     def draw(self) -> None:

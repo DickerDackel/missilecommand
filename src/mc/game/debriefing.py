@@ -143,14 +143,14 @@ class Debriefing(GameState):
         if not self.cd_linger_post.cold(): return
         self.teardown()
 
+    def draw(self):
+        # Since all entities are inside the ECS, the systems of the game state
+        # will render them.
+        pass
+
     def teardown(self):
         ecs.remove_entity(EIDs.BONUS_POINTS)
         ecs.remove_entity(EIDs.MISSILES_LABEL)
         ecs.remove_entity(EIDs.CITIES_LABEL)
 
         raise StateExit(-1)
-
-    def draw(self):
-        # Since all entities are inside the ECS, the systems of the game state
-        # will render them.
-        pass

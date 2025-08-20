@@ -260,7 +260,12 @@ class Game(GameState):
         missiles = ecs.eids_by_property(Prop.IS_MISSILE)
         flyers = ecs.eids_by_property(Prop.IS_FLYER)
         for eid in chain(missiles, flyers):
-            momentum = ecs.comp_of_eid(eid, Comp.MOMENTUM)
+            # FIXME
+            try:
+                momentum = ecs.comp_of_eid(eid, Comp.MOMENTUM)
+            except ecs.UnknownComponentError:
+                print(ecs.eidx[eid])
+                raise
             momentum *= 2
 
         self.phase = next(self.phase_walker)
@@ -381,6 +386,7 @@ class Game(GameState):
         flyers = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, has_properties={Prop.IS_FLYER})
         missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
 
+        # Flyers
         for f_eid, (f_prsa,  f_mask) in flyers:
             if ecs.has_property(f_eid, Prop.IS_DEAD_FLYER):
                 continue
@@ -399,12 +405,13 @@ class Game(GameState):
                     continue
 
                 sound = ecs.comp_of_eid(f_eid, Comp.SOUND)
-                ecs.remove_component(f_eid, Comp.SOUND)
                 sound.stop()
 
                 ecs.set_property(f_eid, Prop.IS_DEAD_FLYER)
                 ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))
-                ecs.remove_component(f_eid, Comp.MOMENTUM)
+
+                momentum = ecs.comp_of_eid(f_eid, Comp.MOMENTUM)
+                momentum *= 0
 
                 mk_explosion(f_pos)
 
@@ -414,6 +421,7 @@ class Game(GameState):
 
                 break
 
+        # Missiles
         for m_eid, (m_prsa, *_) in missiles:
             m_pos = m_prsa.pos
 

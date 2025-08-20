@@ -85,6 +85,8 @@ class HighscoreEntry(GameState):
         ecs.add_component('entry', Comp.TEXT, ''.join(self.entry))
 
     def draw(self) -> None:
+        self.app.renderer.draw_color = C.COLOR.background
+        self.app.renderer.clear()
         ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 

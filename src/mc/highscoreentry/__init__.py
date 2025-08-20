@@ -53,9 +53,9 @@ class HighscoreEntry(GameState):
 
         self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
 
-        self.entry = [LETTERS[0]] * 3
-        self.letter_idx = 0
+        self.letter_idx = 1
         self.entry_no = 0
+        self.entry = [LETTERS[self.letter_idx], LETTERS[0], LETTERS[0]]
         self.cd_scroll = Cooldown(C.HIGHSCORE_ENTRY_SCROLL_COOLDOWN)
 
     def dispatch_event(self, e: pygame.event.Event) -> None:

@@ -337,7 +337,11 @@ MESSAGES = {
     'SCORE': MessageConfig('SCORE', GRID(3, 0, 2, 1).midright, 'midright', COLOR.special_text),
     'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
     'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text),
-    'HIGHSCORE ENTRY': {
+    'title': {
+        'MISSILE': MessageConfig('MISSILE', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 - 1, 1, 1).midbottom, 'midbottom', COLOR.title, (3, 3)),
+        'COMMAND': MessageConfig('COMMAND', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 + 1, 1, 1).midtop, 'midtop', COLOR.title, (3, 3)),
+    },
+    'highscore entry': {
         'PLAYER  ': MessageConfig('PLAYER  ', GRID(15, 7, 2, 1).center, 'center', COLOR.normal_text),
         'GREAT SCORE': MessageConfig('GREAT SCORE', GRID(15, 9, 2, 2).center, 'center', COLOR.normal_text, (2, 1)),
         'ENTER YOUR INITIALS': MessageConfig('ENTER YOUR INITIALS', GRID(15, 12, 2, 1).center, 'center', COLOR.normal_text),

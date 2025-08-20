@@ -45,9 +45,6 @@ class Title(GameState):
         elif e.type == pygame.KEYDOWN:
             if e.key == pygame.K_ESCAPE:
                 raise StateExit(-1)
-            elif e.key == pygame.K_SPACE:
-                self.teardown()
-                raise StateExit
             elif e.key == pygame.K_1:
                 raise StateExit(1)
 

@@ -104,8 +104,8 @@ def main() -> None:
     sm.add(states.title, states.demo, states.game)
     sm.add(states.demo, states.highscores, states.game)
     sm.add(states.highscores, states.title, states.game)
-    sm.add(states.game, states.gameover)
-    sm.add(states.gameover, states.highscores, states.highscoreentry)
+    sm.add(states.game, states.gameover, states.highscoreentry)
+    sm.add(states.gameover, states.highscores)
     sm.add(states.highscoreentry, states.highscores)
     walker = sm.walker(states.splash)
 

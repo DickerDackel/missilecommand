@@ -23,6 +23,7 @@ class HighscoreEntry(GameState):
     def __init__(self, app: App) -> None:
         self.app = app
 
+    def reset(self, *args, **kwargs):
         self.entities = []
 
 

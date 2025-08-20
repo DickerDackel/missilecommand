@@ -1,6 +1,8 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
+from typing import Any
+
 import pygame
 import tinyecs as ecs
 

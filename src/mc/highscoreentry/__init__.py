@@ -89,6 +89,8 @@ class HighscoreEntry(GameState):
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self):
+        highscoretable.append((self.score, ''.join(self.entry)))
+
         for eid in self.entities:
             ecs.remove_entity(eid)
         raise StateExit

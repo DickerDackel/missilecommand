@@ -56,7 +56,6 @@ class HighscoreEntry(GameState):
 
         if e.type == pygame.KEYDOWN and e.key in {pygame.K_q, pygame.K_w, pygame.K_e}:
             self.entry_no += 1
-            print(self.entry_no)
             if self.entry_no >= len(self.entry):
                 return
 
@@ -67,26 +66,14 @@ class HighscoreEntry(GameState):
                 self.cd_scroll.reset()
                 self.letter_idx = (self.letter_idx + e.y) % len(LETTERS)
             self.entry[self.entry_no] = LETTERS[self.letter_idx]
-            print(self.letter_idx)
 
     def update(self, dt: float) -> None:
         if self.entry_no >= len(self.entry):
-            print(f'HIGHSCORE: {"".join(self.entry)}')
             self.teardown()
 
         ecs.add_component('entry', Comp.TEXT, ''.join(self.entry))
 
     def draw(self) -> None:
-        bkp = r.draw_color
-        r.draw_color = 'red'
-        r.draw_rect(C.GRID(7, 3, 2, 1))
-        r.draw_rect(C.GRID(7, 5, 2, 1))
-        r.draw_rect(C.GRID(7, 6, 2, 1))
-        r.draw_rect(C.GRID(7, 7, 2, 1))
-        r.draw_rect(C.GRID(7, 8, 2, 1))
-        r.draw_rect(C.GRID(7, 9, 2, 1))
-        r.draw_color = bkp
-
         ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 

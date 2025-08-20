@@ -11,9 +11,10 @@ from pygame import Vector2 as vec2
 
 import mc.config as C
 
-from mc.launchers import mk_textlabel
-from mc.types import Comp
+from mc.highscoretable import highscoretable
+from mc.launchers import mk_textlabel, mk_texture
 from mc.systems import sys_draw_texture, sys_textlabel
+from mc.types import Comp
 
 LETTERS = [k for k in C.CHAR_MAP.keys() if len(k) == 1]  # Don't use the sym names like 'copy' here
 

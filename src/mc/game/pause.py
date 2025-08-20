@@ -26,8 +26,8 @@ class Pause(GameState):
 
         self.labels = []
 
-        msg = C.MESSAGES['PAUSE']
-        eid = mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, msg.scale, eid=msg.text)
+        msg = C.MESSAGES['pause']['PAUSE']
+        eid = mk_textlabel(*msg, eid=msg.text)
         self.labels.append(eid)
 
         self.blink_cooldown = Cooldown(1)

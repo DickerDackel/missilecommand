@@ -65,7 +65,7 @@ class Debriefing(GameState):
         self.it_cities = (f'city-{i}' for i, city in enumerate(cities) if city)
         self.cities_pos = C.POS_CITIES_DEBRIEFING.copy()
 
-        msg = C.MESSAGES['BONUS POINTS']
+        msg = C.MESSAGES['debriefing']['BONUS POINTS']
         mk_textlabel(*msg, EIDs.BONUS_POINTS)
         mk_textlabel('  0', C.POS_MISSILES_SCORE_DEBRIEFING, 'midright', 'red', (1, 1), EIDs.MISSILES_LABEL)
         mk_textlabel('   0', C.POS_CITIES_SCORE_DEBRIEFING, 'midright', 'red', (1, 1), EIDs.CITIES_LABEL)

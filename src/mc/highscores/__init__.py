@@ -27,19 +27,19 @@ class Highscores(GameState):
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
 
-        msg = C.MESSAGES['HIGH SCORES']
+        msg = C.MESSAGES['highscores']['HIGH SCORES']
         self.entities.append(mk_textlabel(*msg, eid='high scores'))
 
-        msg = C.MESSAGES['BONUS CITY EVERY POINTS']
+        msg = C.MESSAGES['highscores']['BONUS CITY EVERY POINTS']
         self.entities.append(mk_textlabel(*msg, eid='bonus city 1'))
         self.entities.append(mk_textlabel(*msg, eid='bonus city 2'))
         ecs.add_component(self.entities[-1], Comp.COLOR, C.COLOR.special_text)
         ecs.add_component(self.entities[-1], Comp.TEXT, '                 10000       ')
 
-        msg = C.MESSAGES['DEFEND']
+        msg = C.MESSAGES['briefing']['DEFEND']
         self.entities.append(mk_textlabel(*msg, eid='defend'))
 
-        msg = C.MESSAGES['CITIES']
+        msg = C.MESSAGES['briefing']['CITIES']
         self.entities.append(mk_textlabel(*msg, eid='cities'))
 
         for y, (score, initials) in enumerate(nlargest(len(highscoretable), highscoretable)):

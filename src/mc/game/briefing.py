@@ -22,14 +22,14 @@ class Briefing(GameState):
         self.entities = []
 
         for t in ['PLAYER', 'DEFEND', 'CITIES', 'x POINTS']:
-            msg = C.MESSAGES[t]
+            msg = C.MESSAGES['briefing'][t]
             self.entities.append(mk_textlabel(*msg))
 
-        msg = C.MESSAGES['PLAYER_NO']
+        msg = C.MESSAGES['briefing']['PLAYER_NO']
         self.entities.append(mk_textlabel(*msg, eid='PLAYER_NO'))
 
-        msg = C.MESSAGES['MULT']
-        mk_textlabel(f'{mult}{msg.text[1:]}', msg.pos, msg.anchor, msg.color, eid='MULT')
+        msg = C.MESSAGES['briefing']['MULT']
+        mk_textlabel(f'{mult}{msg.text[1:]}', *msg[1:], eid='MULT')
         self.entities.append('MULT')
 
         self.cd_state = Cooldown(3)

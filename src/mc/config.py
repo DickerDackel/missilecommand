@@ -326,20 +326,19 @@ class MessageConfig(NamedTuple):
 
 
 MESSAGES = {
-    'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),
-    'PLAYER': MessageConfig('PLAYER  ', GRID(15, 8, 2, 2).center, 'center', COLOR.normal_text),
-    'PLAYER_NO': MessageConfig('       1', GRID(15, 8, 2, 2).center, 'center', COLOR.special_text),
-    'x POINTS': MessageConfig('  x POINTS', GRID(15, 11, 2, 2).center, 'center', COLOR.normal_text),
-    'MULT': MessageConfig('1         ', GRID(15, 11, 2, 2).center, 'center', COLOR.special_text),
-    'DEFEND': MessageConfig('DEFEND', GRID(9, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
-    'CITIES': MessageConfig('CITIES', GRID(21, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
-    'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 8, 2, 1).center, 'center', COLOR.normal_text),
-    'SCORE': MessageConfig('SCORE', GRID(3, 0, 2, 1).midright, 'midright', COLOR.special_text),
-    'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
-    'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text),
-    'title': {
-        'MISSILE': MessageConfig('MISSILE', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 - 1, 1, 1).midbottom, 'midbottom', COLOR.title, (3, 3)),
-        'COMMAND': MessageConfig('COMMAND', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 + 1, 1, 1).midtop, 'midtop', COLOR.title, (3, 3)),
+    'briefing': {
+        'CITIES': MessageConfig('CITIES', GRID(21, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
+        'DEFEND': MessageConfig('DEFEND', GRID(9, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
+        'MULT': MessageConfig('1         ', GRID(15, 11, 2, 2).center, 'center', COLOR.special_text),
+        'PLAYER': MessageConfig('PLAYER  ', GRID(15, 8, 2, 2).center, 'center', COLOR.normal_text),
+        'PLAYER_NO': MessageConfig('       1', GRID(15, 8, 2, 2).center, 'center', COLOR.special_text),
+        'x POINTS': MessageConfig('  x POINTS', GRID(15, 11, 2, 2).center, 'center', COLOR.normal_text),
+    },
+    'debriefing': {
+        'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 8, 2, 1).center, 'center', COLOR.normal_text),
+    },
+    'game': {
+        'SCORE': MessageConfig('SCORE', GRID(10, 0, 2, 1).midright, 'midright', COLOR.special_text),
     },
     'highscore entry': {
         'PLAYER  ': MessageConfig('PLAYER  ', GRID(15, 7, 2, 1).center, 'center', COLOR.normal_text),
@@ -347,5 +346,16 @@ MESSAGES = {
         'ENTER YOUR INITIALS': MessageConfig('ENTER YOUR INITIALS', GRID(15, 12, 2, 1).center, 'center', COLOR.normal_text),
         'SPIN BALL TO CHANGE LETTER': MessageConfig('SPIN BALL TO CHANGE LETTER', GRID(15, 14, 2, 1).center, 'center', COLOR.normal_text),
         'PRESS ANY FIRE SWITCH TO SELECT': MessageConfig('PRESS ANY FIRE SWITCH TO SELECT', GRID(15, 16, 2, 1).center, 'center', COLOR.normal_text),
+    },
+    'highscores': {
+        'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text),
+        'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
+    },
+    'pause': {
+        'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),
+    },
+    'title': {
+        'MISSILE': MessageConfig('MISSILE', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 - 1, 1, 1).midbottom, 'midbottom', COLOR.title, (3, 3)),
+        'COMMAND': MessageConfig('COMMAND', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 + 1, 1, 1).midtop, 'midtop', COLOR.title, (3, 3)),
     },
 }

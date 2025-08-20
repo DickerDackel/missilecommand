@@ -132,7 +132,7 @@ class Game(GameState):
 
         mk_crosshair()
 
-        msg = C.MESSAGES['SCORE']
+        msg = C.MESSAGES['game']['SCORE']
         mk_score_label(f'{self.score:5d}', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
 
         self.cd_flyer = None

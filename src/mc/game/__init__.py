@@ -109,6 +109,10 @@ class Game(GameState):
         self.allowed_targets = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
+        scale = self.app.renderer.scale
+        rect = C.CROSSHAIR_CONSTRAINT.scale_by(scale).move_to(topleft=(0, 0))
+        self.app.window.mouse_rect = rect
+
         self.score = 0
         self.paused = False
         self.level = -1

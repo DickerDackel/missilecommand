@@ -25,28 +25,30 @@ class HighscoreEntry(GameState):
     def __init__(self, app: App) -> None:
         self.app = app
 
-    def reset(self, *args, **kwargs):
+    def reset(self, from_previous):
+        _, self.score = from_previous
+
         self.entities = []
 
         pos = vec2(C.GRID(15, 3, 2, 1).center)
         self.entities.append(mk_textlabel('   ', pos, 'center', C.COLOR.initials, eid='entry'))
 
-        msg = C.MESSAGES['HIGHSCORE ENTRY']['PLAYER  ']
+        msg = C.MESSAGES['highscore entry']['PLAYER  ']
         self.entities.append(mk_textlabel(*msg))
         self.entities.append(mk_textlabel(*msg))
         ecs.add_component(self.entities[-1], Comp.TEXT, '       1')
         ecs.add_component(self.entities[-1], Comp.COLOR, C.COLOR.special_text)
 
-        msg = C.MESSAGES['HIGHSCORE ENTRY']['GREAT SCORE']
+        msg = C.MESSAGES['highscore entry']['GREAT SCORE']
         self.entities.append(mk_textlabel(*msg))
 
-        msg = C.MESSAGES['HIGHSCORE ENTRY']['ENTER YOUR INITIALS']
+        msg = C.MESSAGES['highscore entry']['ENTER YOUR INITIALS']
         self.entities.append(mk_textlabel(*msg))
 
-        msg = C.MESSAGES['HIGHSCORE ENTRY']['SPIN BALL TO CHANGE LETTER']
+        msg = C.MESSAGES['highscore entry']['SPIN BALL TO CHANGE LETTER']
         self.entities.append(mk_textlabel(*msg))
 
-        msg = C.MESSAGES['HIGHSCORE ENTRY']['PRESS ANY FIRE SWITCH TO SELECT']
+        msg = C.MESSAGES['highscore entry']['PRESS ANY FIRE SWITCH TO SELECT']
         self.entities.append(mk_textlabel(*msg))
 
         self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))

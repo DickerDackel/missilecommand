@@ -26,25 +26,27 @@ class HighscoreEntry(GameState):
     def reset(self, *args, **kwargs):
         self.entities = []
 
+        pos = vec2(C.GRID(15, 3, 2, 1).center)
+        self.entities.append(mk_textlabel('   ', pos, 'center', C.COLOR.initials, eid='entry'))
 
-        pos = vec2(C.GRID(7, 3, 2, 1).center)
-        self.labels.append(mk_textlabel('   ', pos, 'center', C.COLOR.initials, eid='entry'))
+        msg = C.MESSAGES['HIGHSCORE ENTRY']['PLAYER  ']
+        self.entities.append(mk_textlabel(*msg))
+        self.entities.append(mk_textlabel(*msg))
+        ecs.add_component(self.entities[-1], Comp.TEXT, '       1')
+        ecs.add_component(self.entities[-1], Comp.COLOR, C.COLOR.special_text)
 
-        pos = vec2(C.GRID(7, 5, 2, 1).center)
-        self.labels.append(mk_textlabel('PLAYER  ', pos, 'center', C.COLOR.normal_text))
-        self.labels.append(mk_textlabel('       1', pos, 'center', C.COLOR.special_text))
+        msg = C.MESSAGES['HIGHSCORE ENTRY']['GREAT SCORE']
+        self.entities.append(mk_textlabel(*msg))
 
-        pos = vec2(C.GRID(7, 6, 2, 1).center)
-        self.labels.append(mk_textlabel('GREAT SCORE', pos, 'center', C.COLOR.normal_text, scale=(2.5, 1.5)))
+        msg = C.MESSAGES['HIGHSCORE ENTRY']['ENTER YOUR INITIALS']
+        self.entities.append(mk_textlabel(*msg))
 
-        pos = vec2(C.GRID(7, 7, 2, 1).center)
-        self.labels.append(mk_textlabel('ENTER YOUR INITIALS', pos, 'center', C.COLOR.normal_text))
+        msg = C.MESSAGES['HIGHSCORE ENTRY']['SPIN BALL TO CHANGE LETTER']
+        self.entities.append(mk_textlabel(*msg))
 
-        pos = vec2(C.GRID(7, 8, 2, 1).center)
-        self.labels.append(mk_textlabel('SPIN BALL TO CHANGE LATTER', pos, 'center', C.COLOR.normal_text))
+        msg = C.MESSAGES['HIGHSCORE ENTRY']['PRESS ANY FIRE SWITCH TO SELECT']
+        self.entities.append(mk_textlabel(*msg))
 
-        pos = vec2(C.GRID(7, 9, 2, 1).center)
-        self.labels.append(mk_textlabel('PRESS ANY FIRE SWITCH TO SELECT', pos, 'center', C.COLOR.normal_text))
         self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
 
         self.entry = [LETTERS[0]] * 3

@@ -83,6 +83,7 @@ def main() -> None:
     logging.basicConfig(level=log_level)  # noqa: E402
 
     w = pygame.Window(size=(1024, 960))
+    # w = None
     app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     pygame.mouse.set_visible(False)
 

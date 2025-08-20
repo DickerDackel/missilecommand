@@ -1,6 +1,7 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
+from heapq import nlargest
 from typing import Any
 
 import pygame
@@ -41,7 +42,7 @@ class Highscores(GameState):
         msg = C.MESSAGES['CITIES']
         self.entities.append(mk_textlabel(*msg, eid='cities'))
 
-        for y, (score, initials) in enumerate(highscoretable):
+        for y, (score, initials) in enumerate(nlargest(len(highscoretable), highscoretable)):
             msg = C.MessageConfig(f'{initials} {score:8}',
                                   C.GRID(15, y + 4, 2, 1).center,
                                   'center',

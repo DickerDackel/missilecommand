@@ -124,6 +124,8 @@ POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(14, 15, 1, 1).midright)
 #                                                          |___/
 #######################################################################)
 
+ATTACK_SLOTS = 8
+
 EXPLOSION_DURATION = 0.5
 EXPLOSION_COLORS = ('white', '#ffd541', '#a6fcdb', '#df3e23', '#20d6c7', '#d6f264')
 

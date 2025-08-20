@@ -98,6 +98,7 @@ class Game(GameState):
             StatePhase.GAMEOVER: self.phase_gameover_update,
         }
 
+        self.current_incoming = None
         self.incoming_left = None
         self.cd_incoming = None
         self.incoming = None
@@ -173,6 +174,7 @@ class Game(GameState):
 
         self.score_mult = self.level // 2 + 1
 
+        self.current_incoming = 0
         self.incoming_left = self.wave.missiles
         self.incoming = []
 
@@ -205,7 +207,7 @@ class Game(GameState):
         update_fn(dt)
         fps = self.app.clock.get_fps()
         entities = len(ecs.eidx)
-        self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}'
+        self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}  slots={self.current_incoming}'
 
     def phase_setup_update(self, dt: float) -> None:
         self.setup_wave()
@@ -227,6 +229,8 @@ class Game(GameState):
         incoming = len(ecs.eids_by_property(Prop.IS_INCOMING))
         flyers = len(ecs.eids_by_property(Prop.IS_FLYER))
 
+        self.current_incoming = incoming + flyers
+
         if not cities:
             self.phase = next(self.phase_walker)
             return
@@ -245,11 +249,13 @@ class Game(GameState):
 
         if (self.wave.flyer_cooldown
             and not ecs.has(EIDs.FLYER)
-            and self.cd_flyer.cold()):
+            and self.cd_flyer.cold()
+            and self.current_incoming < C.ATTACK_SLOTS):
 
             def shutdown(eid: EntityID) -> None:
                 self.cd_flyer.reset()
 
+            self.current_incoming += 1
             mk_flyer(EIDs.FLYER, self.wave.flyer_min_height, self.wave.flyer_max_height,
                      self.wave.flyer_fire_cooldown, self.app.logical_rect.inflate(32, 32),
                      shutdown)
@@ -347,10 +353,13 @@ class Game(GameState):
     def launch_incoming_wave(self) -> None:
         def attack_shutdown_callback(eid: EntityID) -> None:
             self.incoming.remove(eid)
+            self.current_incoming -= 1
 
-        count = min(C.MISSILES_PER_WAVE, self.incoming_left)
-        for i in range(count):
+        to_launch = min(C.MISSILES_PER_WAVE, self.incoming_left,
+                        C.ATTACK_SLOTS - self.current_incoming)
+        for i in range(to_launch):
             self.incoming_left -= 1
+            self.current_incoming += 1
 
             start = vec2(randint(0, self.app.logical_rect.width), -16)
             target = next(self.allowed_targets)

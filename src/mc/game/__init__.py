@@ -65,11 +65,6 @@ class Game(GameState):
         self.trail_canvas = sdl2.Texture(self.renderer, self.app.logical_rect.size, target=True)
         self.trail_canvas.blend_mode = pygame.BLENDMODE_BLEND
 
-        # self.incoming = TGroup()
-        # self.missiles = TGroup()
-        # self.targets = TGroup()
-        # self.explosions = TGroup()
-
         self.score = None
         self.paused = None
         self.level = None

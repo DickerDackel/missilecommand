@@ -29,7 +29,7 @@ class HighscoreTable(UserList):
         heapify(self.data)
 
     def append(self, val):
-        heappushpop(self.hstable, val)
+        heappushpop(self.data, val)
 
 
 highscoretable = HighscoreTable()

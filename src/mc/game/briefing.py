@@ -23,12 +23,10 @@ class Briefing(GameState):
 
         for t in ['PLAYER', 'DEFEND', 'CITIES', 'x POINTS']:
             msg = C.MESSAGES[t]
-            eid = mk_textlabel(*msg)
-            self.entities.append(eid)
+            self.entities.append(mk_textlabel(*msg))
 
         msg = C.MESSAGES['PLAYER_NO']
-        mk_textlabel(msg.text, msg.pos, msg.anchor, msg.color, eid='PLAYER_NO')
-        self.entities.append('PLAYER_NO')
+        self.entities.append(mk_textlabel(*msg, eid='PLAYER_NO'))
 
         msg = C.MESSAGES['MULT']
         mk_textlabel(f'{mult}{msg.text[1:]}', msg.pos, msg.anchor, msg.color, eid='MULT')

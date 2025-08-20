@@ -116,7 +116,14 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
 
     shutdown = (shutdown_callback, stop_sound)
 
-    prsa = PRSA(pos=vec2(-16, height))
+    left_to_right = random() > 0.5
+    if left_to_right:
+        prsa = PRSA(pos=vec2(container.left, height))
+        momentum = Momentum(speed, 0)
+    else:
+        prsa = PRSA(pos=vec2(container.right, height), scale=(-1, 0))
+        momentum = -Momentum(speed, 0)
+
     ecs.create_entity(eid)
     ecs.set_property(eid, Prop.IS_FLYER)
     ecs.set_property(eid, Prop.IS_PLANE if kind == 'plane' else Prop.IS_SATELLITE)
@@ -124,7 +131,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
     ecs.add_component(eid, Comp.TEXTURE, texture)
     ecs.add_component(eid, Comp.MASK, mask)
     ecs.add_component(eid, Comp.FLYER_FIRE_COOLDOWN, Cooldown(fire_cooldown))
-    ecs.add_component(eid, Comp.MOMENTUM, Momentum(speed, 0))
+    ecs.add_component(eid, Comp.MOMENTUM, momentum)
     ecs.add_component(eid, Comp.CONTAINER, container)
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
     ecs.add_component(eid, Comp.SOUND, sound)

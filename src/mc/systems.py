@@ -160,8 +160,14 @@ def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
 
     bkp_alpha = texture.alpha
 
+    if isinstance(prsa.scale, Sequence):
+        flip_x = prsa.scale[0] < 0
+        flip_y = prsa.scale[1] < 0
+    else:
+        flip_x = flip_y = False
+
     texture.alpha = prsa.alpha  # ty: ignore
-    texture.draw(dstrect=rect, angle=prsa.rotation)
+    texture.draw(dstrect=rect, angle=prsa.rotation, flip_x=flip_x, flip_y=flip_y)
 
     texture.alpha = bkp_alpha
 

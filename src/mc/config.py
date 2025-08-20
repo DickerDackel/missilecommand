@@ -247,27 +247,31 @@ CHAR_MAP = {' ': 42,
 # Initial data from the original Missile Command disassembly table was delay
 # frames.  I wanted to preserve the original values and thus added the `60 * `
 # to convert it into pixels/s
+#
+# NOTE: The original values are hard AF.  Factor added to tone it
+
+DIFFICULTY = 0.75
+
 WAVES = [
-    (1, 60 / 4.8125, 0),  # FIXME
-    (12, 60 / 4.8125, 0),
-    (15, 60 / 2.875, 0),
-    (18, 60 / 1.75, 0),
-    (12, 60 / 1.03, 0),
-    (16, 60 / 0.625, 0),
-    (14, 60 / 0.375, 1),
-    (17, 60 / 0.25, 1),
-    (10, 60 / 0.125, 2),
-    (13, 60 / 0.0625, 3),
-    (16, 60 / 0.04, 4),
-    (19, 60 / 0.02, 4),
-    (12, 60 / 0.016, 5),
-    (14, 60 / 0.008, 5),
-    (16, 60 / 0.004, 6),
-    (18, 60, 6),
-    (14, 60, 7),
-    (17, 60, 7),
-    (19, 60, 7),
-    (22, 60, 7),
+    (12, DIFFICULTY * 60 / 4.8125, 0),
+    (15, DIFFICULTY * 60 / 2.875, 0),
+    (18, DIFFICULTY * 60 / 1.75, 0),
+    (12, DIFFICULTY * 60 / 1.03, 0),
+    (16, DIFFICULTY * 60 / 0.625, 0),
+    (14, DIFFICULTY * 60 / 0.375, 1),
+    (17, DIFFICULTY * 60 / 0.25, 1),
+    (10, DIFFICULTY * 60 / 0.125, 2),
+    (13, DIFFICULTY * 60 / 0.0625, 3),
+    (16, DIFFICULTY * 60 / 0.04, 4),
+    (19, DIFFICULTY * 60 / 0.02, 4),
+    (12, DIFFICULTY * 60 / 0.016, 5),
+    (14, DIFFICULTY * 60 / 0.008, 5),
+    (16, DIFFICULTY * 60 / 0.004, 6),
+    (18, DIFFICULTY * 60, 6),
+    (14, DIFFICULTY * 60, 7),
+    (17, DIFFICULTY * 60, 7),
+    (19, DIFFICULTY * 60, 7),
+    (22, DIFFICULTY * 60, 7),
 ]
 
 # For the cooldown below, the same as for the frame delay above applies

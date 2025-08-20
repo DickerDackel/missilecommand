@@ -110,10 +110,10 @@ HITBOX_BATTERIES = [
 ]
 
 
-POS_MISSILES_DEBRIEFING = vec2(GRID(8, 7, 1, 1).midleft)
-POS_CITIES_DEBRIEFING = vec2(GRID(8, 10, 1, 1).midleft)
-POS_MISSILES_SCORE_DEBRIEFING = vec2(GRID(6, 7, 1, 1).midright)
-POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(6, 10, 1, 1).midright)
+POS_MISSILES_DEBRIEFING = vec2(GRID(16, 12, 1, 1).midleft)
+POS_CITIES_DEBRIEFING = vec2(GRID(16, 15, 1, 1).midleft)
+POS_MISSILES_SCORE_DEBRIEFING = vec2(GRID(14, 12, 1, 1).midright)
+POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(14, 15, 1, 1).midright)
 
 ########################################################################
 #   ____                        ____       _   _   _
@@ -329,8 +329,15 @@ MESSAGES = {
     'MULT': MessageConfig('1         ', GRID(15, 11, 2, 2).center, 'center', COLOR.special_text),
     'DEFEND': MessageConfig('DEFEND', GRID(9, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
     'CITIES': MessageConfig('CITIES', GRID(21, 18, 2, 2).center, 'center', COLOR.normal_text),  # noqa: E501
-    'BONUS POINTS': MessageConfig('BONUS POINTS', (15, ), 'center', COLOR.normal_text),
+    'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 8, 2, 1).center, 'center', COLOR.normal_text),
     'SCORE': MessageConfig('SCORE', GRID(3, 0, 2, 1).midright, 'midright', COLOR.special_text),
     'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
-    'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text)
+    'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text),
+    'HIGHSCORE ENTRY': {
+        'PLAYER  ': MessageConfig('PLAYER  ', GRID(15, 7, 2, 1).center, 'center', COLOR.normal_text),
+        'GREAT SCORE': MessageConfig('GREAT SCORE', GRID(15, 9, 2, 2).center, 'center', COLOR.normal_text, (2, 1)),
+        'ENTER YOUR INITIALS': MessageConfig('ENTER YOUR INITIALS', GRID(15, 12, 2, 1).center, 'center', COLOR.normal_text),
+        'SPIN BALL TO CHANGE LETTER': MessageConfig('SPIN BALL TO CHANGE LETTER', GRID(15, 14, 2, 1).center, 'center', COLOR.normal_text),
+        'PRESS ANY FIRE SWITCH TO SELECT': MessageConfig('PRESS ANY FIRE SWITCH TO SELECT', GRID(15, 16, 2, 1).center, 'center', COLOR.normal_text),
+    },
 }

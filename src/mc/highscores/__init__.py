@@ -27,28 +27,31 @@ class Highscores(GameState):
         ecs.reset()
 
         msg = C.MESSAGES['HIGH SCORES']
-        self.entities.append(mk_textlabel(*msg))
+        self.entities.append(mk_textlabel(*msg, eid='high scores'))
 
         msg = C.MESSAGES['BONUS CITY EVERY POINTS']
-        self.entities.append(mk_textlabel(*msg))
-        self.entities.append(mk_textlabel(*msg))
+        self.entities.append(mk_textlabel(*msg, eid='bonus city 1'))
+        self.entities.append(mk_textlabel(*msg, eid='bonus city 2'))
         ecs.add_component(self.entities[-1], Comp.COLOR, C.COLOR.special_text)
         ecs.add_component(self.entities[-1], Comp.TEXT, '                 10000       ')
 
         msg = C.MESSAGES['DEFEND']
-        self.entities.append(mk_textlabel(*msg))
+        self.entities.append(mk_textlabel(*msg, eid='defend'))
 
         msg = C.MESSAGES['CITIES']
-        self.entities.append(mk_textlabel(*msg))
+        self.entities.append(mk_textlabel(*msg, eid='cities'))
 
         for y, (score, initials) in enumerate(highscoretable):
             msg = C.MessageConfig(f'{initials} {score:8}',
                                   C.GRID(15, y + 4, 2, 1).center,
                                   'center',
                                   C.COLOR.special_text)
-            self.entities.append(mk_textlabel(*msg))
+            self.entities.append(mk_textlabel(*msg, eid=f'hst-{y}'))
 
-        self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
+        self.entities.append(mk_texture(cache['textures']['ground'],
+                                        C.GRID.midbottom,
+                                        'midbottom',
+                                        eid='ground'))
 
         self.cd_state = Cooldown(5)
 

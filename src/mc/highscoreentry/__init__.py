@@ -87,4 +87,4 @@ class HighscoreEntry(GameState):
     def teardown(self):
         for eid in self.entities:
             ecs.remove_entity(eid)
-        raise StateExit(-1)
+        raise StateExit

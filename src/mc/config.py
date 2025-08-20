@@ -28,7 +28,8 @@ FPS = 60
 
 ASSETS = files('mc.assets')
 
-GRID = GridLayout(SCREEN, 31, 26, 0, 0)
+GRID_WIDTH, GRID_HEIGHT = 31, 26
+GRID = GridLayout(SCREEN, GRID_WIDTH, GRID_HEIGHT, 0, 0)
 
 PLAY_AUDIO = True
 

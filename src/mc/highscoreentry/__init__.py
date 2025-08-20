@@ -22,6 +22,7 @@ class HighscoreEntry(GameState):
         self.app = app
 
         self.labels = []
+        self.entities = []
 
 
         pos = vec2(C.GRID(7, 3, 2, 1).center)
@@ -78,6 +79,6 @@ class HighscoreEntry(GameState):
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self):
-        for eid in self.labels:
+        for eid in self.entities:
             ecs.remove_entity(eid)
         raise StateExit(-1)

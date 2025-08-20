@@ -47,7 +47,6 @@ class Debriefing(GameState):
         self.app = app
         self.parent = parent
         self.parent_score_eid = score_eid
-        grid = C.GRID
 
         self.phase_handlers = {
             StatePhase.SETUP: self.phase_setup_update,

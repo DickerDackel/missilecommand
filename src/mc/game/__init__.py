@@ -392,16 +392,18 @@ class Game(GameState):
                 continue
 
             f_pos = f_prsa.pos
+            f_rect = f_mask.get_rect(center=f_pos)
 
             for e_eid, (e_prsa, e_mask, e_scale) in explosions:
-                e_pos = e_prsa.pos
-                offset = e_pos - f_pos
+                lt = e_scale()
+                e_rect = e_mask.get_rect()
+                scale = vec2(e_rect.size) * lt
+                scaled_mask = e_mask.scale(scale)
+                m_rect = scaled_mask.get_rect(center=e_prsa.pos)
 
-                scale = e_scale()
-                size = vec2(e_mask.get_size())
-                scaled_mask = e_mask.scale(size * scale)
+                offset = vec2(m_rect.topleft) - vec2(f_rect.topleft)
 
-                if f_mask.overlap(scaled_mask, offset) is None:
+                if scaled_mask.overlap(f_mask, offset) is None:
                     continue
 
                 sound = ecs.comp_of_eid(f_eid, Comp.SOUND)

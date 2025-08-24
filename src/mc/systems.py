@@ -1,7 +1,7 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from typing import Callable
 
 import pygame

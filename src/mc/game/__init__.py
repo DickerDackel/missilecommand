@@ -60,7 +60,7 @@ class Game(GameState):
         self.app = app
         self.renderer = self.app.renderer
 
-        pygame.mouse.set_pos(app.logical_to_window(self.app.logical_rect.center))
+        pygame.mouse.set_pos(app.coordinates_to_window(self.app.logical_rect.center))
 
         self.trail_canvas = sdl2.Texture(self.renderer, self.app.logical_rect.size, target=True)
         self.trail_canvas.blend_mode = pygame.BLENDMODE_BLEND
@@ -105,8 +105,8 @@ class Game(GameState):
         self.allowed_targets = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
-        scale = self.app.renderer.scale
-        rect = C.CROSSHAIR_CONSTRAINT.scale_by(scale).move_to(topleft=(0, 0))
+        rect = pygame.Rect(self.app.coordinates_to_window(C.CROSSHAIR_CONSTRAINT.topleft),
+                           self.app.size_to_window(C.CROSSHAIR_CONSTRAINT.size))
         self.app.window.mouse_rect = rect
 
         self.score = 0
@@ -180,9 +180,7 @@ class Game(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        self.mouse = to_viewport(pygame.mouse.get_pos(),
-                                 self.app.window_rect.size,
-                                 self.app.logical_rect.size)
+        self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
 
         if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
                 or e.type == pygame.QUIT):
@@ -311,7 +309,7 @@ class Game(GameState):
         # Make mouse work even if stackpermissions forbids update
 
         ecs.run_system(0, sys_mouse, Comp.PRSA,
-                       remap=self.app.window_to_logical,
+                       remap=self.app.coordinates_from_window,
                        has_properties={Comp.WANTS_MOUSE})
 
         ground = cache['textures']['ground']

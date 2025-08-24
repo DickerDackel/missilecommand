@@ -69,6 +69,7 @@ def main() -> None:
     cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')
     cmdline.add_argument('-S', '--stats', action='store_true', default=0, help='Show statistics on exit')
     cmdline.add_argument('-P', '--perftrace', action='store_true', default=0, help='Show live performance data')
+    cmdline.add_argument('-U', '--unlimited', action='store_true', default=False, help='Unlimited ammo FIXME')
     opts = cmdline.parse_args(sys.argv[1:])
     opts.verbose = max(min(opts.verbose, 3), 0)
     opts.quiet = max(min(opts.quiet, 2), 0)
@@ -82,7 +83,7 @@ def main() -> None:
     ][2 - opts.verbose + opts.quiet]
     logging.basicConfig(level=log_level)  # noqa: E402
 
-    w = pygame.Window(size=(1024, 960))
+    w = pygame.Window(size=(1280, 960))
     # w = None
     app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     pygame.mouse.set_visible(False)
@@ -110,6 +111,7 @@ def main() -> None:
     sm.add(states.highscoreentry, states.highscores)
     walker = sm.walker(states.splash)
 
+    app.opts = opts  # FIXME
     app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
 
 

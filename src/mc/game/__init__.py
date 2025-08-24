@@ -16,7 +16,6 @@ from pygame.typing import Point
 
 from ddframework.app import App, GameState, StateExit, StackPermissions
 from ddframework.cache import cache
-from ddframework.gridlayout import debug_grid
 from ddframework.statemachine import StateMachine
 
 import mc.config as C
@@ -36,7 +35,7 @@ from mc.systems import (sys_container, sys_detonate_missile,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
 from mc.types import Comp, EntityID, Prop
-from mc.utils import (cls, play_sound, purge_entities, to_viewport)
+from mc.utils import (cls, play_sound, purge_entities)
 
 
 class StatePhase(StrEnum):
@@ -200,7 +199,7 @@ class Game(GameState):
         update_fn(dt)
         fps = self.app.clock.get_fps()
         entities = len(ecs.eidx)
-        self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}  slots={self.current_incoming}'
+        self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}  slots={len(self.incoming)}'
 
     def phase_setup_update(self, dt: float) -> None:
         self.setup_wave()
@@ -409,7 +408,7 @@ class Game(GameState):
                     continue
 
                 sound = ecs.comp_of_eid(f_eid, Comp.SOUND)
-                sound.stop()
+                if sound is not None: sound.stop()
 
                 ecs.set_property(f_eid, Prop.IS_DEAD_FLYER)
                 ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))

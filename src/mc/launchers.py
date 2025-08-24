@@ -101,7 +101,7 @@ def mk_explosion(pos: Point) -> EntityID:
     return eid
 
 
-def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown: float,
+def mk_flyer(eid: EntityID, min_height: float, max_height: float, shoot_cooldown: float,
              container: Container, shutdown_callback: Callable) -> EntityID:
     kind = choice(('alien', 'plane'))
     color = choice(('red', 'green'))
@@ -112,7 +112,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
     sound = play_sound(cache['sounds']['flyer'], loops=-1)
 
     def stop_sound(eid):
-        sound.stop()
+        if sound is not None: sound.stop()
 
     shutdown = (shutdown_callback, stop_sound)
 
@@ -130,7 +130,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, fire_cooldown:
     ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.TEXTURE, texture)
     ecs.add_component(eid, Comp.MASK, mask)
-    ecs.add_component(eid, Comp.FLYER_FIRE_COOLDOWN, Cooldown(fire_cooldown))
+    ecs.add_component(eid, Comp.FLYER_SHOOT_COOLDOWN, Cooldown(shoot_cooldown))
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
     ecs.add_component(eid, Comp.CONTAINER, container)
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown)

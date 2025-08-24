@@ -15,7 +15,7 @@ class Wave(NamedTuple):
     flyer_min_height: int
     flyer_max_height: int
     flyer_cooldown: int
-    flyer_fire_cooldown: int
+    flyer_shoot_cooldown: int
 
 
 def wave_iter() -> Iterator[Wave]:

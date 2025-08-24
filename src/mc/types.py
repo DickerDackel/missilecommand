@@ -49,7 +49,7 @@ class Comp(StrEnum):
     # Actual objects
     COLOR_CYCLE = auto()
     CONTAINER = auto()  # Rect
-    FLYER_FIRE_COOLDOWN = auto()
+    FLYER_SHOOT_COOLDOWN = auto()
     HITBOX = auto()
     LIFETIME = auto()  # Cooldown, sys_lifetime
     MASK = auto()  # sprite mask for collision checks

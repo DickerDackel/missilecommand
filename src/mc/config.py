@@ -124,8 +124,6 @@ POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(14, 15, 1, 1).midright)
 #                                                          |___/
 #######################################################################)
 
-ATTACK_SLOTS = 8
-
 EXPLOSION_DURATION = 0.5
 EXPLOSION_COLORS = ('white', '#ffd541', '#a6fcdb', '#df3e23', '#20d6c7', '#d6f264')
 
@@ -288,7 +286,11 @@ FLYERS = [
     (SCREEN.height - 100, SCREEN.height - 131,  32 / 60, 16 / 60),
 ]
 
-MISSILES_PER_WAVE = 4
+# Screen height is 240, row 0 is at the bottom in the arcade
+FORK_HEIGHT_RANGE = (240 - 159, 240 - 128)
+INCOMING_REQUIRED_HEIGHT = 240 - 200
+INCOMING_SLOTS = 8
+MAX_LAUNCHES_PER_FRAME = 4
 MISSILE_SPLITS = 3
 PLANE_SPEED = 20
 SATELLITE_SPEED = 30

@@ -92,9 +92,7 @@ class Game(GameState):
             StatePhase.GAMEOVER: self.phase_gameover_update,
         }
 
-        self.current_incoming = None
         self.incoming_left = None
-        self.cd_incoming = None
         self.incoming = None
         self.score_mult = None
 
@@ -118,8 +116,6 @@ class Game(GameState):
 
         self.cities = [True] * 6
         self.batteries = [True] * 3
-
-        self.cd_incoming = Cooldown(2, cold=True)
 
         ecs.reset()
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
@@ -168,12 +164,11 @@ class Game(GameState):
 
         self.score_mult = self.level // 2 + 1
 
-        self.current_incoming = 0
         self.incoming_left = self.wave.missiles
-        self.incoming = []
+        self.incoming = set()
 
-        self.cd_incoming.reset(2)
         self.cd_flyer = Cooldown(self.wave.flyer_cooldown)
+        self.cd_flyer_shoot = Cooldown(self.wave.flyer_shoot_cooldown)
 
     def restart(self, from_state: GameState, result: object) -> None:
         pass
@@ -218,39 +213,76 @@ class Game(GameState):
         #   No more incoming
         cities = any(self.cities)
         silos_left = sum(len(b) for b in self.batteries)
-        incoming = len(ecs.eids_by_property(Prop.IS_INCOMING))
-        flyers = len(ecs.eids_by_property(Prop.IS_FLYER))
 
-        self.current_incoming = incoming + flyers
-
-        if not cities:
+        if (not silos_left
+            or not self.incoming and self.incoming_left <= 0):
             self.phase = next(self.phase_walker)
             return
 
-        if not silos_left:
-            self.phase = next(self.phase_walker)
-            return
-
-        if incoming == 0 and self.incoming_left == 0 and flyers == 0:
-            self.phase = next(self.phase_walker)
-            return
-
-        if self.cd_incoming.cold():
-            self.cd_incoming.reset()
-            self.launch_incoming_wave()
-
-        if (self.wave.flyer_cooldown
-            and not ecs.has(EIDs.FLYER)
-            and self.cd_flyer.cold()
-            and self.current_incoming < C.ATTACK_SLOTS):
-
+        # Launch flyer if
+        #     no flyer is active
+        #     and the wave does have a flyer
+        #     and flyer cooldown is cold
+        #     and an incoming slot is free
+        if (not ecs.has(EIDs.FLYER)
+                and self.wave.flyer_cooldown
+                and len(self.incoming) < C.INCOMING_SLOTS
+                and self.cd_flyer.cold()):
             def shutdown(eid: EntityID) -> None:
                 self.cd_flyer.reset()
+                self.incoming.remove(eid)
 
-            self.current_incoming += 1
-            mk_flyer(EIDs.FLYER, self.wave.flyer_min_height, self.wave.flyer_max_height,
-                     self.wave.flyer_fire_cooldown, self.app.logical_rect.inflate(32, 32),
-                     shutdown)
+            self.incoming.add(mk_flyer(EIDs.FLYER, self.wave.flyer_min_height,
+                                       self.wave.flyer_max_height,
+                                       self.wave.flyer_shoot_cooldown,
+                                       self.app.logical_rect.inflate(32, 32),
+                                       shutdown))
+
+        def spawn_missiles(number=1, origin=None):
+            def attack_shutdown_callback(eid: EntityID) -> None:
+                self.incoming.remove(eid)
+
+            to_launch = min(C.MAX_LAUNCHES_PER_FRAME,
+                            C.INCOMING_SLOTS - len(self.incoming),
+                            self.incoming_left,
+                            number)
+
+            for i in range(to_launch):
+                start = vec2(origin) if origin else vec2(randint(0, self.app.logical_rect.width), -3)
+                target = next(self.allowed_targets)
+                speed = self.wave.missile_speed
+
+                eid = mk_missile(start, target, speed, incoming=True,
+                                 shutdown_callback=attack_shutdown_callback)
+                self.incoming.add(eid)
+                self.incoming_left -= 1
+
+        may_launch = all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
+                         for eid in self.incoming)
+        if may_launch:
+            spawn_missiles(C.MAX_LAUNCHES_PER_FRAME)
+
+        # Flyer shoots
+        if (ecs.has(EIDs.FLYER)):
+            prsa, cd_shoot = ecs.comps_of_eid(EIDs.FLYER, Comp.PRSA, Comp.FLYER_SHOOT_COOLDOWN)
+            if cd_shoot.cold():
+                cd_shoot.reset()
+                spawn_missiles(randint(1, 3), origin=prsa.pos)
+
+        # From the missile command ROM dump text:
+        # So the conditions required for an ICBM to be eligible to split are:
+        # * The current missile, or a previously-examined missile, is at an
+        #   altitude between 128 and 159.
+        # * No previously-examined missile is above 159.
+        # * There must be available slots in the ICBM table, and unspent ICBMs
+        #   for the wave.
+        for eid in list(self.incoming):  # listify the set, since it will change
+            prsa = ecs.comp_of_eid(eid, Comp.PRSA)
+            # FIXME incomplete!
+            if not (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]):
+                break
+
+            spawn_missiles(randint(1, 3))
 
         self.run_game_systems(dt)
 
@@ -303,8 +335,6 @@ class Game(GameState):
         raise StateExit
 
     def draw(self) -> None:
-        debug_grid(self.app.renderer, C.GRID)
-
         # Make mouse work even if stackpermissions forbids update
 
         ecs.run_system(0, sys_mouse, Comp.PRSA,
@@ -326,7 +356,12 @@ class Game(GameState):
             play_sound(cache['sounds']['brzzz'])
             return
 
-        silo = self.batteries[launchpad].pop()
+        # FIXME
+        if self.app.opts.unlimited:
+            from mc.launchers import mk_silo
+            silo = mk_silo(randint(1000, 999999), launchpad, C.POS_BATTERIES[launchpad])
+        else:
+            silo = self.batteries[launchpad].pop()
         ecs.remove_entity(silo)
 
         start = C.POS_BATTERIES[launchpad]
@@ -341,25 +376,6 @@ class Game(GameState):
         mk_target(target_eid, dest)
         mk_missile(start, dest, speed, cb_shutdown, incoming=False)
         play_sound(cache['sounds']['launch'], 3)
-
-    def launch_incoming_wave(self) -> None:
-        def attack_shutdown_callback(eid: EntityID) -> None:
-            self.incoming.remove(eid)
-            self.current_incoming -= 1
-
-        to_launch = min(C.MISSILES_PER_WAVE, self.incoming_left,
-                        C.ATTACK_SLOTS - self.current_incoming)
-        for i in range(to_launch):
-            self.incoming_left -= 1
-            self.current_incoming += 1
-
-            start = vec2(randint(0, self.app.logical_rect.width), -16)
-            target = next(self.allowed_targets)
-            speed = self.wave.missile_speed
-            # speed = 200  # FIXME
-            eid = mk_missile(start, target, speed, incoming=True,
-                             shutdown_callback=attack_shutdown_callback)
-            self.incoming.append(eid)
 
     def run_game_systems(self, dt):
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)

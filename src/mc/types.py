@@ -40,9 +40,9 @@ class Prop(StrEnum):
 
 class Comp(StrEnum):
     # Immutables
-    ANCHOR = auto()  # sys_textlabel, sys_draw_texture
+    ANCHOR = auto()  # sys_draw_textlabel, sys_draw_texture
     BATTERY_ID = auto()  # To identify which battery a silo belongs to
-    COLOR = auto()  # sys_textlabel
+    COLOR = auto()  # sys_draw_textlabel
     ID = auto()  # General id, always belongs to the entity
     WANTS_MOUSE = auto()  # sys_mouse, bool - for entities that want mouse position in prsa.pos
 
@@ -59,7 +59,7 @@ class Comp(StrEnum):
     SHUTDOWN = auto()
     SOUND = auto()
     TARGET = auto()  # sys_target_reached - A target for a sprite or aiming
-    TEXT = auto()  # sys_textlabel - A text label for the sprite based font
+    TEXT = auto()  # sys_draw_textlabel - A text label for the sprite based font
     TEXT_LIST = auto()
     TEXT_SEQUENCE = auto()
     TEXTURE = auto()  # sys_draw_texture, sys_texture_from_texture_list - Exactly what it says

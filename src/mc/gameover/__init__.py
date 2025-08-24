@@ -19,7 +19,7 @@ import mc.config as C
 
 from mc.launchers import mk_gameover_explosion, mk_gameover_text
 from mc.systems import (sys_apply_scale, sys_colorcycle, sys_colorize,
-                        sys_textcurtain, sys_textlabel, sys_draw_texture)
+                        sys_textcurtain, sys_draw_textlabel, sys_draw_texture)
 from mc.types import Comp, Prop
 from mc.utils import play_sound, purge_entities
 
@@ -149,7 +149,7 @@ class Gameover(GameState):
         self.app.renderer.clear()
 
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
-        ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
+        ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def teardown(self) -> None:
         purge_entities(Prop.IS_GAMEOVER)

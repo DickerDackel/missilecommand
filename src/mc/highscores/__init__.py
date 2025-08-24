@@ -15,7 +15,7 @@ import mc.config as C
 
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel, mk_texture
-from mc.systems import sys_draw_texture, sys_textlabel
+from mc.systems import sys_draw_texture, sys_draw_textlabel
 from mc.types import Comp
 
 
@@ -78,7 +78,7 @@ class Highscores(GameState):
     def draw(self) -> None:
         self.app.renderer.draw_color = C.COLOR.background
         self.app.renderer.clear()
-        ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
+        ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self) -> None:

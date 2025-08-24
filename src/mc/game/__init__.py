@@ -31,7 +31,8 @@ from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
 from mc.systems import (sys_container, sys_detonate_missile,
                         sys_dont_overshoot, sys_explosion, sys_lifetime,
                         sys_momentum, sys_mouse, sys_shutdown,
-                        sys_target_reached, sys_textlabel, sys_draw_texture,
+                        sys_target_reached, sys_draw_textlabel,
+                        sys_draw_texture, sys_textblink,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
 from mc.types import Comp, EntityID, Prop
@@ -124,7 +125,7 @@ class Game(GameState):
         mk_crosshair()
 
         msg = C.MESSAGES['game']['SCORE']
-        mk_score_label(f'{self.score:5d}', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
+        mk_score_label(f'{self.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
 
         self.cd_flyer = None
 
@@ -349,7 +350,7 @@ class Game(GameState):
         ecs.run_system(0, sys_texture_from_texture_list, Comp.TEXTURE_LIST)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
-        ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
+        ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def launch_defense(self, launchpad: int, target: Point) -> None:
         if not self.batteries[launchpad]:
@@ -378,6 +379,7 @@ class Game(GameState):
         play_sound(cache['sounds']['launch'], 3)
 
     def run_game_systems(self, dt):
+        ecs.run_system(dt, sys_textblink, Comp.COLOR_CYCLE)
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
@@ -483,4 +485,5 @@ class Game(GameState):
                 self.batteries[i].clear()
                 break
 
-        ecs.add_component(EIDs.SCORE, Comp.TEXT, str(self.score))
+        score = f'{self.score:5d}  '  # Trailing spaces important
+        ecs.add_component(EIDs.SCORE, Comp.TEXT, score)

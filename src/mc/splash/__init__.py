@@ -12,7 +12,7 @@ from ddframework.app import App, GameState, StateExit
 import mc.config as C
 
 from mc.launchers import mk_textlabel
-from mc.systems import sys_textlabel
+from mc.systems import sys_draw_textlabel
 from mc.types import Comp
 
 
@@ -53,7 +53,7 @@ class Splash(GameState):
     def draw(self) -> None:
         self.app.renderer.draw_color = C.COLOR.background
         self.app.renderer.clear()
-        ecs.run_system(0, sys_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
+        ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def teardown(self) -> None:
         ecs.remove_entity(self.state_label)

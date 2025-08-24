@@ -127,8 +127,12 @@ def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
     ecs.add_component(eid, Comp.TEXT, text_sequence())
 
 
-def sys_textlabel(dt: float, eid: EntityID, text: str,
-                  prsa: PRSA, anchor: str, color: ColorLike) -> None:
+def sys_textblink(dt: float, eid: EntityID, colors: AutoSequence):
+    ecs.add_component(eid, Comp.COLOR, colors())
+
+
+def sys_draw_textlabel(dt: float, eid: EntityID, text: str,
+                       prsa: PRSA, anchor: str, color: ColorLike) -> None:
     font = cache['textures']['letters']
     crect = font[0].get_rect().scale_by(prsa.scale)
     rect = crect.scale_by(len(text), 1)

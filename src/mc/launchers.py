@@ -50,16 +50,15 @@ def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
                      pos + C.BATTERY_SILO_OFFSET + offset)
              for i, offset in enumerate(C.SILO_OFFSETS)]
 
-    return silos
+    return (eid, silos)
 
 
-def mk_city(city_id: int, pos: Point) -> EntityID:
+def mk_city(pos: Point, eid: EntityID = None) -> EntityID:
     """Create a city entity"""
     textures = cache['textures']['small-cities']
     auto_sequence = AutoSequence(textures, 10)
-    auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
+    auto_sequence.lt.duration.normalized = random()
 
-    eid = city_id
     eid = ecs.create_entity(eid)
     ecs.set_property(eid, Prop.IS_CITY)
     ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
@@ -192,12 +191,11 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     return eid
 
 
-def mk_ruin(city_id: int, pos: Point) -> EntityID:
+def mk_ruin(pos: Point, eid: EntityID = None) -> EntityID:
     textures = cache['textures']['small-ruins']
     auto_sequence = AutoSequence(textures, 3)
-    auto_sequence.lt.duration.normalized = random()  # ty: ignore[invalid-assignment]
+    auto_sequence.lt.duration.normalized = random()
 
-    eid = city_id
     eid = ecs.create_entity(eid)
     ecs.set_property(eid, Prop.IS_RUIN)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
@@ -214,6 +212,7 @@ def mk_score_label(*args: Any, **kwargs: Any) -> EntityID:
 def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
     textures = cache['textures']['missiles']
     auto_sequence = AutoSequence(textures, 1)
+    auto_sequence.lt.duration.normalized = random()
 
     eid = f'silo-{silo_id}'
     ecs.create_entity(eid)

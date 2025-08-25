@@ -7,11 +7,13 @@ import tinyecs as ecs
 from pgcooldown import Cooldown
 
 from ddframework.app import App, GameState, StateExit
+from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
 
 import mc.config as C
 
 from mc.launchers import mk_textlabel
+from mc.types import Comp
 from mc.utils import play_sound
 
 
@@ -21,16 +23,17 @@ class Briefing(GameState):
 
         self.entities = []
 
-        for t in ['PLAYER', 'DEFEND', 'CITIES', 'x POINTS']:
+        for t in {'PLAYER', 'DEFEND', 'CITIES', 'x POINTS', 'PLAYER_NO'}:
             msg = C.MESSAGES['briefing'][t]
             self.entities.append(mk_textlabel(*msg))
 
-        msg = C.MESSAGES['briefing']['PLAYER_NO']
-        self.entities.append(mk_textlabel(*msg, eid='PLAYER_NO'))
-
         msg = C.MESSAGES['briefing']['MULT']
-        mk_textlabel(f'{mult}{msg.text[1:]}', *msg[1:], eid='MULT')
-        self.entities.append('MULT')
+        self.entities.append(mk_textlabel(f'{mult}{msg.text[1:]}', *msg[1:]))
+
+        for t in {'↓ DEFEND', '↓ CITIES'}:
+            msg = C.MESSAGES['briefing'][t]
+            self.entities.append(mk_textlabel(*msg))
+            ecs.add_component(self.entities[-1], Comp.COLOR_CYCLE, AutoSequence((C.COLOR.special_text, C.COLOR.background)))
 
         self.cd_state = Cooldown(3)
         self.cd_sound = Cooldown(0.35)

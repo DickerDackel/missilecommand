@@ -150,14 +150,14 @@ class Game(GameState):
 
         cls(self.trail_canvas, C.COLOR.clear)
 
-        self.batteries = [mk_battery(i, pos) for i, pos in enumerate(C.POS_BATTERIES)]
+        self.batteries = [mk_battery(i, pos)[1] for i, pos in enumerate(C.POS_BATTERIES)]
 
         for city, alive in enumerate(self.cities):
             pos = C.POS_CITIES[city]
             if alive:
-                mk_city(f'city-{city}', pos)
+                mk_city(pos, eid=f'city-{city}')
             else:
-                mk_ruin(f'ruin-{city}', pos)
+                mk_ruin(pos, eid=f'ruin-{city}')
 
         remaining_cities = [i for i in range(len(self.cities)) if self.cities[i]]
         shuffle(remaining_cities)
@@ -180,11 +180,9 @@ class Game(GameState):
 
     def restart(self, from_state: GameState, result: object) -> None:
         if ecs.has(EIDs.FLYER):
-            print('reactivating flyer sound')
             sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
             if sound is not None:
-                print('really!')
-                play_sound(sound)
+                play_sound(sound, loops=-1)
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
@@ -199,7 +197,6 @@ class Game(GameState):
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
                 if ecs.has(EIDs.FLYER):
-                    print('stopping sound')
                     sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
                     if sound is not None: sound.stop()
 
@@ -307,12 +304,7 @@ class Game(GameState):
         missiles = ecs.eids_by_property(Prop.IS_MISSILE)
         flyers = ecs.eids_by_property(Prop.IS_FLYER)
         for eid in chain(missiles, flyers):
-            # FIXME
-            try:
-                momentum = ecs.comp_of_eid(eid, Comp.MOMENTUM)
-            except ecs.UnknownComponentError:
-                print(ecs.eidx[eid])
-                raise
+            momentum = ecs.comp_of_eid(eid, Comp.MOMENTUM)
             momentum *= 2
 
         self.phase = next(self.phase_walker)
@@ -453,7 +445,10 @@ class Game(GameState):
 
                 is_satellite = ecs.has_property(f_eid, Prop.IS_SATELLITE)
                 base_score = C.Score.SATELLITE if is_satellite else C.Score.PLANE
+                prev_score = self.score // C.BONUS_CITY
                 self.score += self.score_mult * base_score
+                if self.score // C.BONUS_CITY > prev_score:
+                    self.bonus_city = True
 
                 break
 
@@ -484,7 +479,7 @@ class Game(GameState):
                 ecs.add_component(m_eid, Prop.IS_DEAD, True)
                 self.cities[i] = False
                 ecs.remove_entity(f'city-{i}')
-                mk_ruin(f'city-{i}', C.POS_CITIES[i])
+                mk_ruin(C.POS_CITIES[i], f'city-{i}')
 
             # missile vs. batteries
             for i, battery in enumerate(self.batteries):

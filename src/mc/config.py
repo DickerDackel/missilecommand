@@ -344,6 +344,8 @@ MESSAGES = {
         'PLAYER': MessageConfig('PLAYER  ', GRID(15, 8, 2, 2).center, 'center', COLOR.normal_text),
         'PLAYER_NO': MessageConfig('       1', GRID(15, 8, 2, 2).center, 'center', COLOR.special_text),
         'x POINTS': MessageConfig('  x POINTS', GRID(15, 11, 2, 2).center, 'center', COLOR.normal_text),
+        '↓ DEFEND': MessageConfig('↓', GRID(9, 19, 2, 2).center, 'center', COLOR.special_text),
+        '↓ CITIES': MessageConfig('↓', GRID(21, 19, 2, 2).center, 'center', COLOR.special_text),
     },
     'debriefing': {
         'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 8, 2, 1).center, 'center', COLOR.normal_text),
@@ -361,6 +363,7 @@ MESSAGES = {
     },
     'highscores': {
         'BONUS CITY EVERY POINTS': MessageConfig('BONUS CITY EVERY       POINTS', GRID(15, 15, 2, 1).center, 'center', COLOR.normal_text),
+        'BONUS CITY POINTS': MessageConfig('                 10000       ', GRID(15, 15, 2, 1).center, 'center', COLOR.special_text),
         'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
     },
     'pause': {

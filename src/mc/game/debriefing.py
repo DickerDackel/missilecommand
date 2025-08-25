@@ -105,8 +105,11 @@ class Debriefing(GameState):
             self.phase = next(self.phase_walker)
             self.cd_count.reset()
         else:
+            prev_score = self.parent.score // C.BONUS_CITY
             self.parent.score += C.Score.UNUSED_MISSILE
             ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{self.parent.score:5d}  ')
+            if self.parent.score // C.BONUS_CITY > prev_score:
+                self.parent.bonus_city = True
 
             self.missile_score += C.Score.UNUSED_MISSILE
             ecs.add_component(EIDs.MISSILES_LABEL, Comp.TEXT, str(self.missile_score))

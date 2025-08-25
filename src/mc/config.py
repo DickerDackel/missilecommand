@@ -1,6 +1,7 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
+from pathlib import Path
 from enum import IntEnum, auto
 from importlib.resources import files
 from types import SimpleNamespace
@@ -32,6 +33,11 @@ GRID_WIDTH, GRID_HEIGHT = 31, 26
 GRID = GridLayout(SCREEN, GRID_WIDTH, GRID_HEIGHT, 0, 0)
 
 PLAY_AUDIO = True
+
+VENDOR = 'dackelsoft'
+APPNAME = 'Missile Command'
+STATE_DIRECTORY = Path(pygame.system.get_pref_path(VENDOR, APPNAME))
+HIGHSCORE_FILE = STATE_DIRECTORY / 'missile command highscores.json'
 
 ########################################################################
 #   ____
@@ -230,8 +236,8 @@ CHAR_MAP = {' ': 42,
             'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P':
             15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22,
             'X': 23, 'Y': 24, 'Z': 25, '0': 26, '1': 27, '2': 28, '3': 29,
-            '4': 30, '5': 31, '6': 32, '7': 33, '8': 34, '9': 35, 'up': 36,
-            'down': 37, 'left': 38, 'right': 39, 'copy': 40, 'popy': 41, '.': 43,
+            '4': 30, '5': 31, '6': 32, '7': 33, '8': 34, '9': 35, '↑': 36,
+            '↓': 37, '←': 38, '→': 39, '©': 40, 'popy': 41, '.': 43,
             ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48}
 
 
@@ -252,26 +258,27 @@ CHAR_MAP = {' ': 42,
 
 DIFFICULTY = 0.75
 
+240 / 6
 WAVES = [
-    (12, DIFFICULTY * 60 / 4.8125, 0),
-    (15, DIFFICULTY * 60 / 2.875, 0),
-    (18, DIFFICULTY * 60 / 1.75, 0),
-    (12, DIFFICULTY * 60 / 1.03, 0),
-    (16, DIFFICULTY * 60 / 0.625, 0),
-    (14, DIFFICULTY * 60 / 0.375, 1),
-    (17, DIFFICULTY * 60 / 0.25, 1),
-    (10, DIFFICULTY * 60 / 0.125, 2),
-    (13, DIFFICULTY * 60 / 0.0625, 3),
-    (16, DIFFICULTY * 60 / 0.04, 4),
-    (19, DIFFICULTY * 60 / 0.02, 4),
-    (12, DIFFICULTY * 60 / 0.016, 5),
-    (14, DIFFICULTY * 60 / 0.008, 5),
-    (16, DIFFICULTY * 60 / 0.004, 6),
-    (18, DIFFICULTY * 60, 6),
-    (14, DIFFICULTY * 60, 7),
-    (17, DIFFICULTY * 60, 7),
-    (19, DIFFICULTY * 60, 7),
-    (22, DIFFICULTY * 60, 7),
+    (12, DIFFICULTY * 60 / (1 + 4.8125), 0),
+    (15, DIFFICULTY * 60 / (1 + 2.875), 0),
+    (18, DIFFICULTY * 60 / (1 + 1.75), 0),
+    (12, DIFFICULTY * 60 / (1 + 1.03), 0),
+    (16, DIFFICULTY * 60 / (1 + 0.625), 0),
+    (14, DIFFICULTY * 60 / (1 + 0.375), 1),
+    (17, DIFFICULTY * 60 / (1 + 0.25), 1),
+    (10, DIFFICULTY * 60 / (1 + 0.125), 2),
+    (13, DIFFICULTY * 60 / (1 + 0.0625), 3),
+    (16, DIFFICULTY * 60 / (1 + 0.04), 4),
+    (19, DIFFICULTY * 60 / (1 + 0.02), 4),
+    (12, DIFFICULTY * 60 / (1 + 0.016), 5),
+    (14, DIFFICULTY * 60 / (1 + 0.008), 5),
+    (16, DIFFICULTY * 60 / (1 + 0.004), 6),
+    (18, DIFFICULTY * 60 / (1 + 0), 6),
+    (14, DIFFICULTY * 60 / (1 + 0), 7),
+    (17, DIFFICULTY * 60 / (1 + 0), 7),
+    (19, DIFFICULTY * 60 / (1 + 0), 7),
+    (22, DIFFICULTY * 60 / (1 + 0), 7),
 ]
 
 # For the cooldown below, the same as for the frame delay above applies
@@ -342,7 +349,8 @@ MESSAGES = {
         'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 8, 2, 1).center, 'center', COLOR.normal_text),
     },
     'game': {
-        'SCORE': MessageConfig('SCORE', GRID(10, 0, 2, 1).midright, 'midright', COLOR.special_text),
+        'SCORE': MessageConfig('SCORE', GRID(8, 0, 2, 1).midright, 'midright', COLOR.special_text),
+        'HIGHSCORE': MessageConfig('HIGHSCORE', GRID(15, 0, 2, 1).center, 'center', COLOR.special_text),
     },
     'highscore entry': {
         'PLAYER  ': MessageConfig('PLAYER  ', GRID(15, 7, 2, 1).center, 'center', COLOR.normal_text),

@@ -15,6 +15,7 @@ from pygame.math import Vector2 as vec2
 from pygame.typing import Point
 
 from ddframework.app import App, GameState, StateExit, StackPermissions
+from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
 from ddframework.statemachine import StateMachine
 
@@ -27,7 +28,7 @@ from mc.game.waves import wave_iter
 from mc.highscoretable import highscoretable
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
-                          mk_target)
+                          mk_target, mk_textlabel)
 from mc.systems import (sys_container, sys_detonate_missile,
                         sys_dont_overshoot, sys_explosion, sys_lifetime,
                         sys_momentum, sys_mouse, sys_shutdown,
@@ -51,8 +52,10 @@ class StatePhase(StrEnum):
 
 class EIDs(StrEnum):
     FLYER = auto()
+    HIGHSCORE = auto()
     PLAYER = auto()
     SCORE = auto()
+    SCORE_ARROW = auto()
 
 
 class Game(GameState):
@@ -124,8 +127,12 @@ class Game(GameState):
 
         mk_crosshair()
 
+        msg = C.MESSAGES['game']['HIGHSCORE']
+        mk_score_label(f'{highscoretable[0][0]:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
         msg = C.MESSAGES['game']['SCORE']
         mk_score_label(f'{self.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
+        mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)  # FIXME eid literal
+        ecs.add_component(EIDs.SCORE_ARROW, Comp.COLOR_CYCLE, AutoSequence((C.COLOR.special_text, C.COLOR.background)))
 
         self.cd_flyer = None
 
@@ -172,7 +179,12 @@ class Game(GameState):
         self.cd_flyer_shoot = Cooldown(self.wave.flyer_shoot_cooldown)
 
     def restart(self, from_state: GameState, result: object) -> None:
-        pass
+        if ecs.has(EIDs.FLYER):
+            print('reactivating flyer sound')
+            sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
+            if sound is not None:
+                print('really!')
+                play_sound(sound)
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
@@ -186,6 +198,10 @@ class Game(GameState):
                 self.launch_defense(launchpad, self.mouse)
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
+                if ecs.has(EIDs.FLYER):
+                    print('stopping sound')
+                    sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
+                    if sound is not None: sound.stop()
 
     def update(self, dt: float) -> None:
         if self.paused: return
@@ -317,7 +333,7 @@ class Game(GameState):
                 self.phase = self.phase_walker.send(1)
             else:
                 self.phase = next(self.phase_walker)
-                self.app.push(Debriefing(self.app, self, EIDs.SCORE, self.batteries, self.cities),
+                self.app.push(Debriefing(self.app, self, EIDs.SCORE, EIDs.HIGHSCORE, self.batteries, self.cities),
                               passthrough=StackPermissions.DRAW)
 
         self.run_game_systems(dt)
@@ -329,7 +345,6 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
 
     def phase_gameover_update(self, dt: float) -> None:
-        self.score += 10000  # FIXME
         if self.score > highscoretable[0][0]:
             raise StateExit(1, self.score)
 
@@ -350,6 +365,7 @@ class Game(GameState):
         ecs.run_system(0, sys_texture_from_texture_list, Comp.TEXTURE_LIST)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
+        ecs.run_system(0, sys_textblink, Comp.COLOR_CYCLE)
         ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def launch_defense(self, launchpad: int, target: Point) -> None:
@@ -379,7 +395,6 @@ class Game(GameState):
         play_sound(cache['sounds']['launch'], 3)
 
     def run_game_systems(self, dt):
-        ecs.run_system(dt, sys_textblink, Comp.COLOR_CYCLE)
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
@@ -485,5 +500,6 @@ class Game(GameState):
                 self.batteries[i].clear()
                 break
 
-        score = f'{self.score:5d}  '  # Trailing spaces important
-        ecs.add_component(EIDs.SCORE, Comp.TEXT, score)
+        ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{self.score:5d}  ')
+        if self.score > highscoretable[0][0]:
+            ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{self.score:5d}')

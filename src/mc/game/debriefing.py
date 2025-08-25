@@ -11,10 +11,10 @@ from ddframework.app import App, GameState, StateExit
 from ddframework.cache import cache
 from ddframework.statemachine import StateMachine
 from pgcooldown import Cooldown
-from pygame import Vector2 as vec2
 
 import mc.config as C
 
+from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel
 from mc.types import Comp
 from mc.utils import play_sound
@@ -43,10 +43,11 @@ state_machine.add(StatePhase.LINGER_POST, None)
 
 
 class Debriefing(GameState):
-    def __init__(self, app: App, parent, score_eid, batteries, cities) -> None:
+    def __init__(self, app: App, parent, score_eid, highscore_eid, batteries, cities) -> None:
         self.app = app
         self.parent = parent
         self.parent_score_eid = score_eid
+        self.parent_highscore_eid = highscore_eid
 
         self.phase_handlers = {
             StatePhase.SETUP: self.phase_setup_update,
@@ -102,13 +103,15 @@ class Debriefing(GameState):
             eid = next(self.it_missiles)
         except StopIteration:
             self.phase = next(self.phase_walker)
-            self.cd_count.reset(0.275)
+            self.cd_count.reset()
         else:
             self.parent.score += C.Score.UNUSED_MISSILE
-            ecs.add_component(self.parent_score_eid, Comp.TEXT, str(self.parent.score))
+            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{self.parent.score:5d}  ')
 
             self.missile_score += C.Score.UNUSED_MISSILE
             ecs.add_component(EIDs.MISSILES_LABEL, Comp.TEXT, str(self.missile_score))
+            if self.parent.score > highscoretable[0][0]:
+                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{self.parent.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
             prsa.pos = self.missile_pos.copy()
@@ -127,7 +130,9 @@ class Debriefing(GameState):
             self.cd_linger_post.reset()
         else:
             self.parent.score += C.Score.CITY
-            ecs.add_component(self.parent_score_eid, Comp.TEXT, str(self.parent.score))
+            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{self.parent.score:5d}  ')
+            if self.parent.score > highscoretable[0][0]:
+                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{self.parent.score:5d}')
 
             self.city_score += C.Score.CITY
             ecs.add_component(EIDs.CITIES_LABEL, Comp.TEXT, str(self.city_score))
@@ -137,7 +142,7 @@ class Debriefing(GameState):
             self.cities_pos.x += C.SPRITESHEET['small-cities'][0].width * 1.2
             ecs.add_component(eid, Comp.ANCHOR, 'midleft')
             play_sound(cache['sounds']['silo-count'])
-            self.cd_count.reset()
+            self.cd_count.reset(0.275)
 
     def phase_linger_post_update(self, dt):
         if not self.cd_linger_post.cold(): return

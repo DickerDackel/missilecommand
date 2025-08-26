@@ -150,7 +150,11 @@ class Score(IntEnum):
     SATELLITE = 100
     SMART_BOMB = 125
 
+
 HIGHSCORE_ENTRY_SCROLL_COOLDOWN = 0.125
+BONUS_CITY_SCORE = 10_000
+BONUS_CITY_SCORE = 1_000  # FIXME
+MAX_SCORE_MULT = 6
 
 ########################################################################
 #  ____             _ _
@@ -170,12 +174,12 @@ SPRITESHEET = {
     'cities': [pygame.Rect(0, 72, 22, 12), pygame.Rect(32, 72, 22, 12),
                pygame.Rect(64, 72, 22, 12), pygame.Rect(96, 72, 22, 12)],
     'small-cities': [pygame.Rect(0, 104, 16, 9), pygame.Rect(16, 104, 16, 9),
-                     pygame.Rect(32, 104, 16, 9), pygame.Rect(48, 104, 16, 9)], 
+                     pygame.Rect(32, 104, 16, 9), pygame.Rect(48, 104, 16, 9)],
     'ruin': pygame.Rect(64, 0, 22, 12),
     'ruins': [pygame.Rect(0, 88, 22, 12), pygame.Rect(32, 88, 22, 12),
               pygame.Rect(64, 88, 22, 12), pygame.Rect(96, 88, 22, 12)],
     'small-ruins': [pygame.Rect(0, 120, 16, 9), pygame.Rect(16, 120, 16, 9),
-                    pygame.Rect(32, 120, 16, 9), pygame.Rect(48, 120, 16, 9)], 
+                    pygame.Rect(32, 120, 16, 9), pygame.Rect(48, 120, 16, 9)],
     'alien_big_green': pygame.Rect(96, 0, 16, 16),
     'alien_big_red': pygame.Rect(112, 0, 16, 16),
     'alien_green': pygame.Rect(128, 0, 16, 16),
@@ -353,6 +357,7 @@ MESSAGES = {
     'game': {
         'SCORE': MessageConfig('SCORE', GRID(8, 0, 2, 1).midright, 'midright', COLOR.special_text),
         'HIGHSCORE': MessageConfig('HIGHSCORE', GRID(15, 0, 2, 1).center, 'center', COLOR.special_text),
+        'BONUS CITIES': MessageConfig(' x ', GRID(22, 0, 1, 1).midleft, 'midleft', COLOR.special_text)
     },
     'highscore entry': {
         'PLAYER  ': MessageConfig('PLAYER  ', GRID(15, 7, 2, 1).center, 'center', COLOR.normal_text),

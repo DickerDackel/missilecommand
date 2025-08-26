@@ -17,6 +17,7 @@ from pygame.typing import Point
 from ddframework.app import App, GameState, StateExit, StackPermissions
 from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
+from ddframework.dynamicsprite import PRSA
 from ddframework.statemachine import StateMachine
 
 import mc.config as C
@@ -28,7 +29,7 @@ from mc.game.waves import wave_iter
 from mc.highscoretable import highscoretable
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
-                          mk_target, mk_textlabel)
+                          mk_target, mk_textlabel, mk_texture)
 from mc.systems import (sys_container, sys_detonate_missile,
                         sys_dont_overshoot, sys_explosion, sys_lifetime,
                         sys_momentum, sys_mouse, sys_shutdown,
@@ -51,6 +52,7 @@ class StatePhase(StrEnum):
 
 
 class EIDs(StrEnum):
+    BONUS_CITIES = auto()
     FLYER = auto()
     HIGHSCORE = auto()
     PLAYER = auto()
@@ -120,6 +122,7 @@ class Game(GameState):
 
         self.cities = [True] * 6
         self.batteries = [True] * 3
+        self.bonus_cities = 0
 
         ecs.reset()
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
@@ -133,6 +136,11 @@ class Game(GameState):
         mk_score_label(f'{self.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
         mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)  # FIXME eid literal
         ecs.add_component(EIDs.SCORE_ARROW, Comp.COLOR_CYCLE, AutoSequence((C.COLOR.special_text, C.COLOR.background)))
+
+        msg = C.MESSAGES['game']['BONUS CITIES']
+        prsa = PRSA(pos=msg.pos, scale=(0.8, 0.8))
+        mk_textlabel(f' x {self.bonus_cities}', *msg[1:], eid=EIDs.BONUS_CITIES)
+        mk_texture(cache['textures']['small-cities'][0], prsa, anchor='midright')
 
         self.cd_flyer = None
 
@@ -156,6 +164,10 @@ class Game(GameState):
             pos = C.POS_CITIES[city]
             if alive:
                 mk_city(pos, eid=f'city-{city}')
+            elif self.bonus_cities > 0:
+                self.bonus_cities -= 1
+                mk_city(pos, eid=f'city-{city}')
+                self.cities[city] = True
             else:
                 mk_ruin(pos, eid=f'ruin-{city}')
 
@@ -170,7 +182,7 @@ class Game(GameState):
         self.wave = next(self.wave_iter)
         self.level += 1
 
-        self.score_mult = self.level // 2 + 1
+        self.score_mult = min(self.level // 2 + 1, C.MAX_SCORE_MULT)
 
         self.incoming_left = self.wave.missiles
         self.incoming = set()
@@ -298,6 +310,8 @@ class Game(GameState):
 
             spawn_missiles(randint(1, 3))
 
+        ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {self.bonus_cities}')
+
         self.run_game_systems(dt)
 
     def phase_pre_linger_update(self, dt: float) -> None:
@@ -321,7 +335,7 @@ class Game(GameState):
         explosions = len(ecs.eids_by_property(Prop.IS_EXPLOSION))
 
         if missiles == 0 and flyers == 0 and explosions == 0:
-            if not cities:
+            if not cities and self.bonus_cities == 0:
                 self.phase = self.phase_walker.send(1)
             else:
                 self.phase = next(self.phase_walker)
@@ -445,10 +459,11 @@ class Game(GameState):
 
                 is_satellite = ecs.has_property(f_eid, Prop.IS_SATELLITE)
                 base_score = C.Score.SATELLITE if is_satellite else C.Score.PLANE
-                prev_score = self.score // C.BONUS_CITY
+                prev_score = self.score // C.BONUS_CITY_SCORE
                 self.score += self.score_mult * base_score
-                if self.score // C.BONUS_CITY > prev_score:
-                    self.bonus_city = True
+                if self.score // C.BONUS_CITY_SCORE > prev_score:
+                    self.bonus_cities += 1
+                    play_sound(cache['sounds']['bonus-city'])
 
                 break
 

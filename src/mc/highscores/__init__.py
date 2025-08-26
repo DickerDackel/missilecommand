@@ -12,6 +12,7 @@ from pgcooldown import Cooldown
 from ddframework.app import App, GameState, StateExit
 from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
+from ddframework.dynamicsprite import PRSA
 
 import mc.config as C
 
@@ -52,7 +53,7 @@ class Highscores(GameState):
                                   C.GRID(15, y + 4, 2, 1).center, 'center', C.COLOR.special_text)
             tag_entity(mk_textlabel(*msg))
 
-        eid = tag_entity(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
+        eid = tag_entity(mk_texture(cache['textures']['ground'], PRSA(pos=C.GRID.midbottom), 'midbottom'))
         ecs.set_property(eid, THIS)
 
         for pos in C.POS_CITIES:

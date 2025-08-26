@@ -250,11 +250,11 @@ def mk_textlabel(text: str, pos: Point, anchor: str,
     return eid
 
 
-def mk_texture(texture: sdl2.Texture, pos: Point, anchor: str = 'center', color: ColorLike = None, eid: EntityID = None):
+def mk_texture(texture: sdl2.Texture, prsa: PRSA, anchor: str = 'center', color: ColorLike = None, eid: EntityID = None):
     eid = ecs.create_entity() if eid is None else ecs.create_entity(eid)
 
     ecs.add_component(eid, Comp.TEXTURE, texture)
-    ecs.add_component(eid, Comp.PRSA, PRSA(pos=vec2(pos)))
+    ecs.add_component(eid, Comp.PRSA, prsa)
     ecs.add_component(eid, Comp.ANCHOR, anchor)
     if color is not None:
         ecs.add_component(eid, Comp.COLOR, color)

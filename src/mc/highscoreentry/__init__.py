@@ -51,7 +51,7 @@ class HighscoreEntry(GameState):
         msg = C.MESSAGES['highscore entry']['PRESS ANY FIRE SWITCH TO SELECT']
         self.entities.append(mk_textlabel(*msg))
 
-        self.entities.append(mk_texture(cache['textures']['ground'], C.GRID.midbottom, 'midbottom'))
+        self.entities.append(mk_texture(cache['textures']['ground'], PRSA(pos=C.GRID.midbottom), 'midbottom'))
 
         self.letter_idx = 1
         self.entry_no = 0

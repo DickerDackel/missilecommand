@@ -17,7 +17,7 @@ import mc.config as C
 from mc.game.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel
-from mc.types import Comp
+from mc.types import Comp, EIDs
 from mc.utils import play_sound
 
 
@@ -29,12 +29,6 @@ class StatePhase(StrEnum):
     LINGER_POST = auto()
 
 
-class EIDs(StrEnum):
-    BONUS_POINTS = auto()
-    MISSILES_LABEL = auto()
-    CITIES_LABEL = auto()
-
-
 state_machine = StateMachine()
 state_machine.add(StatePhase.SETUP, StatePhase.LINGER_PRE)
 state_machine.add(StatePhase.LINGER_PRE, StatePhase.MISSILES)
@@ -44,11 +38,8 @@ state_machine.add(StatePhase.LINGER_POST, None)
 
 
 class Debriefing(GameState):
-    def __init__(self, app: App, parent, score_eid, highscore_eid, batteries, cities) -> None:
+    def __init__(self, app: App, batteries, cities) -> None:
         self.app = app
-        self.parent = parent
-        self.parent_score_eid = score_eid
-        self.parent_highscore_eid = highscore_eid
 
         self.phase_handlers = {
             StatePhase.SETUP: self.phase_setup_update,
@@ -111,10 +102,10 @@ class Debriefing(GameState):
             self.missile_score += GS.score_mult * C.Score.UNUSED_MISSILE
             GS.score += GS.score_mult * C.Score.UNUSED_MISSILE
             ecs.add_component(EIDs.MISSILES_LABEL, Comp.TEXT, str(self.missile_score))
-            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{GS.score:5d}  ')
+            ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
 
             if GS.score > highscoretable[0][0]:
-                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{GS.score:5d}')
+                ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
             prsa.pos = self.missile_pos.copy()
@@ -124,7 +115,7 @@ class Debriefing(GameState):
             self.cd_count.reset()
 
             if GS.score // C.BONUS_CITY_SCORE > prev_score:
-                self.parent.bonus_city = True
+                GS.bonus_cities += 1
                 play_sound(cache['sounds']['bonus-city'])
 
     def phase_cities_update(self, dt):
@@ -141,9 +132,9 @@ class Debriefing(GameState):
             self.city_score += GS.score_mult * C.Score.CITY
             GS.score += GS.score_mult * C.Score.CITY
             ecs.add_component(EIDs.CITIES_LABEL, Comp.TEXT, str(self.city_score))
-            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{GS.score:5d}  ')
+            ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
             if GS.score > highscoretable[0][0]:
-                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{GS.score:5d}')
+                ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
             prsa.pos = self.cities_pos.copy()
@@ -154,7 +145,7 @@ class Debriefing(GameState):
 
         new_bonus_cities = GS.score // C.BONUS_CITY_SCORE - score_pre
         if new_bonus_cities > 0:
-            self.parent.bonus_cities += new_bonus_cities
+            GS.bonus_cities += new_bonus_cities
             play_sound(cache['sounds']['bonus-city'])
 
     def phase_linger_post_update(self, dt):

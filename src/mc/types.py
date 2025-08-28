@@ -65,3 +65,15 @@ class Comp(StrEnum):
     TEXTURE = auto()  # sys_draw_texture, sys_texture_from_texture_list - Exactly what it says
     TEXTURE_LIST = auto()  # sys_draw_texture - An AutoSequence for textures
     TRAIL = auto()  # sys_trail, sys_update_trail, sys_trail_eraser
+
+
+class EIDs(StrEnum):
+    BONUS_CITIES = auto()
+    BONUS_POINTS = auto()
+    CITIES_LABEL = auto()
+    FLYER = auto()
+    HIGHSCORE = auto()
+    MISSILES_LABEL = auto()
+    PLAYER = auto()
+    SCORE = auto()
+    SCORE_ARROW = auto()

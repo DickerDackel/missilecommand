@@ -38,7 +38,7 @@ from mc.systems import (sys_container, sys_detonate_missile,
                         sys_draw_texture, sys_textblink,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
-from mc.types import Comp, EntityID, Prop
+from mc.types import Comp, EIDs, EntityID, Prop
 from mc.utils import (cls, play_sound, purge_entities)
 
 
@@ -50,15 +50,6 @@ class StatePhase(StrEnum):
     LINGER = auto()
     DEBRIEFING = auto()
     GAMEOVER = auto()
-
-
-class EIDs(StrEnum):
-    BONUS_CITIES = auto()
-    FLYER = auto()
-    HIGHSCORE = auto()
-    PLAYER = auto()
-    SCORE = auto()
-    SCORE_ARROW = auto()
 
 
 class Game(GameState):
@@ -122,7 +113,6 @@ class Game(GameState):
 
         self.cities = [True] * 6
         self.batteries = [True] * 3
-        self.bonus_cities = 0
 
         ecs.reset()
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
@@ -139,7 +129,7 @@ class Game(GameState):
 
         msg = C.MESSAGES['game']['BONUS CITIES']
         prsa = PRSA(pos=msg.pos, scale=(0.8, 0.8))
-        mk_textlabel(f' x {self.bonus_cities}', *msg[1:], eid=EIDs.BONUS_CITIES)
+        mk_textlabel(f' x {GS.bonus_cities}', *msg[1:], eid=EIDs.BONUS_CITIES)
         mk_texture(cache['textures']['small-cities'][0], prsa, anchor='midright')
 
         self.cd_flyer = None
@@ -164,8 +154,8 @@ class Game(GameState):
             pos = C.POS_CITIES[city]
             if alive:
                 mk_city(pos, eid=f'city-{city}')
-            elif self.bonus_cities > 0:
-                self.bonus_cities -= 1
+            elif GS.bonus_cities > 0:
+                GS.bonus_cities -= 1
                 mk_city(pos, eid=f'city-{city}')
                 self.cities[city] = True
             else:
@@ -310,7 +300,7 @@ class Game(GameState):
 
             spawn_missiles(randint(1, 3))
 
-        ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {self.bonus_cities}')
+        ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {GS.bonus_cities}')
 
         self.run_game_systems(dt)
 
@@ -335,11 +325,11 @@ class Game(GameState):
         explosions = len(ecs.eids_by_property(Prop.IS_EXPLOSION))
 
         if missiles == 0 and flyers == 0 and explosions == 0:
-            if not cities and self.bonus_cities == 0:
+            if not cities and GS.bonus_cities == 0:
                 self.phase = self.phase_walker.send(1)
             else:
                 self.phase = next(self.phase_walker)
-                self.app.push(Debriefing(self.app, self, EIDs.SCORE, EIDs.HIGHSCORE, self.batteries, self.cities),
+                self.app.push(Debriefing(self.app, self.batteries, self.cities),
                               passthrough=StackPermissions.DRAW)
 
         self.run_game_systems(dt)
@@ -462,7 +452,7 @@ class Game(GameState):
                 prev_score = GS.score // C.BONUS_CITY_SCORE
                 GS.score += GS.score_mult * base_score
                 if GS.score // C.BONUS_CITY_SCORE > prev_score:
-                    self.bonus_cities += 1
+                    GS.bonus_cities += 1
                     play_sound(cache['sounds']['bonus-city'])
 
                 break

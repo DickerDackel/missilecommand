@@ -373,6 +373,8 @@ class Game(GameState):
         else:
             silo = GS.batteries[launchpad].pop()
         ecs.remove_entity(silo)
+        if len(GS.batteries[launchpad]) == C.LOW_AMMO_WARN_THRESHOLD:
+            play_sound(cache['sounds']['low-ammo'], loops=2)
 
         start = C.POS_BATTERIES[launchpad]
         dest = vec2(target)

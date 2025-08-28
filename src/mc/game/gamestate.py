@@ -8,6 +8,8 @@ class GameState:
     def reset(self):
         self.__init__()
         ...
+        self.batteries = None
+        self.cities = None
 
 
 gs = GameState()

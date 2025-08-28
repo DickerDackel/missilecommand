@@ -38,7 +38,7 @@ state_machine.add(StatePhase.LINGER_POST, None)
 
 
 class Debriefing(GameState):
-    def __init__(self, app: App, batteries, cities) -> None:
+    def __init__(self, app: App) -> None:
         self.app = app
 
         self.phase_handlers = {
@@ -52,11 +52,11 @@ class Debriefing(GameState):
         self.phase_walker = state_machine.walker()
         self.phase = next(self.phase_walker)
 
-        self.it_missiles = iter(list(chain(*(b for b in batteries))))
+        self.it_missiles = iter(list(chain(*(b for b in GS.batteries))))
         self.missile_pos = C.POS_MISSILES_DEBRIEFING.copy()
 
-        self.it_cities = (f'city-{i}' for i, city in enumerate(cities) if city)
-        self.cities_pos = C.POS_CITIES_DEBRIEFING.copy()
+        self.it_city_eids = (f'city-{i}' for i, city in enumerate(GS.cities) if city)
+        self.city_list_pos = C.POS_CITIES_DEBRIEFING.copy()
 
         msg = C.MESSAGES['debriefing']['BONUS POINTS']
         mk_textlabel(*msg, EIDs.BONUS_POINTS)
@@ -124,7 +124,7 @@ class Debriefing(GameState):
         score_pre = GS.score // C.BONUS_CITY_SCORE
 
         try:
-            eid = next(self.it_cities)
+            eid = next(self.it_city_eids)
         except StopIteration:
             self.phase = next(self.phase_walker)
             self.cd_linger_post.reset()
@@ -137,8 +137,8 @@ class Debriefing(GameState):
                 ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
-            prsa.pos = self.cities_pos.copy()
-            self.cities_pos.x += C.SPRITESHEET['small-cities'][0].width * 1.2
+            prsa.pos = self.city_list_pos.copy()
+            self.city_list_pos.x += C.SPRITESHEET['small-cities'][0].width * 1.2
             ecs.add_component(eid, Comp.ANCHOR, 'midleft')
             play_sound(cache['sounds']['silo-count'])
             self.cd_count.reset(0.275)

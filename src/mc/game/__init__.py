@@ -92,8 +92,6 @@ class Game(GameState):
         self.incoming_left = None
         self.incoming = None
 
-        self.cities = None
-        self.batteries = None
         self.missiles = None
         self.allowed_targets = None
 
@@ -111,8 +109,7 @@ class Game(GameState):
         self.phase_walker = self.phases.walker()
         self.phase = next(self.phase_walker)
 
-        self.cities = [True] * 6
-        self.batteries = [True] * 3
+        GS.cities = [True] * 6
 
         ecs.reset()
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
@@ -148,20 +145,20 @@ class Game(GameState):
 
         cls(self.trail_canvas, C.COLOR.clear)
 
-        self.batteries = [mk_battery(i, pos)[1] for i, pos in enumerate(C.POS_BATTERIES)]
+        GS.batteries = [mk_battery(i, pos)[1] for i, pos in enumerate(C.POS_BATTERIES)]
 
-        for city, alive in enumerate(self.cities):
+        for city, alive in enumerate(GS.cities):
             pos = C.POS_CITIES[city]
             if alive:
                 mk_city(pos, eid=f'city-{city}')
             elif GS.bonus_cities > 0:
                 GS.bonus_cities -= 1
                 mk_city(pos, eid=f'city-{city}')
-                self.cities[city] = True
+                GS.cities[city] = True
             else:
                 mk_ruin(pos, eid=f'ruin-{city}')
 
-        remaining_cities = [i for i in range(len(self.cities)) if self.cities[i]]
+        remaining_cities = [i for i in range(len(GS.cities)) if GS.cities[i]]
         shuffle(remaining_cities)
         target_cities = cycle((C.POS_CITIES[_] for _ in remaining_cities[0:3]))
         battery_positions = C.POS_BATTERIES
@@ -218,7 +215,7 @@ class Game(GameState):
 
     def phase_briefing_update(self, dt: float) -> None:
         self.phase = next(self.phase_walker)
-        cities = sum(self.cities)
+        cities = sum(GS.cities)
 
         self.app.push(Briefing(self.app, GS.score_mult, cities), passthrough=StackPermissions.DRAW)
 
@@ -227,8 +224,8 @@ class Game(GameState):
         #   No ammunition left
         #   No city left
         #   No more incoming
-        cities = any(self.cities)
-        silos_left = sum(len(b) for b in self.batteries)
+        cities = any(GS.cities)
+        silos_left = sum(len(b) for b in GS.batteries)
 
         if (not silos_left
             or not self.incoming and self.incoming_left <= 0):
@@ -319,7 +316,7 @@ class Game(GameState):
         #     and no flyers are flying
         #     and no explosions
         # terminate
-        cities = any(self.cities)
+        cities = any(GS.cities)
         missiles = len(ecs.eids_by_property(Prop.IS_MISSILE))
         flyers = len(ecs.eids_by_property(Prop.IS_FLYER))
         explosions = len(ecs.eids_by_property(Prop.IS_EXPLOSION))
@@ -329,8 +326,7 @@ class Game(GameState):
                 self.phase = self.phase_walker.send(1)
             else:
                 self.phase = next(self.phase_walker)
-                self.app.push(Debriefing(self.app, self.batteries, self.cities),
-                              passthrough=StackPermissions.DRAW)
+                self.app.push(Debriefing(self.app), passthrough=StackPermissions.DRAW)
 
         self.run_game_systems(dt)
         self.do_collisions()
@@ -365,7 +361,7 @@ class Game(GameState):
         ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def launch_defense(self, launchpad: int, target: Point) -> None:
-        if not self.batteries[launchpad]:
+        if not GS.batteries[launchpad]:
             play_sound(cache['sounds']['brzzz'])
             return
 
@@ -374,7 +370,7 @@ class Game(GameState):
             from mc.launchers import mk_silo
             silo = mk_silo(randint(1000, 999999), launchpad, C.POS_BATTERIES[launchpad])
         else:
-            silo = self.batteries[launchpad].pop()
+            silo = GS.batteries[launchpad].pop()
         ecs.remove_entity(silo)
 
         start = C.POS_BATTERIES[launchpad]
@@ -475,29 +471,29 @@ class Game(GameState):
                 break
 
             # missile vs. cities
-            for i, c in enumerate(self.cities):
+            for i, c in enumerate(GS.cities):
                 if not c: continue
 
                 if not C.HITBOX_CITY[i].collidepoint(m_pos):
                     continue
 
                 ecs.add_component(m_eid, Prop.IS_DEAD, True)
-                self.cities[i] = False
+                GS.cities[i] = False
                 ecs.remove_entity(f'city-{i}')
                 mk_ruin(C.POS_CITIES[i], f'city-{i}')
 
             # missile vs. batteries
-            for i, battery in enumerate(self.batteries):
+            for i, battery in enumerate(GS.batteries):
                 if not battery: continue
 
                 if not C.HITBOX_BATTERIES[i].collidepoint(m_pos):
                     continue
 
-                for silo in self.batteries[i]:
+                for silo in GS.batteries[i]:
                     ecs.add_component(m_eid, Prop.IS_DEAD, True)
                     ecs.add_component(silo, Comp.LIFETIME,
                                       Cooldown(C.EXPLOSION_DURATION))
-                self.batteries[i].clear()
+                GS.batteries[i].clear()
                 break
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')

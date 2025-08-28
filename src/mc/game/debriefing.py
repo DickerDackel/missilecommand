@@ -17,7 +17,7 @@ import mc.config as C
 from mc.game.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel
-from mc.types import Comp, EIDs
+from mc.types import Comp, EIDs, Prop
 from mc.utils import play_sound
 
 
@@ -62,6 +62,9 @@ class Debriefing(GameState):
         mk_textlabel(*msg, EIDs.BONUS_POINTS)
         mk_textlabel('  0', C.POS_MISSILES_SCORE_DEBRIEFING, 'midright', 'red', (1, 1), EIDs.MISSILES_LABEL)
         mk_textlabel('   0', C.POS_CITIES_SCORE_DEBRIEFING, 'midright', 'red', (1, 1), EIDs.CITIES_LABEL)
+        ecs.set_property(EIDs.BONUS_POINTS, Prop.IS_DEBRIEFING)
+        ecs.set_property(EIDs.MISSILES_LABEL, Prop.IS_DEBRIEFING)
+        ecs.set_property(EIDs.CITIES_LABEL, Prop.IS_DEBRIEFING)
 
         self.cd_linger_pre = Cooldown(2)
         self.cd_linger_post = Cooldown(3)
@@ -158,8 +161,6 @@ class Debriefing(GameState):
         pass
 
     def teardown(self):
-        ecs.remove_entity(EIDs.BONUS_POINTS)
-        ecs.remove_entity(EIDs.MISSILES_LABEL)
-        ecs.remove_entity(EIDs.CITIES_LABEL)
+        ecs.purge_by_property(Prop.IS_DEBRIEFING)
 
         raise StateExit(-1)

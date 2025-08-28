@@ -284,18 +284,19 @@ class Game(GameState):
 
         # From the missile command ROM dump text:
         # So the conditions required for an ICBM to be eligible to split are:
+        # * No previously-examined missile is above 159.
         # * The current missile, or a previously-examined missile, is at an
         #   altitude between 128 and 159.
-        # * No previously-examined missile is above 159.
         # * There must be available slots in the ICBM table, and unspent ICBMs
         #   for the wave.
         for eid in list(self.incoming):  # listify the set, since it will change
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
-            # FIXME incomplete!
-            if not (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]):
+            if (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]
+                and self.incoming.free_slots()
+                and self.incoming_left):
+                spawn_missiles(randint(1, 3))
+            else:
                 break
-
-            spawn_missiles(randint(1, 3))
 
         ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {GS.bonus_cities}')
 

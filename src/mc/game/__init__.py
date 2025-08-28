@@ -221,7 +221,6 @@ class Game(GameState):
         #   No ammunition left
         #   No city left
         #   No more incoming
-        cities = any(GS.cities)
         silos_left = sum(len(b) for b in GS.batteries)
 
         if (not silos_left

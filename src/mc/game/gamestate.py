@@ -5,11 +5,10 @@ class GameState:
 
         self.bonus_cities = 0
 
-    def reset(self):
-        self.__init__()
-        ...
         self.batteries = None
         self.cities = None
+
+    reset = __init__
 
 
 gs = GameState()

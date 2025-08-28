@@ -1,5 +1,6 @@
 from collections.abc import MutableSet
 
+
 class Incoming(MutableSet):
     def __init__(self, slots, iterable=None):
         self.slots = slots

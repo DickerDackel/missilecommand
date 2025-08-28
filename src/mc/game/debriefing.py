@@ -14,6 +14,7 @@ from pgcooldown import Cooldown
 
 import mc.config as C
 
+from mc.game.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel
 from mc.types import Comp
@@ -105,15 +106,15 @@ class Debriefing(GameState):
             self.phase = next(self.phase_walker)
             self.cd_count.reset()
         else:
-            prev_score = self.parent.score // C.BONUS_CITY_SCORE
+            prev_score = GS.score // C.BONUS_CITY_SCORE
 
-            self.missile_score += self.parent.score_mult * C.Score.UNUSED_MISSILE
-            self.parent.score += self.parent.score_mult * C.Score.UNUSED_MISSILE
+            self.missile_score += GS.score_mult * C.Score.UNUSED_MISSILE
+            GS.score += GS.score_mult * C.Score.UNUSED_MISSILE
             ecs.add_component(EIDs.MISSILES_LABEL, Comp.TEXT, str(self.missile_score))
-            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{self.parent.score:5d}  ')
+            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{GS.score:5d}  ')
 
-            if self.parent.score > highscoretable[0][0]:
-                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{self.parent.score:5d}')
+            if GS.score > highscoretable[0][0]:
+                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
             prsa.pos = self.missile_pos.copy()
@@ -122,14 +123,14 @@ class Debriefing(GameState):
             play_sound(cache['sounds']['silo-count'])
             self.cd_count.reset()
 
-            if self.parent.score // C.BONUS_CITY_SCORE > prev_score:
+            if GS.score // C.BONUS_CITY_SCORE > prev_score:
                 self.parent.bonus_city = True
                 play_sound(cache['sounds']['bonus-city'])
 
     def phase_cities_update(self, dt):
         if not self.cd_count.cold(): return
 
-        score_pre = self.parent.score // C.BONUS_CITY_SCORE
+        score_pre = GS.score // C.BONUS_CITY_SCORE
 
         try:
             eid = next(self.it_cities)
@@ -137,12 +138,12 @@ class Debriefing(GameState):
             self.phase = next(self.phase_walker)
             self.cd_linger_post.reset()
         else:
-            self.city_score += self.parent.score_mult * C.Score.CITY
-            self.parent.score += self.parent.score_mult * C.Score.CITY
+            self.city_score += GS.score_mult * C.Score.CITY
+            GS.score += GS.score_mult * C.Score.CITY
             ecs.add_component(EIDs.CITIES_LABEL, Comp.TEXT, str(self.city_score))
-            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{self.parent.score:5d}  ')
-            if self.parent.score > highscoretable[0][0]:
-                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{self.parent.score:5d}')
+            ecs.add_component(self.parent_score_eid, Comp.TEXT, f'{GS.score:5d}  ')
+            if GS.score > highscoretable[0][0]:
+                ecs.add_component(self.parent_highscore_eid, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
             prsa.pos = self.cities_pos.copy()
@@ -151,7 +152,7 @@ class Debriefing(GameState):
             play_sound(cache['sounds']['silo-count'])
             self.cd_count.reset(0.275)
 
-        new_bonus_cities = self.parent.score // C.BONUS_CITY_SCORE - score_pre
+        new_bonus_cities = GS.score // C.BONUS_CITY_SCORE - score_pre
         if new_bonus_cities > 0:
             self.parent.bonus_cities += new_bonus_cities
             play_sound(cache['sounds']['bonus-city'])

@@ -24,6 +24,7 @@ import mc.config as C
 
 from mc.game.briefing import Briefing
 from mc.game.debriefing import Debriefing
+from mc.game.gamestate import gs as GS
 from mc.game.pause import Pause
 from mc.game.waves import wave_iter
 from mc.highscoretable import highscoretable
@@ -70,7 +71,6 @@ class Game(GameState):
         self.trail_canvas = sdl2.Texture(self.renderer, self.app.logical_rect.size, target=True)
         self.trail_canvas.blend_mode = pygame.BLENDMODE_BLEND
 
-        self.score = None
         self.paused = None
         self.level = None
 
@@ -100,7 +100,6 @@ class Game(GameState):
 
         self.incoming_left = None
         self.incoming = None
-        self.score_mult = None
 
         self.cities = None
         self.batteries = None
@@ -112,7 +111,8 @@ class Game(GameState):
                            self.app.size_to_window(C.CROSSHAIR_CONSTRAINT.size))
         self.app.window.mouse_rect = rect
 
-        self.score = 0
+        GS.reset()
+
         self.paused = False
         self.level = -1
         self.wave = None
@@ -133,7 +133,7 @@ class Game(GameState):
         msg = C.MESSAGES['game']['HIGHSCORE']
         mk_score_label(f'{highscoretable[0][0]:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
         msg = C.MESSAGES['game']['SCORE']
-        mk_score_label(f'{self.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
+        mk_score_label(f'{GS.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
         mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)  # FIXME eid literal
         ecs.add_component(EIDs.SCORE_ARROW, Comp.COLOR_CYCLE, AutoSequence((C.COLOR.special_text, C.COLOR.background)))
 
@@ -182,7 +182,7 @@ class Game(GameState):
         self.wave = next(self.wave_iter)
         self.level += 1
 
-        self.score_mult = min(self.level // 2 + 1, C.MAX_SCORE_MULT)
+        GS.score_mult = min(self.level // 2 + 1, C.MAX_SCORE_MULT)
 
         self.incoming_left = self.wave.missiles
         self.incoming = set()
@@ -230,7 +230,7 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
         cities = sum(self.cities)
 
-        self.app.push(Briefing(self.app, self.score_mult, cities), passthrough=StackPermissions.DRAW)
+        self.app.push(Briefing(self.app, GS.score_mult, cities), passthrough=StackPermissions.DRAW)
 
     def phase_playing_update(self, dt: float) -> None:
         # Switch to linger  if
@@ -351,8 +351,8 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
 
     def phase_gameover_update(self, dt: float) -> None:
-        if self.score > highscoretable[0][0]:
-            raise StateExit(1, self.score)
+        if GS.score > highscoretable[0][0]:
+            raise StateExit(1, GS.score)
 
         raise StateExit
 
@@ -459,9 +459,9 @@ class Game(GameState):
 
                 is_satellite = ecs.has_property(f_eid, Prop.IS_SATELLITE)
                 base_score = C.Score.SATELLITE if is_satellite else C.Score.PLANE
-                prev_score = self.score // C.BONUS_CITY_SCORE
-                self.score += self.score_mult * base_score
-                if self.score // C.BONUS_CITY_SCORE > prev_score:
+                prev_score = GS.score // C.BONUS_CITY_SCORE
+                GS.score += GS.score_mult * base_score
+                if GS.score // C.BONUS_CITY_SCORE > prev_score:
                     self.bonus_cities += 1
                     play_sound(cache['sounds']['bonus-city'])
 
@@ -481,7 +481,7 @@ class Game(GameState):
                     continue
 
                 ecs.add_component(m_eid, Prop.IS_DEAD, True)
-                self.score += self.score_mult * C.Score.MISSILE
+                GS.score += GS.score_mult * C.Score.MISSILE
                 break
 
             # missile vs. cities
@@ -510,6 +510,6 @@ class Game(GameState):
                 self.batteries[i].clear()
                 break
 
-        ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{self.score:5d}  ')
-        if self.score > highscoretable[0][0]:
-            ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{self.score:5d}')
+        ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
+        if GS.score > highscoretable[0][0]:
+            ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')

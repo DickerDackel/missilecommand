@@ -153,7 +153,6 @@ class Score(IntEnum):
 
 HIGHSCORE_ENTRY_SCROLL_COOLDOWN = 0.125
 BONUS_CITY_SCORE = 10_000
-BONUS_CITY_SCORE = 1_000  # FIXME
 MAX_SCORE_MULT = 6
 
 ########################################################################

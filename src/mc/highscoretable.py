@@ -1,7 +1,7 @@
 import json
 
 from collections import UserList
-from heapq import heapify, heappushpop
+from heapq import heapify, heappushpop, nlargest
 from typing import NamedTuple
 
 from mc import config as C
@@ -43,6 +43,10 @@ class HighscoreTable(UserList):
     def append(self, val):
         heappushpop(self.data, val)
         self._save()
+
+    @property
+    def leader(self):
+        return nlargest(1, self.data)[0]
 
     def _save(self):
         self.dirname.mkdir(parents=True, exist_ok=True)

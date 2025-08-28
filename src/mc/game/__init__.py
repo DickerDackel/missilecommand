@@ -115,7 +115,7 @@ class Game(GameState):
         mk_crosshair()
 
         msg = C.MESSAGES['game']['HIGHSCORE']
-        mk_score_label(f'{highscoretable[0][0]:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
+        mk_score_label(f'{highscoretable.leader[0]:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
         msg = C.MESSAGES['game']['SCORE']
         mk_score_label(f'{GS.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
         mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)  # FIXME eid literal
@@ -245,7 +245,7 @@ class Game(GameState):
             self.incoming.add(mk_flyer(EIDs.FLYER, self.wave.flyer_min_height,
                                        self.wave.flyer_max_height,
                                        self.wave.flyer_shoot_cooldown,
-                                       self.app.logical_rect.inflate(32, 32),
+                                       C.CONTAINER,
                                        shutdown))
 
         def spawn_missiles(number=1, origin=None):
@@ -339,7 +339,7 @@ class Game(GameState):
 
     def phase_gameover_update(self, dt: float) -> None:
         if GS.score > highscoretable[0][0]:
-            raise StateExit(1, GS.score)
+            raise StateExit(1)
 
         raise StateExit
 
@@ -500,5 +500,5 @@ class Game(GameState):
                 break
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
-        if GS.score > highscoretable[0][0]:
+        if GS.score > highscoretable.leader[0]:
             ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')

@@ -25,6 +25,7 @@ import mc.config as C
 from mc.game.briefing import Briefing
 from mc.game.debriefing import Debriefing
 from mc.game.gamestate import gs as GS
+from mc.game.incoming import Incoming
 from mc.game.pause import Pause
 from mc.game.waves import wave_iter
 from mc.highscoretable import highscoretable
@@ -89,10 +90,6 @@ class Game(GameState):
             StatePhase.GAMEOVER: self.phase_gameover_update,
         }
 
-        self.incoming_left = None
-        self.incoming = None
-
-        self.missiles = None
         self.allowed_targets = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
@@ -172,7 +169,7 @@ class Game(GameState):
         GS.score_mult = min(self.level // 2 + 1, C.MAX_SCORE_MULT)
 
         self.incoming_left = self.wave.missiles
-        self.incoming = set()
+        self.incoming = Incoming(C.INCOMING_SLOTS)
 
         self.cd_flyer = Cooldown(self.wave.flyer_cooldown)
         self.cd_flyer_shoot = Cooldown(self.wave.flyer_shoot_cooldown)
@@ -239,8 +236,9 @@ class Game(GameState):
         #     and an incoming slot is free
         if (not ecs.has(EIDs.FLYER)
                 and self.wave.flyer_cooldown
-                and len(self.incoming) < C.INCOMING_SLOTS
-                and self.cd_flyer.cold()):
+                and self.cd_flyer.cold()
+                and self.incoming.free_slots()):
+
             def shutdown(eid: EntityID) -> None:
                 self.cd_flyer.reset()
                 self.incoming.remove(eid)
@@ -256,7 +254,7 @@ class Game(GameState):
                 self.incoming.remove(eid)
 
             to_launch = min(C.MAX_LAUNCHES_PER_FRAME,
-                            C.INCOMING_SLOTS - len(self.incoming),
+                            self.incoming.free_slots(),
                             self.incoming_left,
                             number)
 
@@ -270,8 +268,11 @@ class Game(GameState):
                 self.incoming.add(eid)
                 self.incoming_left -= 1
 
-        may_launch = all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
-                         for eid in self.incoming)
+        # Once missiles have been launched, only launch more when the earlier
+        # ones are below a given height.  Basically a delay between launches.
+        may_launch = (len(self.incoming) == 0 and self.incoming_left > 0
+                      or all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
+                             for eid in self.incoming))
         if may_launch:
             spawn_missiles(C.MAX_LAUNCHES_PER_FRAME)
 

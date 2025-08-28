@@ -8,11 +8,13 @@ import tinyecs as ecs
 
 from ddframework.app import App, GameState, StateExit
 from ddframework.cache import cache
+from ddframework.dynamicsprite import PRSA
 from pgcooldown import Cooldown
 from pygame import Vector2 as vec2
 
 import mc.config as C
 
+from mc.game.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel, mk_texture
 from mc.systems import sys_draw_texture, sys_draw_textlabel
@@ -21,13 +23,12 @@ from mc.utils import play_sound
 
 LETTERS = [k for k in C.CHAR_MAP.keys() if len(k) == 1]  # Don't use the sym names like 'copy' here
 
+
 class HighscoreEntry(GameState):
     def __init__(self, app: App) -> None:
         self.app = app
 
-    def reset(self, from_previous):
-        _, self.score = from_previous
-
+    def reset(self, *args, **kwargs):
         self.entities = []
 
         pos = vec2(C.GRID(15, 3, 2, 1).center)
@@ -91,7 +92,7 @@ class HighscoreEntry(GameState):
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self):
-        highscoretable.append([self.score, ''.join(self.entry)])
+        highscoretable.append([GS.score, ''.join(self.entry)])
 
         for eid in self.entities:
             ecs.remove_entity(eid)

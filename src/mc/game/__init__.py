@@ -204,7 +204,7 @@ class Game(GameState):
         update_fn(dt)
         fps = self.app.clock.get_fps()
         entities = len(ecs.eidx)
-        self.app.window.title = f'{self.app.title} - {fps=:.2f} {entities=}  slots={len(self.incoming)}'
+        self.app.window.title = f'{self.app.title} - {fps=:.2f}  slots={len(self.incoming)}  left={self.incoming_left}  {entities=}'
 
     def phase_setup_update(self, dt: float) -> None:
         self.setup_wave()

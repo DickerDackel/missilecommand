@@ -96,5 +96,4 @@ class Highscores(GameState):
 
     def teardown(self) -> None:
         ecs.purge_by_property(THIS)
-        print(ecs.eidx)
         raise StateExit

@@ -34,6 +34,7 @@ class Prop(StrEnum):
     IS_RUIN = auto()  # Damaged city
     IS_SATELLITE = auto()  # Flyer is an alien
     IS_SILO = auto()  # Missile head not launched
+    IS_SMARTBOMB = auto()  # Yeah, this...
     IS_TARGET = auto()  # Crosshair after mouse click
     IS_TEXT = auto()  # Any text label
     IS_TRAIL = auto()  # Line segments left by missiles

@@ -171,6 +171,7 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     auto_sequence = AutoSequence(textures, 1)
     trail = [(start, start)]
 
+    # Can't happen, smartbombs and missiles are launched off-screen
     try:
         momentum = (dest - start).normalize() * speed
     except ValueError:
@@ -221,6 +222,31 @@ def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
     ecs.add_component(eid, Comp.BATTERY_ID, battery_id)
     ecs.add_component(eid, Comp.PRSA, PRSA(vec2(pos)))
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
+
+    return eid
+
+
+def mk_smartbomb(start: vec2, dest: vec2, speed: float,
+                 shutdown_callback: Callable | None = None):
+    color = choice(('red', 'green'))
+    texture = cache['textures'][f'smartbomb_{color}']
+    print(texture)
+
+    # Can't happen, smartbombs and missiles are launched off-screen
+    try:
+        momentum = (dest - start).normalize() * speed
+    except ValueError:
+        momentum = vec2()
+
+    eid = ecs.create_entity()
+    ecs.set_property(eid, Prop.IS_SMARTBOMB)
+    ecs.set_property(eid, Prop.IS_INCOMING)
+    ecs.add_component(eid, Comp.PRSA, PRSA(start.copy()))
+    ecs.add_component(eid, Comp.MOMENTUM, momentum)
+    ecs.add_component(eid, Comp.TEXTURE, texture)
+    ecs.add_component(eid, Comp.TARGET, dest.copy())
+    if shutdown_callback is not None:
+        ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
 
     return eid
 

@@ -31,7 +31,7 @@ from mc.game.waves import wave_iter
 from mc.highscoretable import highscoretable
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
-                          mk_target, mk_textlabel, mk_texture)
+                          mk_smartbomb, mk_target, mk_textlabel, mk_texture)
 from mc.systems import (sys_container, sys_detonate_missile,
                         sys_dont_overshoot, sys_explosion, sys_lifetime,
                         sys_momentum, sys_mouse, sys_shutdown,
@@ -174,6 +174,9 @@ class Game(GameState):
         self.cd_flyer = Cooldown(self.wave.flyer_cooldown)
         self.cd_flyer_shoot = Cooldown(self.wave.flyer_shoot_cooldown)
 
+        self.smartbombs_left = self.wave.smartbombs
+        self.smartbombs = Incoming(3)
+
     def restart(self, from_state: GameState, result: object) -> None:
         if ecs.has(EIDs.FLYER):
             sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
@@ -223,11 +226,13 @@ class Game(GameState):
         #   No more incoming
         silos_left = sum(len(b) for b in GS.batteries)
 
-        if (not silos_left
-            or not self.incoming and self.incoming_left <= 0):
+        if (silos_left == 0
+            or (not self.incoming and self.incoming_left <= 0
+                and not self.smartbombs and self.smartbombs_left <= 0)):
             self.phase = next(self.phase_walker)
             return
 
+        launched_this_frame = 0
         # Launch flyer if
         #     no flyer is active
         #     and the wave does have a flyer
@@ -247,15 +252,17 @@ class Game(GameState):
                                        self.wave.flyer_shoot_cooldown,
                                        C.CONTAINER,
                                        shutdown))
+            launched_this_frame += 1
 
         def spawn_missiles(number=1, origin=None):
+            nonlocal launched_this_frame
+
             def attack_shutdown_callback(eid: EntityID) -> None:
                 self.incoming.remove(eid)
 
-            to_launch = min(C.MAX_LAUNCHES_PER_FRAME,
+            to_launch = min(number,
                             self.incoming.free_slots(),
-                            self.incoming_left,
-                            number)
+                            self.incoming_left)
 
             for i in range(to_launch):
                 start = vec2(origin) if origin else vec2(randint(0, self.app.logical_rect.width), -3)
@@ -266,6 +273,7 @@ class Game(GameState):
                                  shutdown_callback=attack_shutdown_callback)
                 self.incoming.add(eid)
                 self.incoming_left -= 1
+                launched_this_frame += 1
 
         # Once missiles have been launched, only launch more when the earlier
         # ones are below a given height.  Basically a delay between launches.
@@ -273,7 +281,7 @@ class Game(GameState):
                       or all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
                              for eid in self.incoming))
         if may_launch:
-            spawn_missiles(C.MAX_LAUNCHES_PER_FRAME)
+            spawn_missiles(C.MAX_LAUNCHES_PER_FRAME - launched_this_frame)
 
         # Flyer shoots
         if (ecs.has(EIDs.FLYER)):
@@ -297,6 +305,28 @@ class Game(GameState):
                 spawn_missiles(randint(1, 3))
             else:
                 break
+
+        # Smartbombs are like missiles, but they take **2** missile slots.
+        # A smartbomb may be launched if:
+        # * The level actually has smartbombs and there are still some left to launch
+        # * A smartbomb slot is free (max 3 on screen)
+        # * 2 Missile slots are free (counting already active smartbombs as well)
+        active_smartbombs = len(self.smartbombs)
+        if (C.MAX_LAUNCHES_PER_FRAME - launched_this_frame > 0
+            and self.smartbombs_left
+            and self.smartbombs.free_slots()
+            and self.incoming.free_slots() >= 2 * (len(self.smartbombs) + 1)):
+
+            def smartbomb_shutdown_callback(eid: EntityID):
+                self.smartbombs.remove(eid)
+
+            start = vec2(randint(0, self.app.logical_rect.width), -3)
+            target = next(self.allowed_targets)
+            speed = self.wave.missile_speed
+            eid = mk_smartbomb(start, target, speed, shutdown_callback=smartbomb_shutdown_callback)
+            self.smartbombs.add(eid)
+            self.smartbombs_left -= 1
+            launched_this_frame += 1
 
         ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {GS.bonus_cities}')
 

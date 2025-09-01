@@ -20,8 +20,7 @@ class Prop(StrEnum):
     IS_BATTERY = auto()  # Batteries contain silos (unlaunched missiles)
     IS_CITY = auto()  # This is a city
     IS_DEAD = auto()  # This object is dead and will be culled by a system
-    IS_DEAD_TRAIL = auto()  # FIXME, probably redundant?
-    IS_DEAD_FLYER = auto()  # Flyer is dead but still rendered
+    IS_DEAD_TRAIL = auto()  # Trail eraser
     IS_DEBRIEFING = auto()  # Entities created in Debriefing
     IS_DEFENSE = auto()  # opposite of IS_INCOMING
     IS_EXPLOSION = auto()  # Yeah...

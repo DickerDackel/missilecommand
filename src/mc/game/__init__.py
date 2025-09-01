@@ -109,6 +109,7 @@ class Game(GameState):
         GS.cities = [True] * 6
 
         ecs.reset()
+        ecs.create_archetype(Comp.PRSA)  # for Smartbomb collisions, but useful in general
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
         ecs.create_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE)  # for Explosion collisions
 
@@ -335,6 +336,7 @@ class Game(GameState):
         ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {GS.bonus_cities}')
 
         self.run_game_systems(dt)
+        self.do_collisions()
 
     def phase_pre_linger_update(self, dt: float) -> None:
         missiles = ecs.eids_by_property(Prop.IS_MISSILE)
@@ -440,19 +442,15 @@ class Game(GameState):
         ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
         ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
 
-        self.do_collisions()
-
     def do_collisions(self) -> None:
+        # Flyers
         explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                             has_properties={Prop.IS_EXPLOSION})
         # There is actually only max 1 flyer at any given time, but in case
         # this changes when moving past the original...
         flyers = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, has_properties={Prop.IS_FLYER})
-        missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
-
-        # Flyers
         for f_eid, (f_prsa,  f_mask) in flyers:
-            if ecs.has_property(f_eid, Prop.IS_DEAD_FLYER):
+            if ecs.has_property(f_eid, Prop.IS_DEAD):
                 continue
 
             f_pos = f_prsa.pos
@@ -473,7 +471,7 @@ class Game(GameState):
                 sound = ecs.comp_of_eid(f_eid, Comp.SOUND)
                 if sound is not None: sound.stop()
 
-                ecs.set_property(f_eid, Prop.IS_DEAD_FLYER)
+                ecs.set_property(f_eid, Prop.IS_DEAD)
                 ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))
 
                 momentum = ecs.comp_of_eid(f_eid, Comp.MOMENTUM)
@@ -492,6 +490,9 @@ class Game(GameState):
                 break
 
         # Missiles
+        explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
+                                            has_properties={Prop.IS_EXPLOSION})
+        missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
         for m_eid, (m_prsa, *_) in missiles:
             m_pos = m_prsa.pos
 
@@ -534,14 +535,13 @@ class Game(GameState):
                 GS.batteries[i].clear()
                 break
 
+        # Smartbombs
         explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                             has_properties={Prop.IS_EXPLOSION})
-        # Smartbombs
-        for b_eid in self.smartbombs:
-            if ecs.has_property(b_eid, Prop.IS_DEAD_FLYER):
+        smartbombs = ecs.comps_of_archetype(Comp.PRSA, has_properties={Prop.IS_SMARTBOMB})
+        for b_eid, b_pos in self.smartbombs:
+            if ecs.has_property(b_eid, Prop.IS_DEAD):
                 continue
-
-            b_pos = ecs.comp_of_eid(b_eid, Comp.PRSA).pos
 
             # smartbomb vs. cities
             for i, c in enumerate(GS.cities):
@@ -555,6 +555,7 @@ class Game(GameState):
                 ecs.remove_entity(f'city-{i}')
                 mk_ruin(C.POS_CITIES[i], f'city-{i}')
 
+            # smartbomb vs. explosion
             for e_eid, (e_prsa, e_mask, e_scale) in explosions:
                 lt = e_scale()
                 delta = abs((b_pos - e_prsa.pos).length())
@@ -564,7 +565,7 @@ class Game(GameState):
                     sound = ecs.comp_of_eid(b_eid, Comp.SOUND)
                     if sound is not None: sound.stop()
 
-                    ecs.set_property(b_eid, Prop.IS_DEAD_FLYER)
+                    ecs.set_property(b_eid, Prop.IS_DEAD)
                     ecs.add_component(b_eid, Comp.LIFETIME, Cooldown(1))
 
                     momentum = ecs.comp_of_eid(b_eid, Comp.MOMENTUM)

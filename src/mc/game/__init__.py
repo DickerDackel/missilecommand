@@ -33,9 +33,9 @@ from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
                           mk_smartbomb, mk_target, mk_textlabel, mk_texture)
 from mc.systems import (sys_container, sys_detonate_missile,
-                        sys_dont_overshoot, sys_explosion, sys_lifetime,
-                        sys_momentum, sys_mouse, sys_shutdown,
-                        sys_target_reached, sys_draw_textlabel,
+                        sys_detonate_smartbomb, sys_dont_overshoot,
+                        sys_explosion, sys_lifetime, sys_momentum, sys_mouse,
+                        sys_shutdown, sys_target_reached, sys_draw_textlabel,
                         sys_draw_texture, sys_textblink,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
@@ -137,6 +137,7 @@ class Game(GameState):
         purge_entities(Prop.IS_EXPLOSION)
         purge_entities(Prop.IS_FLYER)
         purge_entities(Prop.IS_MISSILE)
+        purge_entities(Prop.IS_SMARTBOMB)
         purge_entities(Prop.IS_SILO)
         purge_entities(Prop.IS_TARGET)
 
@@ -238,10 +239,11 @@ class Game(GameState):
         #     and the wave does have a flyer
         #     and flyer cooldown is cold
         #     and an incoming slot is free
+        free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
         if (not ecs.has(EIDs.FLYER)
                 and self.wave.flyer_cooldown
                 and self.cd_flyer.cold()
-                and self.incoming.free_slots()):
+                and free_slots):
 
             def shutdown(eid: EntityID) -> None:
                 self.cd_flyer.reset()
@@ -260,8 +262,9 @@ class Game(GameState):
             def attack_shutdown_callback(eid: EntityID) -> None:
                 self.incoming.remove(eid)
 
+            free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
             to_launch = min(number,
-                            self.incoming.free_slots(),
+                            free_slots,
                             self.incoming_left)
 
             for i in range(to_launch):
@@ -299,8 +302,9 @@ class Game(GameState):
         #   for the wave.
         for eid in list(self.incoming):  # listify the set, since it will change
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
+            free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
             if (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]
-                and self.incoming.free_slots()
+                and free_slots
                 and self.incoming_left):
                 spawn_missiles(randint(1, 3))
             else:
@@ -311,7 +315,7 @@ class Game(GameState):
         # * The level actually has smartbombs and there are still some left to launch
         # * A smartbomb slot is free (max 3 on screen)
         # * 2 Missile slots are free (counting already active smartbombs as well)
-        active_smartbombs = len(self.smartbombs)
+        free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
         if (C.MAX_LAUNCHES_PER_FRAME - launched_this_frame > 0
             and self.smartbombs_left
             and self.smartbombs.free_slots()
@@ -425,6 +429,7 @@ class Game(GameState):
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
         ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
         ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD)
+        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, Prop.IS_DEAD)
         ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
         ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
                        texture=self.trail_canvas,
@@ -527,6 +532,56 @@ class Game(GameState):
                     ecs.add_component(silo, Comp.LIFETIME,
                                       Cooldown(C.EXPLOSION_DURATION))
                 GS.batteries[i].clear()
+                break
+
+        explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
+                                            has_properties={Prop.IS_EXPLOSION})
+        # Smartbombs
+        for b_eid in self.smartbombs:
+            if ecs.has_property(b_eid, Prop.IS_DEAD_FLYER):
+                continue
+
+            b_pos = ecs.comp_of_eid(b_eid, Comp.PRSA).pos
+
+            # smartbomb vs. cities
+            for i, c in enumerate(GS.cities):
+                if not c: continue
+
+                if not C.HITBOX_CITY[i].collidepoint(b_pos):
+                    continue
+
+                ecs.add_component(b_eid, Prop.IS_DEAD, True)
+                GS.cities[i] = False
+                ecs.remove_entity(f'city-{i}')
+                mk_ruin(C.POS_CITIES[i], f'city-{i}')
+
+            for e_eid, (e_prsa, e_mask, e_scale) in explosions:
+                lt = e_scale()
+                delta = abs((b_pos - e_prsa.pos).length())
+
+                if lt * C.EXPLOSION_RADIUS >= delta:
+                    # explode
+                    sound = ecs.comp_of_eid(b_eid, Comp.SOUND)
+                    if sound is not None: sound.stop()
+
+                    ecs.set_property(b_eid, Prop.IS_DEAD_FLYER)
+                    ecs.add_component(b_eid, Comp.LIFETIME, Cooldown(1))
+
+                    momentum = ecs.comp_of_eid(b_eid, Comp.MOMENTUM)
+                    momentum *= 0
+
+                    mk_explosion(b_pos)
+
+                    prev_score = GS.score // C.BONUS_CITY_SCORE
+                    GS.score += GS.score_mult * C.Score.SMARTBOMB
+                    if GS.score // C.BONUS_CITY_SCORE > prev_score:
+                        GS.bonus_cities += 1
+                        play_sound(cache['sounds']['bonus-city'])
+
+                elif C.EXPLOSION_RADIUS < delta < 1.25 * C.EXPLOSION_RADIUS:
+                    # evade
+                    ...
+
                 break
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')

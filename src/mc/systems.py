@@ -86,6 +86,14 @@ def sys_detonate_missile(dt: float,
     play_sound(cache['sounds']['explosion'], 3)
 
 
+def sys_detonate_smartbomb(dt: float,
+                           eid: EntityID,
+                           prsa: PRSA,
+                           is_dead: bool) -> None:
+    mk_explosion(prsa.pos)
+    play_sound(cache['sounds']['explosion'], 3)
+
+
 def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
     """Flags entity for culling after lifetime runs out."""
     if lifetime.cold():

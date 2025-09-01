@@ -230,7 +230,12 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float,
                  shutdown_callback: Callable | None = None):
     color = choice(('red', 'green'))
     texture = cache['textures'][f'smartbomb_{color}']
-    print(texture)
+    sound = play_sound(cache['sounds']['smartbomb'], loops=-1)
+
+    def stop_sound(eid):
+        if sound is not None: sound.stop()
+
+    shutdown = (shutdown_callback, stop_sound) if shutdown_callback is not None else stop_sound
 
     # Can't happen, smartbombs and missiles are launched off-screen
     try:
@@ -245,8 +250,9 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float,
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
     ecs.add_component(eid, Comp.TEXTURE, texture)
     ecs.add_component(eid, Comp.TARGET, dest.copy())
-    if shutdown_callback is not None:
-        ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
+    ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
+    ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
+    ecs.add_component(eid, Comp.SOUND, sound)
 
     return eid
 

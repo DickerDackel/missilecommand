@@ -430,8 +430,8 @@ class Game(GameState):
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
         ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
-        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD)
-        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, Prop.IS_DEAD)
+        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD, has_properties={Prop.IS_MISSILE})
+        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, Prop.IS_DEAD, has_properties={Prop.IS_SMARTBOMB})
         ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
         ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
                        texture=self.trail_canvas,
@@ -511,25 +511,27 @@ class Game(GameState):
 
             # missile vs. cities
             for i, c in enumerate(GS.cities):
-                if not c: continue
-
                 if not C.HITBOX_CITY[i].collidepoint(m_pos):
                     continue
 
                 ecs.add_component(m_eid, Prop.IS_DEAD, True)
+
+                if not c: continue
+
                 GS.cities[i] = False
                 ecs.remove_entity(f'city-{i}')
                 mk_ruin(C.POS_CITIES[i], f'city-{i}')
 
             # missile vs. batteries
             for i, battery in enumerate(GS.batteries):
-                if not battery: continue
-
                 if not C.HITBOX_BATTERIES[i].collidepoint(m_pos):
                     continue
 
+                ecs.add_component(m_eid, Prop.IS_DEAD, True)
+
+                if not battery: continue
+
                 for silo in GS.batteries[i]:
-                    ecs.add_component(m_eid, Prop.IS_DEAD, True)
                     ecs.add_component(silo, Comp.LIFETIME,
                                       Cooldown(C.EXPLOSION_DURATION))
                 GS.batteries[i].clear()
@@ -545,12 +547,13 @@ class Game(GameState):
 
             # smartbomb vs. cities
             for i, c in enumerate(GS.cities):
-                if not c: continue
-
                 if not C.HITBOX_CITY[i].collidepoint(b_pos):
                     continue
 
                 ecs.add_component(b_eid, Prop.IS_DEAD, True)
+
+                if not c: continue
+
                 GS.cities[i] = False
                 ecs.remove_entity(f'city-{i}')
                 mk_ruin(C.POS_CITIES[i], f'city-{i}')
@@ -558,20 +561,14 @@ class Game(GameState):
             # smartbomb vs. explosion
             for e_eid, (e_prsa, e_mask, e_scale) in explosions:
                 lt = e_scale()
-                delta = abs((b_pos - e_prsa.pos).length())
+                delta = e_pos - b_pos
 
-                if lt * C.EXPLOSION_RADIUS >= delta:
+                if delta.length() <= lt * C.EXPLOSION_RADIUS:
                     # explode
                     sound = ecs.comp_of_eid(b_eid, Comp.SOUND)
                     if sound is not None: sound.stop()
 
                     ecs.set_property(b_eid, Prop.IS_DEAD)
-                    ecs.add_component(b_eid, Comp.LIFETIME, Cooldown(1))
-
-                    momentum = ecs.comp_of_eid(b_eid, Comp.MOMENTUM)
-                    momentum *= 0
-
-                    mk_explosion(b_pos)
 
                     prev_score = GS.score // C.BONUS_CITY_SCORE
                     GS.score += GS.score_mult * C.Score.SMARTBOMB
@@ -580,6 +577,7 @@ class Game(GameState):
                         play_sound(cache['sounds']['bonus-city'])
 
                 elif C.EXPLOSION_RADIUS < delta < 1.25 * C.EXPLOSION_RADIUS:
+                    evade = delta.rotate(90)
                     # evade
                     ...
 

@@ -376,8 +376,8 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
             lt = e_scale()
             delta = e_prsa.pos - b_prsa.pos
 
+            # explode
             if delta.length() <= lt * C.EXPLOSION_RADIUS:
-                # explode
                 stop_sound(ecs.comp_of_eid(b_eid, Comp.SOUND))
 
                 ecs.set_property(b_eid, Prop.IS_DEAD)
@@ -388,10 +388,12 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
                     GS.bonus_cities += 1
                     play_sound(cache['sounds']['bonus-city'])
 
+            # evade
             elif C.EXPLOSION_RADIUS < delta < 1.25 * C.EXPLOSION_RADIUS:
-                # evade
                 evade = -delta.normalize() * b_speed
                 b_momentum += evade
+
+            # Normal drop
             else:
                 try:
                     b_momentum.update((b_target - b_prsa.pos).normalize() * b_speed)

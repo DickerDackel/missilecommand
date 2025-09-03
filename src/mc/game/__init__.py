@@ -209,6 +209,7 @@ class Game(GameState):
                     stop_sound(ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND))
 
     def update(self, dt: float) -> None:
+        print('update')
         if self.paused: return
         if self.app.is_stacked(self): return
 
@@ -433,6 +434,7 @@ class Game(GameState):
         play_sound(cache['sounds']['launch'], 3)
 
     def run_game_systems(self, dt):
+        print('run_game_systems')
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)

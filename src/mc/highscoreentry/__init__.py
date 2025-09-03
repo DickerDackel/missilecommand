@@ -14,7 +14,7 @@ from pygame import Vector2 as vec2
 
 import mc.config as C
 
-from mc.game.gamestate import gs as GS
+from mc.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel, mk_texture
 from mc.systems import sys_draw_texture, sys_draw_textlabel

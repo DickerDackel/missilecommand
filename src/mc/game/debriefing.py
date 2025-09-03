@@ -14,7 +14,7 @@ from pgcooldown import Cooldown
 
 import mc.config as C
 
-from mc.game.gamestate import gs as GS
+from mc.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_textlabel
 from mc.types import Comp, EIDs, Prop

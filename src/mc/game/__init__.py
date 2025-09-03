@@ -24,10 +24,10 @@ import mc.config as C
 
 from mc.game.briefing import Briefing
 from mc.game.debriefing import Debriefing
-from mc.game.gamestate import gs as GS
 from mc.game.incoming import Incoming
 from mc.game.pause import Pause
 from mc.game.waves import wave_iter
+from mc.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,

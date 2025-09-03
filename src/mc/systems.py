@@ -23,6 +23,7 @@ import mc.config as C
 from mc.launchers import mk_explosion, mk_trail_eraser
 from mc.types import Comp, EntityID, Momentum, Prop, Trail
 from mc.utils import play_sound
+from mc.gamestate import gs as GS
 
 
 def sys_apply_scale(dt: float,

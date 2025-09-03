@@ -389,7 +389,7 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
                     play_sound(cache['sounds']['bonus-city'])
 
             # evade
-            elif C.EXPLOSION_RADIUS < delta < 1.25 * C.EXPLOSION_RADIUS:
+            elif delta.length() < 1.25 * C.EXPLOSION_RADIUS:
                 evade = -delta.normalize() * b_speed
                 b_momentum += evade
 

@@ -58,6 +58,11 @@ def purge_entities(property: Hashable) -> None:
         ecs.remove_entity(eid)
 
 
+def stop_sound(sound: pygame.mixer.Sound | None):
+    if sound is not None:
+        sound.stop()
+
+
 def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int, int]) -> Point:
     return (remap(0, real_size[0], 0, virtual_size[0], pos[0]),
             remap(0, real_size[1], 0, virtual_size[1], pos[1]))

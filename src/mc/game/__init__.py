@@ -40,7 +40,7 @@ from mc.systems import (sys_container, sys_detonate_missile,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail)
 from mc.types import Comp, EIDs, EntityID, Prop
-from mc.utils import (cls, play_sound, purge_entities)
+from mc.utils import (cls, play_sound, purge_entities, stop_sound)
 
 
 class StatePhase(StrEnum):
@@ -198,8 +198,7 @@ class Game(GameState):
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
                 if ecs.has(EIDs.FLYER):
-                    sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
-                    if sound is not None: sound.stop()
+                    stop_sound(ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND))
 
     def update(self, dt: float) -> None:
         if self.paused: return
@@ -468,8 +467,7 @@ class Game(GameState):
                 if scaled_mask.overlap(f_mask, offset) is None:
                     continue
 
-                sound = ecs.comp_of_eid(f_eid, Comp.SOUND)
-                if sound is not None: sound.stop()
+                stop_sound(ecs.comp_of_eid(f_eid, Comp.SOUND))
 
                 ecs.set_property(f_eid, Prop.IS_DEAD)
                 ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))
@@ -565,8 +563,7 @@ class Game(GameState):
 
                 if delta.length() <= lt * C.EXPLOSION_RADIUS:
                     # explode
-                    sound = ecs.comp_of_eid(b_eid, Comp.SOUND)
-                    if sound is not None: sound.stop()
+                    stop_sound(ecs.comp_of_eid(b_eid, Comp.SOUND))
 
                     ecs.set_property(b_eid, Prop.IS_DEAD)
 

@@ -32,13 +32,20 @@ from mc.highscoretable import highscoretable
 from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
                           mk_smartbomb, mk_target, mk_textlabel, mk_texture)
-from mc.systems import (sys_container, sys_detonate_missile,
-                        sys_detonate_smartbomb, sys_dont_overshoot,
-                        sys_explosion, sys_lifetime, sys_momentum, sys_mouse,
-                        sys_shutdown, sys_target_reached, sys_draw_textlabel,
+from mc.systems import (non_ecs_sys_collide_flyer_with_explosion,
+                        non_ecs_sys_collide_missile_with_battery,
+                        non_ecs_sys_collide_missile_with_city,
+                        non_ecs_sys_collide_missile_with_explosion,
+                        non_ecs_sys_collide_smartbomb_with_city,
+                        non_ecs_sys_collide_smartbomb_with_explosion,
+                        sys_container, sys_detonate_flyer,
+                        sys_detonate_missile, sys_detonate_smartbomb,
+                        sys_dont_overshoot, sys_explosion, sys_lifetime,
+                        sys_momentum, sys_mouse, sys_shutdown,
+                        sys_target_reached, sys_draw_textlabel,
                         sys_draw_texture, sys_textblink,
                         sys_texture_from_texture_list, sys_trail_eraser,
-                        sys_trail, sys_update_trail)
+                        sys_trail, sys_update_trail,)
 from mc.types import Comp, EIDs, EntityID, Prop
 from mc.utils import (cls, play_sound, purge_entities, stop_sound)
 
@@ -112,6 +119,7 @@ class Game(GameState):
         ecs.create_archetype(Comp.PRSA)  # for Smartbomb collisions, but useful in general
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
         ecs.create_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE)  # for Explosion collisions
+        ecs.create_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM, Comp.SPEED)  # For smartbomb evasion
 
         mk_crosshair()
 
@@ -429,156 +437,28 @@ class Game(GameState):
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
         ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
-        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD, has_properties={Prop.IS_MISSILE})
-        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, Prop.IS_DEAD, has_properties={Prop.IS_SMARTBOMB})
         ecs.run_system(dt, sys_trail, Comp.TRAIL, texture=self.trail_canvas)
-        ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL,
-                       texture=self.trail_canvas,
-                       has_properties={Prop.IS_DEAD_TRAIL})
-        ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA,
-                       Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
+        ecs.run_system(dt, sys_trail_eraser, Comp.TRAIL, texture=self.trail_canvas, has_properties={Prop.IS_DEAD_TRAIL})
+        ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA, Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
         ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
         ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
+
+        self.do_collisions()
+
+        ecs.run_system(dt, sys_detonate_flyer, Comp.PRSA, Prop.IS_DEAD, has_properties={Prop.IS_FLYER})
+        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD, has_properties={Prop.IS_MISSILE})
+        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, Prop.IS_DEAD, has_properties={Prop.IS_SMARTBOMB})
+
+        # Shutdown needs to be very last, else all the IS_DEAD filters won't trigger
         ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
 
     def do_collisions(self) -> None:
-        # Flyers
-        explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
-                                            has_properties={Prop.IS_EXPLOSION})
-        # There is actually only max 1 flyer at any given time, but in case
-        # this changes when moving past the original...
-        flyers = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, has_properties={Prop.IS_FLYER})
-        for f_eid, (f_prsa,  f_mask) in flyers:
-            if ecs.has_property(f_eid, Prop.IS_DEAD):
-                continue
-
-            f_pos = f_prsa.pos
-            f_rect = f_mask.get_rect(center=f_pos)
-
-            for e_eid, (e_prsa, e_mask, e_scale) in explosions:
-                lt = e_scale()
-                e_rect = e_mask.get_rect()
-                scale = vec2(e_rect.size) * lt
-                scaled_mask = e_mask.scale(scale)
-                m_rect = scaled_mask.get_rect(center=e_prsa.pos)
-
-                offset = vec2(m_rect.topleft) - vec2(f_rect.topleft)
-
-                if scaled_mask.overlap(f_mask, offset) is None:
-                    continue
-
-                stop_sound(ecs.comp_of_eid(f_eid, Comp.SOUND))
-
-                ecs.set_property(f_eid, Prop.IS_DEAD)
-                ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))
-
-                momentum = ecs.comp_of_eid(f_eid, Comp.MOMENTUM)
-                momentum *= 0
-
-                mk_explosion(f_pos)
-
-                is_satellite = ecs.has_property(f_eid, Prop.IS_SATELLITE)
-                base_score = C.Score.SATELLITE if is_satellite else C.Score.PLANE
-                prev_score = GS.score // C.BONUS_CITY_SCORE
-                GS.score += GS.score_mult * base_score
-                if GS.score // C.BONUS_CITY_SCORE > prev_score:
-                    GS.bonus_cities += 1
-                    play_sound(cache['sounds']['bonus-city'])
-
-                break
-
-        # Missiles
-        explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
-                                            has_properties={Prop.IS_EXPLOSION})
-        missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
-        for m_eid, (m_prsa, *_) in missiles:
-            m_pos = m_prsa.pos
-
-            # missile vs. explosions
-            for e_eid, (e_prsa, e_mask, e_scale) in explosions:
-                e_pos = e_prsa.pos
-                delta = e_pos - m_pos
-                width = e_mask.get_size()[0]
-
-                if delta.length() > e_scale() * width / 2:
-                    continue
-
-                ecs.add_component(m_eid, Prop.IS_DEAD, True)
-                GS.score += GS.score_mult * C.Score.MISSILE
-                break
-
-            # missile vs. cities
-            for i, c in enumerate(GS.cities):
-                if not C.HITBOX_CITY[i].collidepoint(m_pos):
-                    continue
-
-                ecs.add_component(m_eid, Prop.IS_DEAD, True)
-
-                if not c: continue
-
-                GS.cities[i] = False
-                ecs.remove_entity(f'city-{i}')
-                mk_ruin(C.POS_CITIES[i], f'city-{i}')
-
-            # missile vs. batteries
-            for i, battery in enumerate(GS.batteries):
-                if not C.HITBOX_BATTERIES[i].collidepoint(m_pos):
-                    continue
-
-                ecs.add_component(m_eid, Prop.IS_DEAD, True)
-
-                if not battery: continue
-
-                for silo in GS.batteries[i]:
-                    ecs.add_component(silo, Comp.LIFETIME,
-                                      Cooldown(C.EXPLOSION_DURATION))
-                GS.batteries[i].clear()
-                break
-
-        # Smartbombs
-        explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
-                                            has_properties={Prop.IS_EXPLOSION})
-        smartbombs = ecs.comps_of_archetype(Comp.PRSA, has_properties={Prop.IS_SMARTBOMB})
-        for b_eid, b_pos in self.smartbombs:
-            if ecs.has_property(b_eid, Prop.IS_DEAD):
-                continue
-
-            # smartbomb vs. cities
-            for i, c in enumerate(GS.cities):
-                if not C.HITBOX_CITY[i].collidepoint(b_pos):
-                    continue
-
-                ecs.add_component(b_eid, Prop.IS_DEAD, True)
-
-                if not c: continue
-
-                GS.cities[i] = False
-                ecs.remove_entity(f'city-{i}')
-                mk_ruin(C.POS_CITIES[i], f'city-{i}')
-
-            # smartbomb vs. explosion
-            for e_eid, (e_prsa, e_mask, e_scale) in explosions:
-                lt = e_scale()
-                delta = e_pos - b_pos
-
-                if delta.length() <= lt * C.EXPLOSION_RADIUS:
-                    # explode
-                    stop_sound(ecs.comp_of_eid(b_eid, Comp.SOUND))
-
-                    ecs.set_property(b_eid, Prop.IS_DEAD)
-
-                    prev_score = GS.score // C.BONUS_CITY_SCORE
-                    GS.score += GS.score_mult * C.Score.SMARTBOMB
-                    if GS.score // C.BONUS_CITY_SCORE > prev_score:
-                        GS.bonus_cities += 1
-                        play_sound(cache['sounds']['bonus-city'])
-
-                elif C.EXPLOSION_RADIUS < delta < 1.25 * C.EXPLOSION_RADIUS:
-                    evade = delta.rotate(90)
-                    # evade
-                    ...
-
-                break
+        non_ecs_sys_collide_flyer_with_explosion()
+        non_ecs_sys_collide_missile_with_battery()
+        non_ecs_sys_collide_missile_with_city()
+        non_ecs_sys_collide_missile_with_explosion()
+        non_ecs_sys_collide_smartbomb_with_city()
+        non_ecs_sys_collide_smartbomb_with_explosion()
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
         if GS.score > highscoretable.leader[0]:

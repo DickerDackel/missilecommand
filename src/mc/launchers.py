@@ -22,7 +22,7 @@ from rpeasings import out_quad
 import mc.config as C
 
 from mc.types import Comp, Container, EntityID, Momentum, Prop, Trail
-from mc.utils import play_sound
+from mc.utils import play_sound, stop_sound
 
 
 def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
@@ -110,10 +110,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, shoot_cooldown
     height = randint(max_height, min_height)
     sound = play_sound(cache['sounds']['flyer'], loops=-1)
 
-    def stop_sound(eid):
-        if sound is not None: sound.stop()
-
-    shutdown = (shutdown_callback, stop_sound)
+    shutdown = (shutdown_callback, lambda eid: stop_sound(sound))
 
     left_to_right = random() > 0.5
     if left_to_right:
@@ -235,7 +232,7 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float,
     def stop_sound(eid):
         if sound is not None: sound.stop()
 
-    shutdown = (shutdown_callback, stop_sound) if shutdown_callback is not None else stop_sound
+    shutdown = (shutdown_callback, lambda eid: stop_sound(sound)) if shutdown_callback is not None else stop_sound
 
     # Can't happen, smartbombs and missiles are launched off-screen
     try:
@@ -248,6 +245,7 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float,
     ecs.set_property(eid, Prop.IS_INCOMING)
     ecs.add_component(eid, Comp.PRSA, PRSA(start.copy()))
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
+    ecs.add_component(eid, Comp.SPEED, speed)
     ecs.add_component(eid, Comp.TEXTURE, texture)
     ecs.add_component(eid, Comp.TARGET, dest.copy())
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)

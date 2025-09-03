@@ -20,10 +20,11 @@ from pygame.typing import ColorLike, Point
 
 import mc.config as C
 
-from mc.launchers import mk_explosion, mk_trail_eraser
-from mc.types import Comp, EntityID, Momentum, Prop, Trail
-from mc.utils import play_sound
 from mc.gamestate import gs as GS
+from mc.highscoretable import highscoretable
+from mc.launchers import mk_explosion, mk_ruin, mk_trail_eraser
+from mc.types import Comp, EIDs, EntityID, Momentum, Prop, Trail
+from mc.utils import play_sound, stop_sound
 
 
 def sys_apply_scale(dt: float,
@@ -77,11 +78,20 @@ def sys_dont_overshoot(dt: float, eid: EntityID,
         ecs.add_component(eid, Prop.IS_DEAD, True)
 
 
+def sys_detonate_flyer(dt: float,
+                       eid: EntityID,
+                       prsa: PRSA,
+                       is_dead: bool) -> None:
+    mk_explosion(prsa.pos)
+    play_sound(cache['sounds']['explosion'], 3)
+
+
 def sys_detonate_missile(dt: float,
                          eid: EntityID,
                          prsa: PRSA,
                          trail: Trail,
                          is_dead: bool) -> None:
+    print(f'detonate missile at {prsa.pos}')
     mk_explosion(prsa.pos)
     mk_trail_eraser(trail)
     play_sound(cache['sounds']['explosion'], 3)
@@ -130,6 +140,9 @@ def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> No
     """Flag the entity for culling if it has reached target."""
     if prsa.pos == target:
         ecs.add_component(eid, Prop.IS_DEAD, True)
+        from pprint import pprint
+        print(f'{eid} has reached {target}')
+        pprint(ecs.eidx[eid])
 
 
 def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
@@ -157,8 +170,7 @@ def sys_draw_textlabel(dt: float, eid: EntityID, text: str,
         crect.midleft = crect.midright
 
 
-def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture,
-                prsa: PRSA) -> None:
+def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture, prsa: PRSA) -> None:
     """Render the current texture following the settings in prsa."""
     # FIXME unneeded?
     # tpos = round(prsa.pos.x), round(prsa.pos.y)
@@ -231,3 +243,157 @@ def sys_trail_eraser(dt: float,
 def sys_update_trail(dt: float, eid: EntityID, prsa: PRSA, trail: Trail) -> None:
     previous = trail[-1][1]
     trail.append((previous, prsa.pos.copy()))
+
+
+def non_ecs_sys_collide_flyer_with_explosion():
+    # There is actually only max 1 flyer at any given time, but in case
+    # this changes when moving past the original...
+    flyers = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, has_properties={Prop.IS_FLYER})
+    explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
+                                        has_properties={Prop.IS_EXPLOSION})
+    for f_eid, (f_prsa,  f_mask) in flyers:
+        if ecs.has_property(f_eid, Prop.IS_DEAD):
+            continue
+
+        f_rect = f_mask.get_rect(center=f_prsa.pos)
+
+        for e_eid, (e_prsa, e_mask, e_scale) in explosions:
+            lt = e_scale()
+            e_rect = e_mask.get_rect()
+            scale = vec2(e_rect.size) * lt
+            scaled_mask = e_mask.scale(scale)
+            m_rect = scaled_mask.get_rect(center=e_prsa.pos)
+            offset = vec2(m_rect.topleft) - vec2(f_rect.topleft)
+
+            if scaled_mask.overlap(f_mask, offset) is None:
+                continue
+
+            # Don't flag it dead yet, just let it linger motionless for 1s
+            # until the explosion covers it.
+            ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))
+            momentum = ecs.comp_of_eid(f_eid, Comp.MOMENTUM)
+            momentum *= 0
+
+            mk_explosion(f_prsa.pos)
+
+            is_satellite = ecs.has_property(f_eid, Prop.IS_SATELLITE)
+            base_score = C.Score.SATELLITE if is_satellite else C.Score.PLANE
+            prev_score = GS.score // C.BONUS_CITY_SCORE
+            GS.score += GS.score_mult * base_score
+            if GS.score // C.BONUS_CITY_SCORE > prev_score:
+                GS.bonus_cities += 1
+                play_sound(cache['sounds']['bonus-city'])
+
+            break
+
+
+def non_ecs_sys_collide_missile_with_battery():
+    missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
+    for m_eid, (m_prsa, *_) in missiles:
+        for i, battery in enumerate(GS.batteries):
+            if not C.HITBOX_BATTERIES[i].collidepoint(m_prsa.pos):
+                continue
+
+            ecs.add_component(m_eid, Prop.IS_DEAD, True)
+
+            if not battery: continue
+
+            for silo in GS.batteries[i]:
+                ecs.add_component(silo, Comp.LIFETIME,
+                                  Cooldown(C.EXPLOSION_DURATION))
+            GS.batteries[i].clear()
+            break
+
+
+def non_ecs_sys_collide_missile_with_city():
+    missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
+    for m_eid, (m_prsa, *_) in missiles:
+        for i, c in enumerate(GS.cities):
+            if not C.HITBOX_CITY[i].collidepoint(m_prsa.pos):
+                continue
+
+            # Explode missile, even if city is already removed
+            ecs.add_component(m_eid, Prop.IS_DEAD, True)
+            if not c: continue
+
+            GS.cities[i] = False
+            ecs.remove_entity(f'city-{i}')
+            mk_ruin(C.POS_CITIES[i], f'city-{i}')
+
+
+def non_ecs_sys_collide_missile_with_explosion():
+    explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
+                                        has_properties={Prop.IS_EXPLOSION})
+    missiles = ecs.comps_of_archetype(Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_INCOMING})
+    for m_eid, (m_prsa, *_) in missiles:
+        for e_eid, (e_prsa, e_mask, e_scale) in explosions:
+            e_pos = e_prsa.pos
+            delta = e_pos - m_prsa.pos
+            width = e_mask.get_size()[0]
+
+            if delta.length() > e_scale() * width / 2:
+                continue
+
+            ecs.add_component(m_eid, Prop.IS_DEAD, True)
+            GS.score += GS.score_mult * C.Score.MISSILE
+            break
+
+
+def non_ecs_sys_collide_smartbomb_with_city():
+    smartbombs = ecs.comps_of_archetype(Comp.PRSA, has_properties={Prop.IS_SMARTBOMB})
+
+    for b_eid, (b_prsa,) in smartbombs:
+        if ecs.has_property(b_eid, Prop.IS_DEAD):
+            continue
+
+        for i, c in enumerate(GS.cities):
+            if not C.HITBOX_CITY[i].collidepoint(b_prsa.pos):
+                continue
+
+            ecs.add_component(b_eid, Prop.IS_DEAD, True)
+            if not c: continue
+
+            GS.cities[i] = False
+            ecs.remove_entity(f'city-{i}')
+            mk_ruin(C.POS_CITIES[i], f'city-{i}')
+
+    ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
+    if GS.score > highscoretable.leader[0]:
+        ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
+
+
+def non_ecs_sys_collide_smartbomb_with_explosion():
+    explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
+                                        has_properties={Prop.IS_EXPLOSION})
+    smartbombs = ecs.comps_of_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM,
+                                        Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})
+
+    for b_eid, (b_prsa, b_target, b_momentum, b_speed) in smartbombs:
+        if ecs.has_property(b_eid, Prop.IS_DEAD):
+            continue
+
+        for e_eid, (e_prsa, e_mask, e_scale) in explosions:
+            lt = e_scale()
+            delta = e_prsa.pos - b_prsa.pos
+
+            if delta.length() <= lt * C.EXPLOSION_RADIUS:
+                # explode
+                stop_sound(ecs.comp_of_eid(b_eid, Comp.SOUND))
+
+                ecs.set_property(b_eid, Prop.IS_DEAD)
+
+                prev_score = GS.score // C.BONUS_CITY_SCORE
+                GS.score += GS.score_mult * C.Score.SMARTBOMB
+                if GS.score // C.BONUS_CITY_SCORE > prev_score:
+                    GS.bonus_cities += 1
+                    play_sound(cache['sounds']['bonus-city'])
+
+            elif C.EXPLOSION_RADIUS < delta < 1.25 * C.EXPLOSION_RADIUS:
+                # evade
+                evade = -delta.normalize() * b_speed
+                b_momentum += evade
+            else:
+                try:
+                    b_momentum.update((b_target - b_prsa.pos).normalize() * b_speed)
+                except ValueError:
+                    b_momentum = vec2()

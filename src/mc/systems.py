@@ -76,6 +76,7 @@ def sys_dont_overshoot(dt: float, eid: EntityID,
     if not delta or delta.length() < momentum.length() and dot < 0:
         prsa.pos = target
         ecs.add_component(eid, Prop.IS_DEAD, True)
+        ecs.set_property(eid, Prop.IS_DEAD)
 
 
 def sys_detonate_flyer(dt: float,
@@ -109,6 +110,7 @@ def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
     """Flags entity for culling after lifetime runs out."""
     if lifetime.cold():
         ecs.add_component(eid, Prop.IS_DEAD, True)
+        ecs.set_property(eid, Prop.IS_DEAD)
 
 
 def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> None:
@@ -140,6 +142,7 @@ def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> No
     """Flag the entity for culling if it has reached target."""
     if prsa.pos == target:
         ecs.add_component(eid, Prop.IS_DEAD, True)
+        ecs.set_property(eid, Prop.IS_DEAD)
 
 
 def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
@@ -292,6 +295,7 @@ def non_ecs_sys_collide_missile_with_battery():
                 continue
 
             ecs.add_component(m_eid, Prop.IS_DEAD, True)
+            ecs.set_property(m_eid, Prop.IS_DEAD)
 
             if not battery: continue
 
@@ -311,6 +315,7 @@ def non_ecs_sys_collide_missile_with_city():
 
             # Explode missile, even if city is already removed
             ecs.add_component(m_eid, Prop.IS_DEAD, True)
+            ecs.set_property(m_eid, Prop.IS_DEAD)
             if not c: continue
 
             GS.cities[i] = False
@@ -332,6 +337,7 @@ def non_ecs_sys_collide_missile_with_explosion():
                 continue
 
             ecs.add_component(m_eid, Prop.IS_DEAD, True)
+            ecs.set_property(m_eid, Prop.IS_DEAD)
             GS.score += GS.score_mult * C.Score.MISSILE
             break
 
@@ -348,6 +354,7 @@ def non_ecs_sys_collide_smartbomb_with_city():
                 continue
 
             ecs.add_component(b_eid, Prop.IS_DEAD, True)
+            ecs.set_property(b_eid, Prop.IS_DEAD)
             if not c: continue
 
             GS.cities[i] = False
@@ -375,6 +382,7 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
 
             # explode
             if delta.length() <= lt * C.EXPLOSION_RADIUS:
+                ecs.add_component(b_eid, Prop.IS_DEAD, True)
                 ecs.set_property(b_eid, Prop.IS_DEAD)
 
                 prev_score = GS.score // C.BONUS_CITY_SCORE

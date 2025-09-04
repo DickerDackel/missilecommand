@@ -393,10 +393,10 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
 
             # evade
             elif delta.length() < 1.25 * C.EXPLOSION_RADIUS:
-                evade = -delta.normalize() * b_speed
-                b_momentum += evade
+                ...
 
-            # Normal drop
+            # Normal drop - Make sure momentum is aiming to the target if
+            # we're not evading
             else:
                 try:
                     b_momentum.update((b_target - b_prsa.pos).normalize() * b_speed)

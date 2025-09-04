@@ -22,7 +22,7 @@ from rpeasings import out_quad
 import mc.config as C
 
 from mc.types import Comp, Container, EntityID, Momentum, Prop, Trail
-from mc.utils import play_sound, stop_sound
+from mc.utils import play_sound
 
 
 def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
@@ -108,9 +108,9 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, shoot_cooldown
     mask = cache['masks'][f'{kind}_{color}']
     speed = C.PLANE_SPEED if kind == 'plane' else C.SATELLITE_SPEED
     height = randint(max_height, min_height)
-    sound = play_sound(cache['sounds']['flyer'], loops=-1)
+    sound_channel = play_sound(cache['sounds']['flyer'], loops=-1)
 
-    shutdown = (shutdown_callback, lambda eid: stop_sound(sound))
+    shutdown = (shutdown_callback, lambda eid: sound_channel.stop())
 
     left_to_right = random() > 0.5
     if left_to_right:
@@ -130,7 +130,7 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, shoot_cooldown
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
     ecs.add_component(eid, Comp.CONTAINER, container)
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
-    ecs.add_component(eid, Comp.SOUND, sound)
+    ecs.add_component(eid, Comp.SOUND_CHANNEL, sound_channel)
 
     return eid
 
@@ -223,16 +223,12 @@ def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
     return eid
 
 
-def mk_smartbomb(start: vec2, dest: vec2, speed: float,
-                 shutdown_callback: Callable | None = None):
+def mk_smartbomb(start: vec2, dest: vec2, speed: float, shutdown_callback: Callable):
     color = choice(('red', 'green'))
     texture = cache['textures'][f'smartbomb_{color}']
-    sound = play_sound(cache['sounds']['smartbomb'], loops=-1)
+    sound_channel = play_sound(cache['sounds']['smartbomb'], loops=-1)
 
-    def stop_sound(eid):
-        if sound is not None: sound.stop()
-
-    shutdown = (shutdown_callback, lambda eid: stop_sound(sound)) if shutdown_callback is not None else stop_sound
+    shutdown = (shutdown_callback, lambda eid: sound_channel.stop())
 
     # Can't happen, smartbombs and missiles are launched off-screen
     try:
@@ -250,7 +246,7 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float,
     ecs.add_component(eid, Comp.TARGET, dest.copy())
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
-    ecs.add_component(eid, Comp.SOUND, sound)
+    ecs.add_component(eid, Comp.SOUND_CHANNEL, sound_channel)
 
     return eid
 

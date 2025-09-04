@@ -47,7 +47,7 @@ from mc.systems import (non_ecs_sys_collide_flyer_with_explosion,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail,)
 from mc.types import Comp, EIDs, EntityID, Prop
-from mc.utils import (cls, play_sound, purge_entities, stop_sound)
+from mc.utils import (cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
 
 class StatePhase(StrEnum):
@@ -188,10 +188,7 @@ class Game(GameState):
         self.smartbombs = Incoming(3)
 
     def restart(self, from_state: GameState, result: object) -> None:
-        if ecs.has(EIDs.FLYER):
-            sound = ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND)
-            if sound is not None:
-                play_sound(sound, loops=-1)
+        unpause_all_sounds()
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
@@ -205,8 +202,7 @@ class Game(GameState):
                 self.launch_defense(launchpad, self.mouse)
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
-                if ecs.has(EIDs.FLYER):
-                    stop_sound(ecs.comp_of_eid(EIDs.FLYER, Comp.SOUND))
+                pause_all_sounds()
 
     def update(self, dt: float) -> None:
         print('update')
@@ -431,7 +427,7 @@ class Game(GameState):
 
         mk_target(target_eid, dest)
         mk_missile(start, dest, speed, cb_shutdown, incoming=False)
-        play_sound(cache['sounds']['launch'], 3)
+        play_sound(cache['sounds']['launch'])
 
     def run_game_systems(self, dt):
         print('run_game_systems')

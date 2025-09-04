@@ -24,7 +24,7 @@ from mc.gamestate import gs as GS
 from mc.highscoretable import highscoretable
 from mc.launchers import mk_explosion, mk_ruin, mk_trail_eraser
 from mc.types import Comp, EIDs, EntityID, Momentum, Prop, Trail
-from mc.utils import play_sound, stop_sound
+from mc.utils import play_sound
 
 
 def sys_apply_scale(dt: float,
@@ -83,7 +83,7 @@ def sys_detonate_flyer(dt: float,
                        prsa: PRSA,
                        is_dead: bool) -> None:
     mk_explosion(prsa.pos)
-    play_sound(cache['sounds']['explosion'], 3)
+    play_sound(cache['sounds']['explosion'])
 
 
 def sys_detonate_missile(dt: float,
@@ -94,7 +94,7 @@ def sys_detonate_missile(dt: float,
     print(f'detonate missile at {prsa.pos}')
     mk_explosion(prsa.pos)
     mk_trail_eraser(trail)
-    play_sound(cache['sounds']['explosion'], 3)
+    play_sound(cache['sounds']['explosion'])
 
 
 def sys_detonate_smartbomb(dt: float,
@@ -102,7 +102,7 @@ def sys_detonate_smartbomb(dt: float,
                            prsa: PRSA,
                            is_dead: bool) -> None:
     mk_explosion(prsa.pos)
-    play_sound(cache['sounds']['explosion'], 3)
+    play_sound(cache['sounds']['explosion'])
 
 
 def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
@@ -378,8 +378,6 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
 
             # explode
             if delta.length() <= lt * C.EXPLOSION_RADIUS:
-                stop_sound(ecs.comp_of_eid(b_eid, Comp.SOUND))
-
                 ecs.set_property(b_eid, Prop.IS_DEAD)
 
                 prev_score = GS.score // C.BONUS_CITY_SCORE

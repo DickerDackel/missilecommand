@@ -58,7 +58,7 @@ class Comp(StrEnum):
     PRSA = auto()
     SCALE = auto()  # LerpThing, sys_apply_scale
     SHUTDOWN = auto()
-    SOUND = auto()
+    SOUND_CHANNEL = auto()
     SPEED = auto()
     TARGET = auto()  # sys_target_reached - A target for a sprite or aiming
     TEXT = auto()  # sys_draw_textlabel - A text label for the sprite based font

@@ -12,6 +12,7 @@ from pygame.typing import ColorLike, Point
 from pgcooldown import remap
 
 import mc.config as C
+from mc.soundpool import soundpool
 
 
 def cls(texture: sdl2.Texture, color: ColorLike = 'black') -> None:
@@ -41,16 +42,22 @@ def debug_rect(renderer, rect, color='red'):
     renderer.draw_color = bkp_color
 
 
-def play_sound(sound: pygame.mixer.Sound,
-               max_instances: int = 0, *args, **kwargs) -> None:
-    if not C.PLAY_AUDIO: return
+def play_sound(sound: pygame.mixer.Sound, *args, **kwargs) -> int:
+    if not C.PLAY_AUDIO: return None
 
-    if max_instances and sound.get_num_channels() > max_instances:
-        return
+    return sound.play()
 
-    sound.play(*args, **kwargs)
 
-    return sound
+def pause_all_sounds():
+    for c in soundpool:
+        if c.get_busy():
+            c.pause()
+
+
+def unpause_all_sounds():
+    for c in soundpool:
+        if c.get_busy():
+            c.unpause()
 
 
 def purge_entities(property: Hashable) -> None:
@@ -58,9 +65,10 @@ def purge_entities(property: Hashable) -> None:
         ecs.remove_entity(eid)
 
 
-def stop_sound(sound: pygame.mixer.Sound | None):
-    if sound is not None:
-        sound.stop()
+def stop_all_sounds():
+    for c in soundpool:
+        if c.get_busy():
+            c.stop()
 
 
 def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int, int]) -> Point:
@@ -68,4 +76,6 @@ def to_viewport(pos: Point, real_size: tuple[int, int], virtual_size: tuple[int,
             remap(0, real_size[1], 0, virtual_size[1], pos[1]))
 
 
-__all__ = ['cls', 'debug_rect', 'play_sound', 'purge_entities', 'to_viewport']
+__all__ = ['cls', 'constraint_mouse', 'debug_rect', 'pause_all_sounds',
+           'play_sound', 'purge_entities', 'stop_all_sounds', 'to_viewport',
+           'unpause_all_sounds']

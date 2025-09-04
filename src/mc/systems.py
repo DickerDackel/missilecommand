@@ -140,9 +140,6 @@ def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> No
     """Flag the entity for culling if it has reached target."""
     if prsa.pos == target:
         ecs.add_component(eid, Prop.IS_DEAD, True)
-        from pprint import pprint
-        print(f'{eid} has reached {target}')
-        pprint(ecs.eidx[eid])
 
 
 def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:

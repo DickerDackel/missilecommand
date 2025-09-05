@@ -45,7 +45,7 @@ def debug_rect(renderer, rect, color='red'):
 def play_sound(sound: pygame.mixer.Sound, *args, **kwargs) -> int:
     if not C.PLAY_AUDIO: return None
 
-    return sound.play()
+    return sound.play(*args, **kwargs)
 
 
 def pause_all_sounds():

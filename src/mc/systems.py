@@ -27,6 +27,22 @@ from mc.types import Comp, EIDs, EntityID, Momentum, Prop, Trail
 from mc.utils import play_sound
 
 
+def sys_aim(dt: float,
+            eid: EntityID,
+            prsa: PRSA,
+            target: Point,
+            momentum: vec2,
+            speed: float):
+    try:
+        fix = (vec2(target) - prsa.pos).normalize() * speed
+    except ValueError:
+        fix = vec2()
+
+    print(f'FIX: {momentum - fix}')
+
+    momentum.update(fix)
+
+
 def sys_apply_scale(dt: float,
                     eid: EntityID,
                     prsa: PRSA,
@@ -379,9 +395,10 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
         for e_eid, (e_prsa, e_mask, e_scale) in explosions:
             lt = e_scale()
             delta = e_prsa.pos - b_prsa.pos
+            dlen = delta.length()
 
             # explode
-            if delta.length() <= lt * C.EXPLOSION_RADIUS:
+            if dlen <= lt * C.EXPLOSION_RADIUS:
                 ecs.add_component(b_eid, Prop.IS_DEAD, True)
                 ecs.set_property(b_eid, Prop.IS_DEAD)
 
@@ -392,13 +409,11 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
                     play_sound(cache['sounds']['bonus-city'])
 
             # evade
-            elif delta.length() < 1.25 * C.EXPLOSION_RADIUS:
-                ...
-
-            # Normal drop - Make sure momentum is aiming to the target if
-            # we're not evading
-            else:
-                try:
-                    b_momentum.update((b_target - b_prsa.pos).normalize() * b_speed)
-                except ValueError:
-                    b_momentum = vec2()
+            elif dlen < 1.25 * C.EXPLOSION_RADIUS:
+                left_dodge = delta.rotate(90).normalize()
+                right_dodge = delta.rotate(-90).normalize()
+                # dot > 0 --> Still moving towards target
+                if b_momentum * left_dodge > 0:
+                    b_momentum.update(left_dodge * b_momentum.length())
+                else:
+                    b_momentum.update(right_dodge * b_momentum.length())

@@ -180,6 +180,7 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     ecs.set_property(eid, Prop.IS_INCOMING if incoming else Prop.IS_DEFENSE)
     ecs.add_component(eid, Comp.PRSA, PRSA(start.copy()))
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
+    ecs.add_component(eid, Comp.SPEED, speed)
     ecs.add_component(eid, Comp.TEXTURE_LIST, auto_sequence)
     ecs.add_component(eid, Comp.TARGET, dest.copy())
     ecs.add_component(eid, Comp.TRAIL, trail)
@@ -247,6 +248,8 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float, shutdown_callback: Calla
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
     ecs.add_component(eid, Comp.SOUND_CHANNEL, sound_channel)
+
+    # print(ecs.has_property(eid, Prop.IS_SMARTBOMB), ecs.eidx[eid])
 
     return eid
 

@@ -38,8 +38,6 @@ def sys_aim(dt: float,
     except ValueError:
         fix = vec2()
 
-    print(f'FIX: {momentum - fix}')
-
     momentum.update(fix)
 
 
@@ -108,7 +106,6 @@ def sys_detonate_missile(dt: float,
                          prsa: PRSA,
                          trail: Trail,
                          is_dead: bool) -> None:
-    print(f'detonate missile at {prsa.pos}')
     mk_explosion(prsa.pos)
     mk_trail_eraser(trail)
     play_sound(cache['sounds']['explosion'])
@@ -410,10 +407,14 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
 
             # evade
             elif dlen < 1.25 * C.EXPLOSION_RADIUS:
+                print('evading')
+                up_dodge = -delta.normalize() * (1.25 - dlen)
                 left_dodge = delta.rotate(90).normalize()
                 right_dodge = delta.rotate(-90).normalize()
                 # dot > 0 --> Still moving towards target
                 if b_momentum * left_dodge > 0:
-                    b_momentum.update(left_dodge * b_momentum.length())
+                    fix = left_dodge * b_momentum.length() + up_dodge
                 else:
-                    b_momentum.update(right_dodge * b_momentum.length())
+                    fix = right_dodge * b_momentum.length() + up_dodge
+
+                b_momentum.update(fix)

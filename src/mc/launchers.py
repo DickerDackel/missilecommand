@@ -249,8 +249,6 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float, shutdown_callback: Calla
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
     ecs.add_component(eid, Comp.SOUND_CHANNEL, sound_channel)
 
-    # print(ecs.has_property(eid, Prop.IS_SMARTBOMB), ecs.eidx[eid])
-
     return eid
 
 

@@ -21,7 +21,7 @@ from rpeasings import out_quad
 
 import mc.config as C
 
-from mc.types import Comp, Container, EntityID, Momentum, Prop, Trail
+from mc.types import Comp, Container, EIDs, EntityID, Momentum, Prop, Trail
 from mc.utils import play_sound
 
 
@@ -108,9 +108,6 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, shoot_cooldown
     mask = cache['masks'][f'{kind}_{color}']
     speed = C.PLANE_SPEED if kind == 'plane' else C.SATELLITE_SPEED
     height = randint(max_height, min_height)
-    sound_channel = play_sound(cache['sounds']['flyer'], loops=-1)
-
-    shutdown = (shutdown_callback, lambda eid: sound_channel.stop())
 
     left_to_right = random() > 0.5
     if left_to_right:
@@ -129,8 +126,9 @@ def mk_flyer(eid: EntityID, min_height: float, max_height: float, shoot_cooldown
     ecs.add_component(eid, Comp.FLYER_SHOOT_COOLDOWN, Cooldown(shoot_cooldown))
     ecs.add_component(eid, Comp.MOMENTUM, momentum)
     ecs.add_component(eid, Comp.CONTAINER, container)
-    ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
-    ecs.add_component(eid, Comp.SOUND_CHANNEL, sound_channel)
+    ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
+
+    mk_sound_singleton(EIDs.FLYER_SOUND, 'flyer', Prop.IS_FLYER)
 
     return eid
 
@@ -227,9 +225,6 @@ def mk_silo(silo_id: int, battery_id: int, pos: Point) -> EntityID:
 def mk_smartbomb(start: vec2, dest: vec2, speed: float, shutdown_callback: Callable):
     color = choice(('red', 'green'))
     texture = cache['textures'][f'smartbomb_{color}']
-    sound_channel = play_sound(cache['sounds']['smartbomb'], loops=-1)
-
-    shutdown = (shutdown_callback, lambda eid: sound_channel.stop())
 
     # Can't happen, smartbombs and missiles are launched off-screen
     try:
@@ -246,8 +241,22 @@ def mk_smartbomb(start: vec2, dest: vec2, speed: float, shutdown_callback: Calla
     ecs.add_component(eid, Comp.TEXTURE, texture)
     ecs.add_component(eid, Comp.TARGET, dest.copy())
     ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
-    ecs.add_component(eid, Comp.SHUTDOWN, shutdown)
+
+    mk_sound_singleton(EIDs.SMARTBOMB_SOUND, 'smartbomb', Prop.IS_SMARTBOMB)
+
+    return eid
+
+
+def mk_sound_singleton(eid, sound, parent_type):
+    if not ecs.has(eid):
+        ecs.create_entity(eid)
+
+    if ecs.eid_has(eid, Comp.SOUND_CHANNEL):
+        return
+
+    sound_channel = play_sound(cache['sounds'][sound], loops=-1)
     ecs.add_component(eid, Comp.SOUND_CHANNEL, sound_channel)
+    ecs.add_component(eid, Comp.PARENT_TYPE, parent_type)
 
     return eid
 

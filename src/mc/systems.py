@@ -1,7 +1,7 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
 from typing import Callable
 
 import pygame
@@ -32,13 +32,18 @@ def sys_aim(dt: float,
             prsa: PRSA,
             target: Point,
             momentum: vec2,
-            speed: float):
+            speed: float, *, renderer):  # FIXME
     try:
         fix = (vec2(target) - prsa.pos).normalize() * speed
     except ValueError:
         fix = vec2()
 
     momentum.update(fix)
+
+    bkp_color = renderer.draw_color
+    renderer.draw_color = 'red'
+    renderer.draw_line(prsa.pos, prsa.pos + momentum)
+    renderer.draw_color = bkp_color
 
 
 def sys_apply_scale(dt: float,
@@ -48,11 +53,15 @@ def sys_apply_scale(dt: float,
     prsa.scale = scale()
 
 
-def sys_colorize(dt: float,
-                 eid: EntityID,
-                 texture: sdl2.Texture,
-                 color: ColorLike) -> None:
-    texture.color = color
+def sys_close_orphan_sound(dt, eid, sound_channel, parent_type):
+    parents = ecs.eids_by_property(parent_type)
+    for p_eid in parents:
+        # Parents might be found, but already dead/lingering
+        if not ecs.has_property(p_eid, Prop.IS_DEAD) and not ecs.has_property(p_eid, Prop.IS_LINGERING):
+            return
+
+    sound_channel.stop()
+    ecs.remove_component(eid, Comp.SOUND_CHANNEL)
 
 
 def sys_colorcycle(dt: float,
@@ -61,34 +70,18 @@ def sys_colorcycle(dt: float,
     ecs.add_component(eid, Comp.COLOR, colors())
 
 
+def sys_colorize(dt: float,
+                 eid: EntityID,
+                 texture: sdl2.Texture,
+                 color: ColorLike) -> None:
+    texture.color = color
+
+
 def sys_container(dt: float,
                   eid: EntityID,
                   prsa: PRSA,
                   container: pygame.Rect) -> None:
     if not container.collidepoint(prsa.pos):
-        ecs.add_component(eid, Prop.IS_DEAD, True)
-        ecs.set_property(eid, Prop.IS_DEAD)
-
-
-def sys_explosion(dt: float,
-                  eid: EntityID,
-                  textures: Callable,
-                  prsa: PRSA,
-                  scale: LerpThing) -> None:
-    if scale.finished():
-        ecs.remove_entity(eid)
-        return
-
-    prsa.scale = scale()
-
-
-def sys_dont_overshoot(dt: float, eid: EntityID,
-                       prsa: PRSA, momentum: vec2, target: vec2) -> None:
-    delta = target - prsa.pos
-    dot = momentum * delta
-
-    if not delta or delta.length() < momentum.length() and dot < 0:
-        prsa.pos = target
         ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
 
@@ -119,51 +112,15 @@ def sys_detonate_smartbomb(dt: float,
     play_sound(cache['sounds']['explosion'])
 
 
-def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
-    """Flags entity for culling after lifetime runs out."""
-    if lifetime.cold():
+def sys_dont_overshoot(dt: float, eid: EntityID,
+                       prsa: PRSA, momentum: vec2, target: vec2) -> None:
+    delta = target - prsa.pos
+    dot = momentum * delta
+
+    if not delta or delta.length() < momentum.length() and dot < 0:
+        prsa.pos = target
         ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
-
-
-def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> None:
-    """Apply a static momentum to the position, a.k.a. float."""
-    prsa.pos += momentum * dt
-
-
-def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
-    """Apply mouse position to prsa.pos"""
-    mp = remap(pygame.mouse.get_pos())
-    prsa.pos = vec2(mp)
-
-
-def sys_shutdown(dt: float, eid: float, is_dead: bool) -> None:
-    """Call all shutdown callbacks and remove the entity"""
-
-    if ecs.eid_has(eid, Comp.SHUTDOWN):
-        callbacks = ecs.comp_of_eid(eid, Comp.SHUTDOWN)
-        if isinstance(callbacks, Sequence):
-            for cb in callbacks:
-                cb(eid)
-        else:
-            callbacks(eid)
-
-    ecs.remove_entity(eid)
-
-
-def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> None:
-    """Flag the entity for culling if it has reached target."""
-    if prsa.pos == target:
-        ecs.add_component(eid, Prop.IS_DEAD, True)
-        ecs.set_property(eid, Prop.IS_DEAD)
-
-
-def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
-    ecs.add_component(eid, Comp.TEXT, text_sequence())
-
-
-def sys_textblink(dt: float, eid: EntityID, colors: AutoSequence):
-    ecs.add_component(eid, Comp.COLOR, colors())
 
 
 def sys_draw_textlabel(dt: float, eid: EntityID, text: str,
@@ -208,6 +165,70 @@ def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture, prsa: PRSA
     texture.draw(dstrect=rect, angle=prsa.rotation, flip_x=flip_x, flip_y=flip_y)
 
     texture.alpha = bkp_alpha
+
+
+def sys_explosion(dt: float,
+                  eid: EntityID,
+                  textures: Callable,
+                  prsa: PRSA,
+                  scale: LerpThing) -> None:
+    if scale.finished():
+        ecs.remove_entity(eid)
+        return
+
+    prsa.scale = scale()
+
+
+def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
+    """Flags entity for culling after lifetime runs out."""
+    if lifetime.cold():
+        ecs.add_component(eid, Prop.IS_DEAD, True)
+        ecs.set_property(eid, Prop.IS_DEAD)
+
+
+def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> None:
+    """Apply a static momentum to the position, a.k.a. float."""
+    prsa.pos += momentum * dt
+
+
+def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
+    """Apply mouse position to prsa.pos"""
+    mp = remap(pygame.mouse.get_pos())
+    prsa.pos = vec2(mp)
+
+
+def sys_shutdown(dt: float, eid: float, is_dead: bool) -> None:
+    """Call all shutdown callbacks and remove the entity"""
+
+    if ecs.eid_has(eid, Comp.SHUTDOWN):
+        callbacks = ecs.comp_of_eid(eid, Comp.SHUTDOWN)
+        if isinstance(callbacks, Sequence):
+            for cb in callbacks:
+                cb(eid)
+        else:
+            callbacks(eid)
+
+    ecs.remove_entity(eid)
+
+
+def sys_smartbomb_evade(dt, eid, prsa, evade_fix):
+    sys_momentum(dt, eid, prsa, evade_fix)
+    ecs.remove_component(eid, Comp.EVADE_FIX)
+
+
+def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> None:
+    """Flag the entity for culling if it has reached target."""
+    if prsa.pos == target:
+        ecs.add_component(eid, Prop.IS_DEAD, True)
+        ecs.set_property(eid, Prop.IS_DEAD)
+
+
+def sys_textblink(dt: float, eid: EntityID, colors: AutoSequence):
+    ecs.add_component(eid, Comp.COLOR, colors())
+
+
+def sys_textcurtain(dt: float, eid: EntityID, text_sequence) -> None:
+    ecs.add_component(eid, Comp.TEXT, text_sequence())
 
 
 def sys_texture_from_texture_list(dt: float, eid: EntityID, textures: Callable) -> None:
@@ -265,7 +286,7 @@ def non_ecs_sys_collide_flyer_with_explosion():
     explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                         has_properties={Prop.IS_EXPLOSION})
     for f_eid, (f_prsa,  f_mask) in flyers:
-        if ecs.has_property(f_eid, Prop.IS_DEAD):
+        if ecs.has_property(f_eid, Prop.IS_DEAD) or ecs.has_property(f_eid, Prop.IS_LINGERING):
             continue
 
         f_rect = f_mask.get_rect(center=f_prsa.pos)
@@ -283,6 +304,7 @@ def non_ecs_sys_collide_flyer_with_explosion():
 
             # Don't flag it dead yet, just let it linger motionless for 1s
             # until the explosion covers it.
+            ecs.set_property(f_eid, Prop.IS_LINGERING)
             ecs.add_component(f_eid, Comp.LIFETIME, Cooldown(1))
             momentum = ecs.comp_of_eid(f_eid, Comp.MOMENTUM)
             momentum *= 0
@@ -379,18 +401,19 @@ def non_ecs_sys_collide_smartbomb_with_city():
         ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
 
-def non_ecs_sys_collide_smartbomb_with_explosion():
+def non_ecs_sys_collide_smartbomb_with_explosion(renderer):
     explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                         has_properties={Prop.IS_EXPLOSION})
     smartbombs = ecs.comps_of_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM,
-                                        Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})
+                                        has_properties={Prop.IS_SMARTBOMB})
 
-    for b_eid, (b_prsa, b_target, b_momentum, b_speed) in smartbombs:
+    for b_eid, (b_prsa, b_target, b_momentum) in smartbombs:
         if ecs.has_property(b_eid, Prop.IS_DEAD):
             continue
 
         for e_eid, (e_prsa, e_mask, e_scale) in explosions:
             lt = e_scale()
+            explosion_growing = e_scale.loops == 1
             delta = e_prsa.pos - b_prsa.pos
             dlen = delta.length()
 
@@ -406,15 +429,25 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
                     play_sound(cache['sounds']['bonus-city'])
 
             # evade
-            elif dlen < 1.25 * C.EXPLOSION_RADIUS:
-                print('evading')
-                up_dodge = -delta.normalize() * (1.25 - dlen)
-                left_dodge = delta.rotate(90).normalize()
-                right_dodge = delta.rotate(-90).normalize()
-                # dot > 0 --> Still moving towards target
-                if b_momentum * left_dodge > 0:
-                    fix = left_dodge * b_momentum.length() + up_dodge
-                else:
-                    fix = right_dodge * b_momentum.length() + up_dodge
+            elif explosion_growing and dlen < 1.5 * C.EXPLOSION_RADIUS:
 
-                b_momentum.update(fix)
+                if delta * b_momentum < 0:
+                    continue
+
+                speed = b_momentum.length()
+
+                if dlen < 1.25 * C.EXPLOSION_RADIUS:
+                    # Just dodge towards outside of radius
+                    dodge = -delta.normalize() * speed * 1.5
+
+                else:
+                    # dodge left or right
+                    left_dodge = delta.rotate(90).normalize()
+                    right_dodge = delta.rotate(-90).normalize()
+                    # dot > 0 --> Still moving towards target
+                    if b_momentum * left_dodge > 0:
+                        dodge = left_dodge * speed
+                    else:
+                        dodge = right_dodge * speed
+
+                ecs.add_component(b_eid, Comp.EVADE_FIX, dodge)

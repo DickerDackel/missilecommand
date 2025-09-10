@@ -28,6 +28,7 @@ class Prop(StrEnum):
     IS_GAMEOVER = auto()  # stuff added by the gameover state
     IS_INCOMING = auto()  # opposite of IS_DEFENSE
     IS_INFRASTRUCTURE = auto()  # mouse cursor, score, ...
+    IS_LINGERING = auto()  # Not dead, but also no longer collisions
     IS_MISSILE = auto()  # Missile head in flight
     IS_PLANE = auto()  # Flyer is a plane
     IS_RUIN = auto()  # Damaged city
@@ -50,11 +51,13 @@ class Comp(StrEnum):
     # Actual objects
     COLOR_CYCLE = auto()
     CONTAINER = auto()  # Rect
+    EVADE_FIX = auto()  # 2nd Momentum for smartbomb evasion
     FLYER_SHOOT_COOLDOWN = auto()
     HITBOX = auto()
     LIFETIME = auto()  # Cooldown, sys_lifetime
     MASK = auto()  # sprite mask for collision checks
     MOMENTUM = auto()  # sys_momentum
+    PARENT_TYPE = auto()  # sound checks if any of its parent sprites are active
     PRSA = auto()
     SCALE = auto()  # LerpThing, sys_apply_scale
     SHUTDOWN = auto()
@@ -74,8 +77,10 @@ class EIDs(StrEnum):
     BONUS_POINTS = auto()
     CITIES_LABEL = auto()
     FLYER = auto()
+    FLYER_SOUND = auto()  # flyer sound is a singleton
     HIGHSCORE = auto()
     MISSILES_LABEL = auto()
     PLAYER = auto()
     SCORE = auto()
     SCORE_ARROW = auto()
+    SMARTBOMB_SOUND = auto()  # smartbomb sound is a singleton

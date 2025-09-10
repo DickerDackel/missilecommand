@@ -37,13 +37,13 @@ from mc.systems import (non_ecs_sys_collide_flyer_with_explosion,
                         non_ecs_sys_collide_missile_with_city,
                         non_ecs_sys_collide_missile_with_explosion,
                         non_ecs_sys_collide_smartbomb_with_city,
-                        non_ecs_sys_collide_smartbomb_with_explosion,
-                        sys_aim, sys_container, sys_detonate_flyer,
-                        sys_detonate_missile, sys_detonate_smartbomb,
-                        sys_dont_overshoot, sys_explosion, sys_lifetime,
-                        sys_momentum, sys_mouse, sys_shutdown,
-                        sys_target_reached, sys_draw_textlabel,
-                        sys_draw_texture, sys_textblink,
+                        non_ecs_sys_collide_smartbomb_with_explosion, sys_aim,
+                        sys_close_orphan_sound, sys_container,
+                        sys_detonate_flyer, sys_detonate_missile,
+                        sys_detonate_smartbomb, sys_dont_overshoot,
+                        sys_explosion, sys_lifetime, sys_momentum, sys_mouse,
+                        sys_shutdown, sys_target_reached, sys_draw_textlabel,
+                        sys_draw_texture, sys_smartbomb_evade, sys_textblink,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail,)
 from mc.types import Comp, EIDs, EntityID, Prop
@@ -67,6 +67,8 @@ class Game(GameState):
 
         pygame.mouse.set_pos(app.coordinates_to_window(self.app.logical_rect.center))
 
+        ecs.create_entity(EIDs.FLYER_SOUND)
+        ecs.create_entity(EIDs.SMARTBOMB_SOUND)
         self.trail_canvas = sdl2.Texture(self.renderer, self.app.logical_rect.size, target=True)
         self.trail_canvas.blend_mode = pygame.BLENDMODE_BLEND
 
@@ -119,7 +121,7 @@ class Game(GameState):
         ecs.create_archetype(Comp.PRSA)  # for Smartbomb collisions, but useful in general
         ecs.create_archetype(Comp.PRSA, Comp.MASK)  # for Flyer collisions
         ecs.create_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE)  # for Explosion collisions
-        ecs.create_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM, Comp.SPEED)  # For smartbomb evasion
+        ecs.create_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM)  # For smartbomb evasion
 
         mk_crosshair()
 
@@ -325,13 +327,13 @@ class Game(GameState):
             and self.smartbombs.free_slots()
             and self.incoming.free_slots() >= 2 * (len(self.smartbombs) + 1)):
 
-            def smartbomb_shutdown_callback(eid: EntityID):
+            def shutdown(eid: EntityID):
                 self.smartbombs.remove(eid)
 
             start = vec2(randint(0, self.app.logical_rect.width), -3)
             target = next(self.allowed_targets)
             speed = self.wave.missile_speed
-            eid = mk_smartbomb(start, target, speed, shutdown_callback=smartbomb_shutdown_callback)
+            eid = mk_smartbomb(start, target, speed, shutdown_callback=shutdown)
             self.smartbombs.add(eid)
             self.smartbombs_left -= 1
             launched_this_frame += 1
@@ -429,8 +431,9 @@ class Game(GameState):
         play_sound(cache['sounds']['launch'])
 
     def run_game_systems(self, dt):
-        ecs.run_system(dt, sys_aim, Comp.PRSA, Comp.TARGET, Comp.MOMENTUM, Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
+        ecs.run_system(dt, sys_smartbomb_evade, Comp.PRSA, Comp.EVADE_FIX)
+        ecs.run_system(dt, sys_aim, Comp.PRSA, Comp.TARGET, Comp.MOMENTUM, Comp.SPEED, has_properties={Prop.IS_SMARTBOMB}, renderer=self.renderer)  # FIXME
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
         ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
@@ -439,6 +442,7 @@ class Game(GameState):
         ecs.run_system(dt, sys_explosion, Comp.TEXTURE_LIST, Comp.PRSA, Comp.SCALE, has_properties={Prop.IS_EXPLOSION})
         ecs.run_system(dt, sys_container, Comp.PRSA, Comp.CONTAINER)
         ecs.run_system(dt, sys_lifetime, Comp.LIFETIME)
+        ecs.run_system(dt, sys_close_orphan_sound, Comp.SOUND_CHANNEL, Comp.PARENT_TYPE)
 
         self.do_collisions()
 
@@ -455,7 +459,7 @@ class Game(GameState):
         non_ecs_sys_collide_missile_with_city()
         non_ecs_sys_collide_missile_with_explosion()
         non_ecs_sys_collide_smartbomb_with_city()
-        non_ecs_sys_collide_smartbomb_with_explosion()
+        non_ecs_sys_collide_smartbomb_with_explosion(self.renderer)  # FIXME
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
         if GS.score > highscoretable.leader[0]:

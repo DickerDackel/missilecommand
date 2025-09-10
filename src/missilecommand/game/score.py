@@ -5,7 +5,7 @@ from typing import Any
 
 import ddframework.msgbroker as broker
 
-import mc.config as C
+import missilecommand.config as C
 
 
 class Score:

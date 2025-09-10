@@ -17,15 +17,15 @@ from ddframework.app import App
 from ddframework.cache import cache
 from ddframework.statemachine import StateMachine
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.splash import Splash
-from mc.title import Title
-from mc.demo import Demo
-from mc.highscores import Highscores
-from mc.highscoreentry import HighscoreEntry
-from mc.game import Game
-from mc.gameover import Gameover
+from missilecommand.splash import Splash
+from missilecommand.title import Title
+from missilecommand.demo import Demo
+from missilecommand.highscores import Highscores
+from missilecommand.highscoreentry import HighscoreEntry
+from missilecommand.game import Game
+from missilecommand.gameover import Gameover
 
 
 pygame.init()

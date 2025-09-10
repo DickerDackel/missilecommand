@@ -19,10 +19,10 @@ from ddframework.dynamicsprite import PRSA
 from ddframework.autosequence import AutoSequence
 from rpeasings import out_quad
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.types import Comp, Container, EIDs, EntityID, Momentum, Prop, Trail
-from mc.utils import play_sound
+from missilecommand.types import Comp, Container, EIDs, EntityID, Momentum, Prop, Trail
+from missilecommand.utils import play_sound
 
 
 def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:

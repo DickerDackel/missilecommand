@@ -15,13 +15,13 @@ from pgcooldown import Cooldown, LerpThing
 from pygame.math import Vector2 as vec2
 from rpeasings import in_quad
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.launchers import mk_gameover_explosion, mk_gameover_text
-from mc.systems import (sys_apply_scale, sys_colorcycle, sys_colorize,
+from missilecommand.launchers import mk_gameover_explosion, mk_gameover_text
+from missilecommand.systems import (sys_apply_scale, sys_colorcycle, sys_colorize,
                         sys_textcurtain, sys_draw_textlabel, sys_draw_texture)
-from mc.types import Comp, Prop
-from mc.utils import play_sound, purge_entities
+from missilecommand.types import Comp, Prop
+from missilecommand.utils import play_sound, purge_entities
 
 EXPLOSION_EID = 'explosion'
 TEXT_EID = 'text'

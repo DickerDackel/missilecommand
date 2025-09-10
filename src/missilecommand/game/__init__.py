@@ -20,19 +20,19 @@ from ddframework.cache import cache
 from ddframework.dynamicsprite import PRSA
 from ddframework.statemachine import StateMachine
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.game.briefing import Briefing
-from mc.game.debriefing import Debriefing
-from mc.game.incoming import Incoming
-from mc.game.pause import Pause
-from mc.game.waves import wave_iter
-from mc.gamestate import gs as GS
-from mc.highscoretable import highscoretable
-from mc.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
+from missilecommand.game.briefing import Briefing
+from missilecommand.game.debriefing import Debriefing
+from missilecommand.game.incoming import Incoming
+from missilecommand.game.pause import Pause
+from missilecommand.game.waves import wave_iter
+from missilecommand.gamestate import gs as GS
+from missilecommand.highscoretable import highscoretable
+from missilecommand.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
                           mk_flyer, mk_missile, mk_ruin, mk_score_label,
                           mk_smartbomb, mk_target, mk_textlabel, mk_texture)
-from mc.systems import (non_ecs_sys_collide_flyer_with_explosion,
+from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                         non_ecs_sys_collide_missile_with_battery,
                         non_ecs_sys_collide_missile_with_city,
                         non_ecs_sys_collide_missile_with_explosion,
@@ -46,8 +46,8 @@ from mc.systems import (non_ecs_sys_collide_flyer_with_explosion,
                         sys_draw_texture, sys_smartbomb_evade, sys_textblink,
                         sys_texture_from_texture_list, sys_trail_eraser,
                         sys_trail, sys_update_trail,)
-from mc.types import Comp, EIDs, EntityID, Prop
-from mc.utils import (cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
+from missilecommand.types import Comp, EIDs, EntityID, Prop
+from missilecommand.utils import (cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
 
 class StatePhase(StrEnum):
@@ -409,7 +409,7 @@ class Game(GameState):
 
         # FIXME
         if self.app.opts.unlimited:
-            from mc.launchers import mk_silo
+            from missilecommand.launchers import mk_silo
             silo = mk_silo(randint(1000, 999999), launchpad, C.POS_BATTERIES[launchpad])
         else:
             silo = GS.batteries[launchpad].pop()

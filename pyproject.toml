@@ -1,5 +1,5 @@
 [project]
-name = "mc"
+name = "missilecommand"
 description = "Missile Command"
 version = "0.0.1"
 readme = "README.md"
@@ -27,11 +27,11 @@ dependencies = [
 ]
 
 [project.scripts]
-missile = "mc.__main__:main"
+missile = "missilecommand.__main__:main"
 
 [project.urls]
-homepage = "https://github.com/dickerdackel/mc"
-bugtracker = "https://github.com/DickerDackel/mc/issues"
+homepage = "https://github.com/dickerdackel/missilecommand"
+bugtracker = "https://github.com/DickerDackel/missilecommand/issues"
 
 [build-system]
 requires = ["setuptools"]

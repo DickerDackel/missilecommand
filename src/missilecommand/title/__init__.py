@@ -9,11 +9,11 @@ import tinyecs as ecs
 from pgcooldown import Cooldown
 from ddframework.app import App, GameState, StateExit
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.launchers import mk_textlabel
-from mc.systems import sys_draw_textlabel
-from mc.types import Comp
+from missilecommand.launchers import mk_textlabel
+from missilecommand.systems import sys_draw_textlabel
+from missilecommand.types import Comp
 
 
 class Title(GameState):

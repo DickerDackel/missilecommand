@@ -12,14 +12,14 @@ from ddframework.dynamicsprite import PRSA
 from pgcooldown import Cooldown
 from pygame import Vector2 as vec2
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.gamestate import gs as GS
-from mc.highscoretable import highscoretable
-from mc.launchers import mk_textlabel, mk_texture
-from mc.systems import sys_draw_texture, sys_draw_textlabel
-from mc.types import Comp
-from mc.utils import play_sound
+from missilecommand.gamestate import gs as GS
+from missilecommand.highscoretable import highscoretable
+from missilecommand.launchers import mk_textlabel, mk_texture
+from missilecommand.systems import sys_draw_texture, sys_draw_textlabel
+from missilecommand.types import Comp
+from missilecommand.utils import play_sound
 
 LETTERS = [k for k in C.CHAR_MAP.keys() if len(k) == 1]  # Don't use the sym names like 'copy' here
 

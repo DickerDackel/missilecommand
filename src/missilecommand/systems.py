@@ -18,13 +18,13 @@ from pygame.typing import ColorLike, Point
 
 # from ddframework.msgbroker import broker
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.gamestate import gs as GS
-from mc.highscoretable import highscoretable
-from mc.launchers import mk_explosion, mk_ruin, mk_trail_eraser
-from mc.types import Comp, EIDs, EntityID, Momentum, Prop, Trail
-from mc.utils import play_sound
+from missilecommand.gamestate import gs as GS
+from missilecommand.highscoretable import highscoretable
+from missilecommand.launchers import mk_explosion, mk_ruin, mk_trail_eraser
+from missilecommand.types import Comp, EIDs, EntityID, Momentum, Prop, Trail
+from missilecommand.utils import play_sound
 
 
 def sys_aim(dt: float,
@@ -60,7 +60,10 @@ def sys_close_orphan_sound(dt, eid, sound_channel, parent_type):
         if not ecs.has_property(p_eid, Prop.IS_DEAD) and not ecs.has_property(p_eid, Prop.IS_LINGERING):
             return
 
-    sound_channel.stop()
+    # FIXME, this check must not exist, but there's a bug somewhere...
+    if sound_channel is not None:
+        sound_channel.stop()
+
     ecs.remove_component(eid, Comp.SOUND_CHANNEL)
 
 

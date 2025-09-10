@@ -9,10 +9,10 @@ import tinyecs as ecs
 from ddframework.app import App, GameState, StateExit
 from pgcooldown import Cooldown
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.launchers import mk_textlabel
-from mc.types import Comp
+from missilecommand.launchers import mk_textlabel
+from missilecommand.types import Comp
 
 
 class Pause(GameState):

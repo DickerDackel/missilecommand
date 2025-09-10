@@ -11,8 +11,8 @@ from pygame.typing import ColorLike, Point
 
 from pgcooldown import remap
 
-import mc.config as C
-from mc.soundpool import soundpool
+import missilecommand.config as C
+from missilecommand.soundpool import soundpool
 
 
 def cls(texture: sdl2.Texture, color: ColorLike = 'black') -> None:

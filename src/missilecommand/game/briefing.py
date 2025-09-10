@@ -10,11 +10,11 @@ from ddframework.app import App, GameState, StateExit
 from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.launchers import mk_textlabel
-from mc.types import Comp
-from mc.utils import play_sound
+from missilecommand.launchers import mk_textlabel
+from missilecommand.types import Comp
+from missilecommand.utils import play_sound
 
 
 class Briefing(GameState):

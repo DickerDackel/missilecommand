@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from itertools import cycle
 from typing import NamedTuple
 
-import mc.config as C
+import missilecommand.config as C
 
 
 class Wave(NamedTuple):

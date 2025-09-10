@@ -23,11 +23,11 @@ from pygame.typing import ColorLike, Point
 #
 ########################################################################
 
-TITLE = 'mc'
+TITLE = 'missilecommand'
 SCREEN = pygame.Rect(0, 0, 256, 240)
 FPS = 60
 
-ASSETS = files('mc.assets')
+ASSETS = files('missilecommand.assets')
 
 GRID_WIDTH, GRID_HEIGHT = 31, 26
 GRID = GridLayout(SCREEN, GRID_WIDTH, GRID_HEIGHT, 0, 0)

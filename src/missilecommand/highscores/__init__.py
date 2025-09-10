@@ -14,13 +14,13 @@ from ddframework.autosequence import AutoSequence
 from ddframework.cache import cache
 from ddframework.dynamicsprite import PRSA
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.highscoretable import highscoretable
-from mc.launchers import mk_battery, mk_city, mk_textlabel, mk_texture
-from mc.systems import (sys_draw_texture, sys_draw_textlabel, sys_textblink,
+from missilecommand.highscoretable import highscoretable
+from missilecommand.launchers import mk_battery, mk_city, mk_textlabel, mk_texture
+from missilecommand.systems import (sys_draw_texture, sys_draw_textlabel, sys_textblink,
                         sys_texture_from_texture_list)
-from mc.types import Comp
+from missilecommand.types import Comp
 
 THIS = 'highscores'
 

@@ -4,7 +4,7 @@ from collections import UserList
 from heapq import heapify, heappushpop, nlargest
 from typing import NamedTuple
 
-from mc import config as C
+from missilecommand import config as C
 
 
 class HighscoreEntry(NamedTuple):

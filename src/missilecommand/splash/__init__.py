@@ -9,14 +9,14 @@ import tinyecs as ecs
 from pgcooldown import Cooldown
 from ddframework.app import App, GameState, StateExit
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.launchers import mk_textlabel
-from mc.systems import sys_draw_textlabel
-from mc.types import Comp
+from missilecommand.launchers import mk_textlabel
+from missilecommand.systems import sys_draw_textlabel
+from missilecommand.types import Comp
 
 
-class Demo(GameState):
+class Splash(GameState):
     def __init__(self, app: 'App') -> None:
         self.app: App = app
 
@@ -26,11 +26,11 @@ class Demo(GameState):
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
         self.state_label = mk_textlabel(
-            'DEMO',
+            'DACKELSOFT',
             self.app.logical_rect.center,
             'center', 'white', scale=2)
 
-        self.cd_state = Cooldown(5)
+        self.cd_state = Cooldown(3)
 
     def restart(self, from_state: 'GameState', result: Any) -> None:
         pass
@@ -41,11 +41,10 @@ class Demo(GameState):
         elif e.type == pygame.KEYDOWN:
             if e.key == pygame.K_ESCAPE:
                 raise StateExit(-1)
-            elif e.key == pygame.K_SPACE:
-                self.teardown()
+            # FIXME -->
+            elif e.key == pygame.K_q:
                 raise StateExit
-            elif e.key == pygame.K_1:
-                raise StateExit(1)
+            # FIXME <--
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():

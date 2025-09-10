@@ -12,13 +12,13 @@ from ddframework.cache import cache
 from ddframework.statemachine import StateMachine
 from pgcooldown import Cooldown
 
-import mc.config as C
+import missilecommand.config as C
 
-from mc.gamestate import gs as GS
-from mc.highscoretable import highscoretable
-from mc.launchers import mk_textlabel
-from mc.types import Comp, EIDs, Prop
-from mc.utils import play_sound
+from missilecommand.gamestate import gs as GS
+from missilecommand.highscoretable import highscoretable
+from missilecommand.launchers import mk_textlabel
+from missilecommand.types import Comp, EIDs, Prop
+from missilecommand.utils import play_sound
 
 
 class StatePhase(StrEnum):

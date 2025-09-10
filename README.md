@@ -1,37 +1,34 @@
-# FIXME project name
+# Missile Command in pygame and tinyecs
 
-tl;dr description here
+This is just a testbed to figure out how to work with tinyecs.
 
-## Synopsis
-
-```console
-one-liner usage example
-```
-
-## Usage
-
-Detailed usage and sample code for libraries, full help and options for tools.
+This project does too much ECS, but I mostly learned that by doing it this
+way.
 
 ## Installation
 
-Installation instructions + requirements (should come automagically with
-pyproject.toml)
+### Linux bash instructions
 
 ```console
-sample install session
+git clone https://github.com/dickerdackel/missilecommand
+cd missilecommand
+python3 -m venv --prompt missilecommand .venv
+source .venv/bin/activate.sh
+pip install .
 ```
+
+After that, just run `missile` in the activated env.
+
+### Windows
+
+No idea, depends on your environment.  Probably something similar to the
+above.
 
 ## Support / Contributing
 
-Issues can be opened on [Github](https://github.com/dickerdackel/FIXME/issues)
-
-## Credits / Acknowledgements
-
-* Thanks to [Make a README](https://www.makeareadme.com/)
+Issues can be opened on [Github](https://github.com/dickerdackel/missilecommand/issues)
 
 ## License
-
-FIXME
 
 This software is provided under the MIT license.
 

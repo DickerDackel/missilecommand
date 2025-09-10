@@ -29,6 +29,9 @@ dependencies = [
 [project.scripts]
 missile = "missilecommand.__main__:main"
 
+[tool.setuptools.package-data]
+assets = ["src/missilecommand/assets/*.*"]
+
 [project.urls]
 homepage = "https://github.com/dickerdackel/missilecommand"
 bugtracker = "https://github.com/DickerDackel/missilecommand/issues"

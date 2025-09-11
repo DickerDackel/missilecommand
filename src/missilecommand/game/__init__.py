@@ -29,23 +29,29 @@ from missilecommand.game.pause import Pause
 from missilecommand.game.waves import wave_iter
 from missilecommand.gamestate import gs as GS
 from missilecommand.highscoretable import highscoretable
-from missilecommand.launchers import (mk_battery, mk_city, mk_crosshair, mk_explosion,
-                          mk_flyer, mk_missile, mk_ruin, mk_score_label,
-                          mk_smartbomb, mk_target, mk_textlabel, mk_texture)
+from missilecommand.launchers import (mk_battery, mk_city, mk_crosshair,
+                                      mk_flyer, mk_missile, mk_ruin,
+                                      mk_score_label, mk_smartbomb, mk_target,
+                                      mk_textlabel, mk_texture)
 from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
-                        non_ecs_sys_collide_missile_with_battery,
-                        non_ecs_sys_collide_missile_with_city,
-                        non_ecs_sys_collide_missile_with_explosion,
-                        non_ecs_sys_collide_smartbomb_with_city,
-                        non_ecs_sys_collide_smartbomb_with_explosion, sys_aim,
-                        sys_close_orphan_sound, sys_container,
-                        sys_detonate_flyer, sys_detonate_missile,
-                        sys_detonate_smartbomb, sys_dont_overshoot,
-                        sys_explosion, sys_lifetime, sys_momentum, sys_mouse,
-                        sys_shutdown, sys_target_reached, sys_draw_textlabel,
-                        sys_draw_texture, sys_smartbomb_evade, sys_textblink,
-                        sys_texture_from_texture_list, sys_trail_eraser,
-                        sys_trail, sys_update_trail,)
+                                    non_ecs_sys_collide_missile_with_battery,
+                                    non_ecs_sys_collide_missile_with_city,
+                                    non_ecs_sys_collide_missile_with_explosion,
+                                    non_ecs_sys_collide_smartbomb_with_battery,
+                                    non_ecs_sys_collide_smartbomb_with_city,
+                                    non_ecs_sys_collide_smartbomb_with_explosion,
+                                    sys_aim, sys_close_orphan_sound,
+                                    sys_container, sys_detonate_flyer,
+                                    sys_detonate_missile,
+                                    sys_detonate_smartbomb,
+                                    sys_dont_overshoot, sys_explosion,
+                                    sys_lifetime, sys_momentum, sys_mouse,
+                                    sys_shutdown, sys_target_reached,
+                                    sys_draw_textlabel, sys_draw_texture,
+                                    sys_smartbomb_evade, sys_textblink,
+                                    sys_texture_from_texture_list,
+                                    sys_trail_eraser, sys_trail,
+                                    sys_update_trail,)
 from missilecommand.types import Comp, EIDs, EntityID, Prop
 from missilecommand.utils import (check_for_exit, cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
@@ -406,12 +412,7 @@ class Game(GameState):
             play_sound(cache['sounds']['brzzz'])
             return
 
-        # FIXME
-        if self.app.opts.unlimited:
-            from missilecommand.launchers import mk_silo
-            silo = mk_silo(randint(1000, 999999), launchpad, C.POS_BATTERIES[launchpad])
-        else:
-            silo = GS.batteries[launchpad].pop()
+        silo = GS.batteries[launchpad].pop()
         ecs.remove_entity(silo)
         if len(GS.batteries[launchpad]) == C.LOW_AMMO_WARN_THRESHOLD:
             play_sound(cache['sounds']['low-ammo'], loops=2)
@@ -432,7 +433,7 @@ class Game(GameState):
     def run_game_systems(self, dt):
         ecs.run_system(dt, sys_momentum, Comp.PRSA, Comp.MOMENTUM)
         ecs.run_system(dt, sys_smartbomb_evade, Comp.PRSA, Comp.EVADE_FIX)
-        ecs.run_system(dt, sys_aim, Comp.PRSA, Comp.TARGET, Comp.MOMENTUM, Comp.SPEED, has_properties={Prop.IS_SMARTBOMB}, renderer=self.renderer)  # FIXME
+        ecs.run_system(dt, sys_aim, Comp.PRSA, Comp.TARGET, Comp.MOMENTUM, Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})
         ecs.run_system(dt, sys_dont_overshoot, Comp.PRSA, Comp.MOMENTUM, Comp.TARGET)
         ecs.run_system(dt, sys_update_trail, Comp.PRSA, Comp.TRAIL)
         ecs.run_system(dt, sys_target_reached, Comp.PRSA, Comp.TARGET)
@@ -457,8 +458,9 @@ class Game(GameState):
         non_ecs_sys_collide_missile_with_battery()
         non_ecs_sys_collide_missile_with_city()
         non_ecs_sys_collide_missile_with_explosion()
+        non_ecs_sys_collide_smartbomb_with_battery()
         non_ecs_sys_collide_smartbomb_with_city()
-        non_ecs_sys_collide_smartbomb_with_explosion(self.renderer)  # FIXME
+        non_ecs_sys_collide_smartbomb_with_explosion()
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
         if GS.score > highscoretable.leader[0]:

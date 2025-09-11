@@ -32,18 +32,13 @@ def sys_aim(dt: float,
             prsa: PRSA,
             target: Point,
             momentum: vec2,
-            speed: float, *, renderer):  # FIXME
+            speed: float):
     try:
         fix = (vec2(target) - prsa.pos).normalize() * speed
     except ValueError:
         fix = vec2()
 
     momentum.update(fix)
-
-    bkp_color = renderer.draw_color
-    renderer.draw_color = 'red'
-    renderer.draw_line(prsa.pos, prsa.pos + momentum)
-    renderer.draw_color = bkp_color
 
 
 def sys_apply_scale(dt: float,
@@ -116,7 +111,9 @@ def sys_detonate_smartbomb(dt: float,
 
 
 def sys_dont_overshoot(dt: float, eid: EntityID,
-                       prsa: PRSA, momentum: vec2, target: vec2) -> None:
+                       prsa: PRSA,
+                       momentum: vec2,
+                       target: vec2) -> None:
     delta = target - prsa.pos
     dot = momentum * delta
 
@@ -145,9 +142,6 @@ def sys_draw_textlabel(dt: float, eid: EntityID, text: str,
 
 def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture, prsa: PRSA) -> None:
     """Render the current texture following the settings in prsa."""
-    # FIXME unneeded?
-    # tpos = round(prsa.pos.x), round(prsa.pos.y)
-    # rect = texture.get_rect().scale_by(prsa.scale).move_to(center=tpos)
     rect = texture.get_rect().scale_by(prsa.scale)
     try:
         anchor = ecs.comp_of_eid(eid, Comp.ANCHOR)

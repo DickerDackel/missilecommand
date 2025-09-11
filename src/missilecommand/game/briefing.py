@@ -53,7 +53,8 @@ class Briefing(GameState):
             self.cd_sound.reset()
 
     def draw(self) -> None:
-        ...  # FIXME
+        # Drawing is done through the game state below in the state stack
+        pass
 
     def teardown(self) -> None:
         for t in self.entities:

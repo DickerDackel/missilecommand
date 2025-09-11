@@ -4,7 +4,6 @@ logging.info(__name__)  # noqa: E402
 from enum import StrEnum, auto
 from itertools import chain
 
-import pygame
 import tinyecs as ecs
 
 from ddframework.app import App, GameState, StateExit

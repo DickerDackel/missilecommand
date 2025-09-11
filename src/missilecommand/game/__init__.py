@@ -349,11 +349,16 @@ class Game(GameState):
         self.do_collisions()
 
     def update_pre_linger_phase(self, dt: float) -> None:
-        missiles = ecs.eids_by_property(Prop.IS_MISSILE)
-        flyers = ecs.eids_by_property(Prop.IS_FLYER)
-        for eid in chain(missiles, flyers):
-            momentum = ecs.comp_of_eid(eid, Comp.MOMENTUM)
-            momentum *= 2
+        missiles = ecs.eids_by_cids(Comp.MOMENTUM, has_properties={Prop.IS_MISSILE})
+        flyers = ecs.eids_by_cids(Comp.MOMENTUM, has_properties={Prop.IS_FLYER})
+        smartbombs = ecs.eids_by_cids(Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})
+
+        for eid, (momentum, ) in chain(missiles, flyers):
+            momentum *= 3
+
+        # Smartbombs are not momentum based, it's recalculated every frame
+        for eid, (speed, ) in smartbombs:
+            ecs.add_component(eid, Comp.SPEED, speed * 3)
 
         self.phase = next(self.phase_walker)
 

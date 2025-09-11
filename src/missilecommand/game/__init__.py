@@ -237,8 +237,10 @@ class Game(GameState):
         #   No city left
         #   No more incoming
         silos_left = sum(len(b) for b in GS.batteries)
+        cities_left = any(GS.cities)
 
         if (silos_left == 0
+            or not cities_left
             or (not self.incoming and self.incoming_left <= 0
                 and not self.smartbombs and self.smartbombs_left <= 0)):
             self.phase = next(self.phase_walker)
@@ -367,8 +369,9 @@ class Game(GameState):
         missiles = len(ecs.eids_by_property(Prop.IS_MISSILE))
         flyers = len(ecs.eids_by_property(Prop.IS_FLYER))
         explosions = len(ecs.eids_by_property(Prop.IS_EXPLOSION))
+        smartbombs = len(ecs.eids_by_property(Prop.IS_SMARTBOMB))
 
-        if missiles == 0 and flyers == 0 and explosions == 0:
+        if missiles == 0 and flyers == 0 and explosions == 0 and smartbombs == 0:
             if not cities and GS.bonus_cities == 0:
                 self.phase = self.phase_walker.send(1)
             else:

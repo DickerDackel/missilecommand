@@ -7,6 +7,7 @@ logging.info(__name__)  # noqa: E402
 import sys
 
 from argparse import ArgumentParser
+from os import environ
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -27,6 +28,8 @@ from missilecommand.highscoreentry import HighscoreEntry
 from missilecommand.game import Game
 from missilecommand.gameover import Gameover
 
+if 'XDG_SESSION_TYPE' in environ and environ['XDG_SESSION_TYPE'] == 'wayland':
+    environ['SDL_VIDEODRIVER'] = 'wayland'
 
 pygame.init()
 
@@ -81,7 +84,7 @@ def main() -> None:
     ][2 - opts.verbose + opts.quiet]
     logging.basicConfig(level=log_level)  # noqa: E402
 
-    w = pygame.Window(size=(1280, 960))
+    w = pygame.Window(size=(1280, 960), position=pygame.WINDOWPOS_CENTERED)
     app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     # app = App(C.TITLE, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     pygame.mouse.set_visible(False)

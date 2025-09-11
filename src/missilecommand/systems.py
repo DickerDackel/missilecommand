@@ -416,7 +416,7 @@ def non_ecs_sys_collide_smartbomb_with_city():
             mk_ruin(C.POS_CITIES[i], f'city-{i}')
 
     ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
-    if GS.score > highscoretable.leader[0]:
+    if GS.score > highscoretable.leader.score:
         ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
 

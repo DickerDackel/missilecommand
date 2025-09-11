@@ -15,7 +15,7 @@ from pygame import Vector2 as vec2
 import missilecommand.config as C
 
 from missilecommand.gamestate import gs as GS
-from missilecommand.highscoretable import highscoretable
+from missilecommand.highscoretable import highscoretable, HighscoreRecord
 from missilecommand.launchers import mk_textlabel, mk_texture
 from missilecommand.systems import sys_draw_texture, sys_draw_textlabel
 from missilecommand.types import Comp
@@ -92,7 +92,7 @@ class HighscoreEntry(GameState):
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self):
-        highscoretable.append([GS.score, ''.join(self.entry)])
+        highscoretable.append(HighscoreRecord(GS.score, ''.join(self.entry)))
 
         for eid in self.entities:
             ecs.remove_entity(eid)

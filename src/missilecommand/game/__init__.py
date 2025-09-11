@@ -132,7 +132,7 @@ class Game(GameState):
         mk_crosshair()
 
         msg = C.MESSAGES['game']['HIGHSCORE']
-        mk_score_label(f'{highscoretable.leader[0]:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
+        mk_score_label(f'{highscoretable.leader.score:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
         msg = C.MESSAGES['game']['SCORE']
         mk_score_label(f'{GS.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
         mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)  # FIXME eid literal
@@ -391,7 +391,7 @@ class Game(GameState):
         self.phase = next(self.phase_walker)
 
     def update_gameover_phase(self, dt: float) -> None:
-        if GS.score > highscoretable[0][0]:
+        if GS.score > highscoretable.last.score:
             raise StateExit(1)
 
         raise StateExit
@@ -470,5 +470,5 @@ class Game(GameState):
         non_ecs_sys_collide_smartbomb_with_explosion()
 
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
-        if GS.score > highscoretable.leader[0]:
+        if GS.score > highscoretable.leader.score:
             ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')

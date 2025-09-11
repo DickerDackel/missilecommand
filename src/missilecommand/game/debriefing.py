@@ -104,7 +104,7 @@ class Debriefing(GameState):
             ecs.add_component(EIDs.MISSILES_LABEL, Comp.TEXT, str(self.missile_score))
             ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
 
-            if GS.score > highscoretable[0][0]:
+            if GS.score > highscoretable.leader.score:
                 ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)
@@ -133,7 +133,7 @@ class Debriefing(GameState):
             GS.score += GS.score_mult * C.Score.CITY
             ecs.add_component(EIDs.CITIES_LABEL, Comp.TEXT, str(self.city_score))
             ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
-            if GS.score > highscoretable[0][0]:
+            if GS.score > highscoretable.leader.score:
                 ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
             prsa = ecs.comp_of_eid(eid, Comp.PRSA)

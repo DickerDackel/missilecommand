@@ -237,10 +237,8 @@ class Game(GameState):
         #   No city left
         #   No more incoming
         silos_left = sum(len(b) for b in GS.batteries)
-        cities_left = any(GS.cities)
 
         if (silos_left == 0
-            or not cities_left
             or (not self.incoming and self.incoming_left <= 0
                 and not self.smartbombs and self.smartbombs_left <= 0)):
             self.phase = next(self.phase_walker)

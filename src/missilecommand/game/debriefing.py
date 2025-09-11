@@ -73,10 +73,7 @@ class Debriefing(GameState):
         self.missile_score = 0
         self.city_score = 0
 
-    def dispatch_events(self, e):
-        if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
-                or e.type == pygame.QUIT):
-            self.teardown()
+    def dispatch_event(self, e):
         check_for_exit(e)
 
     def update(self, dt):
@@ -155,6 +152,7 @@ class Debriefing(GameState):
     def phase_linger_post_update(self, dt):
         if not self.cd_linger_post.cold(): return
         self.teardown()
+        raise StateExit
 
     def draw(self):
         # Since all entities are inside the ECS, the systems of the game state
@@ -163,5 +161,3 @@ class Debriefing(GameState):
 
     def teardown(self):
         ecs.purge_by_property(Prop.IS_DEBRIEFING)
-
-        raise StateExit(-1)

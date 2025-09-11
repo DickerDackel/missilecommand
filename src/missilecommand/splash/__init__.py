@@ -37,16 +37,12 @@ class Splash(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        elif e.type == pygame.KEYDOWN:
-            # FIXME -->
-            elif e.key == pygame.K_q:
-                raise StateExit
-            # FIXME <--
         check_for_exit(e)
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():
             self.teardown()
+            raise StateExit
 
     def draw(self) -> None:
         self.app.renderer.draw_color = C.COLOR.background
@@ -55,4 +51,3 @@ class Splash(GameState):
 
     def teardown(self) -> None:
         ecs.remove_entity(self.state_label)
-        raise StateExit

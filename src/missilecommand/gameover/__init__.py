@@ -80,13 +80,9 @@ class Gameover(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        elif e.type == pygame.KEYDOWN:
-            elif e.key == pygame.K_SPACE:
-                self.teardown()
-                raise StateExit
-            elif e.key == pygame.K_1:
         check_for_exit(e)
         if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:
@@ -140,6 +136,7 @@ class Gameover(GameState):
 
     def phase_lingering_update(self, dt: float) -> None:
         if self.cd_linger.cold():
+            self.teardown()
             raise StateExit
 
     def draw(self) -> None:
@@ -151,4 +148,3 @@ class Gameover(GameState):
 
     def teardown(self) -> None:
         purge_entities(Prop.IS_GAMEOVER)
-        raise StateExit

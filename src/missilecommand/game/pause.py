@@ -34,11 +34,10 @@ class Pause(GameState):
         self.blink_colors = cycle(['red', 'blue'])
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
+        # NOTE: Pause is a stacked state that falls back to the main game and
+        # does not exit to the desktop.
         if e.type == pygame.KEYDOWN and e.key in {pygame.K_p, pygame.K_ESCAPE}:
-            ecs.remove_entity(self.state_label)  # FIXME
-
-            for eid in self.labels:
-                ecs.remove_entity(eid)
+            self.teardown()
             raise StateExit(-1)
 
     def update(self, dt: float) -> None:
@@ -50,3 +49,9 @@ class Pause(GameState):
     def draw(self) -> None:
         # Done from the ECS in the underlying game state
         pass
+
+    def teardown(self):
+        ecs.remove_entity(self.state_label)  # FIXME
+
+        for eid in self.labels:
+            ecs.remove_entity(eid)

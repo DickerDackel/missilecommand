@@ -39,11 +39,6 @@ class Briefing(GameState):
         self.cd_sound = Cooldown(0.35)
         self.sounds_pending = cities
 
-    def teardown(self) -> None:
-        for t in self.entities:
-            ecs.remove_entity(t)
-
-    def dispatch_events(self, e: pygame.event.Event) -> None:
     def dispatch_event(self, e: pygame.event.Event) -> None:
         check_for_exit(e)
 
@@ -59,3 +54,7 @@ class Briefing(GameState):
 
     def draw(self) -> None:
         ...  # FIXME
+
+    def teardown(self) -> None:
+        for t in self.entities:
+            ecs.remove_entity(t)

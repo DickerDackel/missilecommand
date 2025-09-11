@@ -38,11 +38,15 @@ class Demo(GameState):
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         check_for_exit(e)
+
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():
             self.teardown()
+            raise StateExit
 
     def draw(self) -> None:
         self.app.renderer.draw_color = C.COLOR.background
@@ -51,4 +55,3 @@ class Demo(GameState):
 
     def teardown(self) -> None:
         ecs.remove_entity(self.state_label)
-        raise StateExit

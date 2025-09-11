@@ -41,15 +41,16 @@ class Title(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        elif e.type == pygame.KEYDOWN:
-            elif e.key == pygame.K_1:
         check_for_exit(e)
 
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():
             self.teardown()
+            raise StateExit
 
     def draw(self) -> None:
         self.app.renderer.draw_color = C.COLOR.background
@@ -58,4 +59,3 @@ class Title(GameState):
 
     def teardown(self) -> None:
         ecs.reset()
-        raise StateExit

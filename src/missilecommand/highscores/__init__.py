@@ -72,18 +72,16 @@ class Highscores(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        elif e.type == pygame.KEYDOWN:
-            elif e.key == pygame.K_SPACE:
-                self.teardown()
-                raise StateExit
-            elif e.key == pygame.K_1:
         check_for_exit(e)
 
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():
             self.teardown()
+            raise StateExit
 
     def draw(self) -> None:
         self.app.renderer.draw_color = C.COLOR.background
@@ -95,4 +93,3 @@ class Highscores(GameState):
 
     def teardown(self) -> None:
         ecs.purge_by_property(THIS)
-        raise StateExit

@@ -62,11 +62,12 @@ class HighscoreEntry(GameState):
     def dispatch_event(self, e: pygame.event.Event) -> None:
         check_for_exit(e)
 
-        if e.type == pygame.KEYDOWN and e.key in {pygame.K_q, pygame.K_w, pygame.K_e}:
-            play_sound(cache['sounds']['diiuuu'])
-            self.entry_no += 1
-            if self.entry_no >= len(self.entry):
-                return
+        if e.type == pygame.KEYDOWN:
+            if e.key in {pygame.K_q, pygame.K_w, pygame.K_e}:
+                play_sound(cache['sounds']['diiuuu'])
+                self.entry_no += 1
+                if self.entry_no >= len(self.entry):
+                    return
 
             self.entry[self.entry_no] = LETTERS[self.letter_idx]
 
@@ -80,6 +81,7 @@ class HighscoreEntry(GameState):
     def update(self, dt: float) -> None:
         if self.entry_no >= len(self.entry):
             self.teardown()
+            raise StateExit
 
         ecs.add_component('entry', Comp.TEXT, ''.join(self.entry))
 
@@ -94,4 +96,3 @@ class HighscoreEntry(GameState):
 
         for eid in self.entities:
             ecs.remove_entity(eid)
-        raise StateExit

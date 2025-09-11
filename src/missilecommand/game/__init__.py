@@ -96,13 +96,13 @@ class Game(GameState):
         self.phase = None
 
         self.phase_handlers = {
-            StatePhase.SETUP: self.phase_setup_update,
-            StatePhase.BRIEFING: self.phase_briefing_update,
-            StatePhase.PLAYING: self.phase_playing_update,
-            StatePhase.PRE_LINGER: self.phase_pre_linger_update,
-            StatePhase.LINGER: self.phase_linger_update,
-            StatePhase.DEBRIEFING: self.phase_debriefing_update,
-            StatePhase.GAMEOVER: self.phase_gameover_update,
+            StatePhase.SETUP: self.update_setup_phase,
+            StatePhase.BRIEFING: self.update_briefing_phase,
+            StatePhase.PLAYING: self.update_gameplay_phase,
+            StatePhase.PRE_LINGER: self.update_pre_linger_phase,
+            StatePhase.LINGER: self.update_linger_phase,
+            StatePhase.DEBRIEFING: self.update_debriefing_phase,
+            StatePhase.GAMEOVER: self.update_gameover_phase,
         }
 
         self.allowed_targets = None
@@ -221,17 +221,17 @@ class Game(GameState):
         entities = len(ecs.eidx)
         self.app.window.title = f'{self.app.title} - {fps=:.2f}  slots={len(self.incoming)}  left={self.incoming_left}  {entities=}'
 
-    def phase_setup_update(self, dt: float) -> None:
+    def update_setup_phase(self, dt: float) -> None:
         self.setup_wave()
         self.phase = next(self.phase_walker)
 
-    def phase_briefing_update(self, dt: float) -> None:
+    def update_briefing_phase(self, dt: float) -> None:
         self.phase = next(self.phase_walker)
         cities = sum(GS.cities)
 
         self.app.push(Briefing(self.app, GS.score_mult, cities), passthrough=StackPermissions.DRAW)
 
-    def phase_playing_update(self, dt: float) -> None:
+    def update_gameplay_phase(self, dt: float) -> None:
         # Switch to linger  if
         #   No ammunition left
         #   No city left
@@ -350,7 +350,7 @@ class Game(GameState):
         self.run_game_systems(dt)
         self.do_collisions()
 
-    def phase_pre_linger_update(self, dt: float) -> None:
+    def update_pre_linger_phase(self, dt: float) -> None:
         missiles = ecs.eids_by_property(Prop.IS_MISSILE)
         flyers = ecs.eids_by_property(Prop.IS_FLYER)
         for eid in chain(missiles, flyers):
@@ -359,7 +359,7 @@ class Game(GameState):
 
         self.phase = next(self.phase_walker)
 
-    def phase_linger_update(self, dt: float) -> None:
+    def update_linger_phase(self, dt: float) -> None:
         # if no more missiles are flying
         #     and no defenses are flying
         #     and no flyers are flying
@@ -381,12 +381,12 @@ class Game(GameState):
         self.run_game_systems(dt)
         self.do_collisions()
 
-    def phase_debriefing_update(self, dt: float) -> None:
+    def update_debriefing_phase(self, dt: float) -> None:
         if self.app.is_stacked(self): return
 
         self.phase = next(self.phase_walker)
 
-    def phase_gameover_update(self, dt: float) -> None:
+    def update_gameover_phase(self, dt: float) -> None:
         if GS.score > highscoretable[0][0]:
             raise StateExit(1)
 

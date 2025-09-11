@@ -349,6 +349,7 @@ class Game(GameState):
         self.do_collisions()
 
     def update_pre_linger_phase(self, dt: float) -> None:
+        print('pre_linger')
         missiles = ecs.eids_by_cids(Comp.MOMENTUM, has_properties={Prop.IS_MISSILE})
         flyers = ecs.eids_by_cids(Comp.MOMENTUM, has_properties={Prop.IS_FLYER})
         smartbombs = ecs.eids_by_cids(Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})

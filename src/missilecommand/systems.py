@@ -375,6 +375,27 @@ def non_ecs_sys_collide_missile_with_explosion():
             break
 
 
+def non_ecs_sys_collide_smartbomb_with_battery():
+    smartbombs = ecs.comps_of_archetype(Comp.PRSA, has_properties={Prop.IS_SMARTBOMB})
+
+    for b_eid, (b_prsa, *_) in smartbombs:
+        for i, battery in enumerate(GS.batteries):
+            if not C.HITBOX_BATTERIES[i].collidepoint(b_prsa.pos):
+                continue
+
+            # Mark as dead, even if battery is already emptied
+            ecs.add_component(b_eid, Prop.IS_DEAD, True)
+            ecs.set_property(b_eid, Prop.IS_DEAD)
+
+            if not battery: continue
+
+            for silo in GS.batteries[i]:
+                ecs.add_component(silo, Comp.LIFETIME,
+                                  Cooldown(C.EXPLOSION_DURATION))
+            GS.batteries[i].clear()
+            break
+
+
 def non_ecs_sys_collide_smartbomb_with_city():
     smartbombs = ecs.comps_of_archetype(Comp.PRSA, has_properties={Prop.IS_SMARTBOMB})
 

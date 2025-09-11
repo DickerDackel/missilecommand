@@ -15,6 +15,11 @@ import missilecommand.config as C
 from missilecommand.soundpool import soundpool
 
 
+def check_for_exit(e):
+    if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+        raise SystemExit(-1)
+
+
 def cls(texture: sdl2.Texture, color: ColorLike = 'black') -> None:
     """clear the given texture"""
     renderer = texture.renderer

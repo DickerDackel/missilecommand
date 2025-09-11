@@ -13,6 +13,7 @@ import missilecommand.config as C
 
 from missilecommand.launchers import mk_textlabel
 from missilecommand.systems import sys_draw_textlabel
+from missilecommand.utils import check_for_exit
 from missilecommand.types import Comp
 
 
@@ -36,15 +37,7 @@ class Demo(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        if e.type == pygame.QUIT:
-            raise StateExit(-1)
-        elif e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_ESCAPE:
-                raise StateExit(-1)
-            elif e.key == pygame.K_SPACE:
-                self.teardown()
-                raise StateExit
-            elif e.key == pygame.K_1:
+        check_for_exit(e)
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:

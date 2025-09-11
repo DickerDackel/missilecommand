@@ -21,7 +21,7 @@ from missilecommand.launchers import mk_gameover_explosion, mk_gameover_text
 from missilecommand.systems import (sys_apply_scale, sys_colorcycle, sys_colorize,
                         sys_textcurtain, sys_draw_textlabel, sys_draw_texture)
 from missilecommand.types import Comp, Prop
-from missilecommand.utils import play_sound, purge_entities
+from missilecommand.utils import check_for_exit, play_sound, purge_entities
 
 EXPLOSION_EID = 'explosion'
 TEXT_EID = 'text'
@@ -80,15 +80,13 @@ class Gameover(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        if e.type == pygame.QUIT:
-            raise StateExit(-1)
         elif e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_ESCAPE:
-                raise StateExit(-1)
             elif e.key == pygame.K_SPACE:
                 self.teardown()
                 raise StateExit
             elif e.key == pygame.K_1:
+        check_for_exit(e)
+        if e.type == pygame.KEYDOWN:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:

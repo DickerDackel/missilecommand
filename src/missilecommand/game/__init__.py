@@ -48,6 +48,7 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                         sys_trail, sys_update_trail,)
 from missilecommand.types import Comp, EIDs, EntityID, Prop
 from missilecommand.utils import (cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
+from missilecommand.utils import (check_for_exit, cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
 
 class StatePhase(StrEnum):
@@ -195,11 +196,11 @@ class Game(GameState):
     def dispatch_event(self, e: pygame.event.Event) -> None:
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
 
-        if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
-                or e.type == pygame.QUIT):
-            raise StateExit(-1)
         elif e.type == pygame.KEYDOWN and self.phase == StatePhase.PLAYING:
             if e.key in C.KEY_SILO_MAP:
+        check_for_exit(e)
+
+        if e.type == pygame.KEYDOWN:
                 launchpad = C.KEY_SILO_MAP[e.key]
                 self.launch_defense(launchpad, self.mouse)
             elif e.key == pygame.K_p:

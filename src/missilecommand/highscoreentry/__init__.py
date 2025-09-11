@@ -19,7 +19,7 @@ from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import mk_textlabel, mk_texture
 from missilecommand.systems import sys_draw_texture, sys_draw_textlabel
 from missilecommand.types import Comp
-from missilecommand.utils import play_sound
+from missilecommand.utils import check_for_exit, play_sound
 
 LETTERS = [k for k in C.CHAR_MAP.keys() if len(k) == 1]  # Don't use the sym names like 'copy' here
 
@@ -60,9 +60,7 @@ class HighscoreEntry(GameState):
         self.cd_scroll = Cooldown(C.HIGHSCORE_ENTRY_SCROLL_COOLDOWN)
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
-                or e.type == pygame.QUIT):
-            self.teardown()
+        check_for_exit(e)
 
         if e.type == pygame.KEYDOWN and e.key in {pygame.K_q, pygame.K_w, pygame.K_e}:
             play_sound(cache['sounds']['diiuuu'])

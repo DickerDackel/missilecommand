@@ -21,6 +21,7 @@ from missilecommand.launchers import mk_battery, mk_city, mk_textlabel, mk_textu
 from missilecommand.systems import (sys_draw_texture, sys_draw_textlabel, sys_textblink,
                         sys_texture_from_texture_list)
 from missilecommand.types import Comp
+from missilecommand.utils import check_for_exit
 
 THIS = 'highscores'
 
@@ -71,15 +72,13 @@ class Highscores(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        if e.type == pygame.QUIT:
-            raise StateExit(-1)
         elif e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_ESCAPE:
-                raise StateExit(-1)
             elif e.key == pygame.K_SPACE:
                 self.teardown()
                 raise StateExit
             elif e.key == pygame.K_1:
+        check_for_exit(e)
+
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:

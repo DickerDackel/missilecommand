@@ -18,7 +18,7 @@ from missilecommand.gamestate import gs as GS
 from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import mk_textlabel
 from missilecommand.types import Comp, EIDs, Prop
-from missilecommand.utils import play_sound
+from missilecommand.utils import check_for_exit, play_sound
 
 
 class StatePhase(StrEnum):
@@ -77,6 +77,7 @@ class Debriefing(GameState):
         if (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE
                 or e.type == pygame.QUIT):
             self.teardown()
+        check_for_exit(e)
 
     def update(self, dt):
         update_fn = self.phase_handlers[self.phase]

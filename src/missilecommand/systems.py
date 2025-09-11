@@ -237,6 +237,7 @@ def sys_trail(dt: float,
               eid: EntityID,
               trail: list[tuple[Point, Point]],
               *, texture: sdl2.Texture) -> None:
+    """Draw the trail on the dedicated trail texture"""
     renderer = texture.renderer
     bkp_target = renderer.target
     bkp_color = renderer.draw_color
@@ -255,7 +256,7 @@ def sys_trail_eraser(dt: float,
                      eid: EntityID,
                      trail: Trail,
                      *, texture: sdl2.Texture) -> None:
-
+    """Wipe the trail on the dedicated trail texture"""
     renderer = texture.renderer
     bkp_target = renderer.target
     bkp_color = renderer.draw_color
@@ -398,7 +399,7 @@ def non_ecs_sys_collide_smartbomb_with_city():
         ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
 
 
-def non_ecs_sys_collide_smartbomb_with_explosion(renderer):
+def non_ecs_sys_collide_smartbomb_with_explosion():
     explosions = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE,
                                         has_properties={Prop.IS_EXPLOSION})
     smartbombs = ecs.comps_of_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM,

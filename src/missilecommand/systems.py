@@ -80,14 +80,17 @@ def sys_container(dt: float,
                   prsa: PRSA,
                   container: pygame.Rect) -> None:
     if not container.collidepoint(prsa.pos):
-        ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
+        ecs.set_property(eid, Prop.IS_ESCAPED)
 
 
 def sys_detonate_flyer(dt: float,
                        eid: EntityID,
-                       prsa: PRSA,
-                       is_dead: bool) -> None:
+                       prsa: PRSA) -> None:
+    # Flyer dead by container, not collision
+    if ecs.has_property(eid, Prop.IS_ESCAPED):
+        return
+
     mk_explosion(prsa.pos)
     play_sound(cache['sounds']['explosion'])
 
@@ -95,8 +98,7 @@ def sys_detonate_flyer(dt: float,
 def sys_detonate_missile(dt: float,
                          eid: EntityID,
                          prsa: PRSA,
-                         trail: Trail,
-                         is_dead: bool) -> None:
+                         trail: Trail) -> None:
     mk_explosion(prsa.pos)
     mk_trail_eraser(trail)
     play_sound(cache['sounds']['explosion'])
@@ -104,8 +106,7 @@ def sys_detonate_missile(dt: float,
 
 def sys_detonate_smartbomb(dt: float,
                            eid: EntityID,
-                           prsa: PRSA,
-                           is_dead: bool) -> None:
+                           prsa: PRSA) -> None:
     mk_explosion(prsa.pos)
     play_sound(cache['sounds']['explosion'])
 
@@ -119,7 +120,6 @@ def sys_dont_overshoot(dt: float, eid: EntityID,
 
     if not delta or delta.length() < momentum.length() and dot < 0:
         prsa.pos = target
-        ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
 
 
@@ -179,7 +179,6 @@ def sys_explosion(dt: float,
 def sys_lifetime(dt: float, eid: EntityID, lifetime: Cooldown) -> None:
     """Flags entity for culling after lifetime runs out."""
     if lifetime.cold():
-        ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
 
 
@@ -194,18 +193,14 @@ def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
     prsa.pos = vec2(mp)
 
 
-def sys_shutdown(dt: float, eid: float, is_dead: bool) -> None:
+def sys_shutdown(dt: float, eid: float, shutdown: Callable) -> None:
     """Call all shutdown callbacks and remove the entity"""
 
-    if ecs.eid_has(eid, Comp.SHUTDOWN):
-        callbacks = ecs.comp_of_eid(eid, Comp.SHUTDOWN)
-        if isinstance(callbacks, Sequence):
-            for cb in callbacks:
-                cb(eid)
-        else:
-            callbacks(eid)
-
-    ecs.remove_entity(eid)
+    if isinstance(shutdown, Sequence):
+        for fn in shutdown:
+            fn(eid)
+    else:
+        shutdown(eid)
 
 
 def sys_smartbomb_evade(dt, eid, prsa, evade_fix):
@@ -216,7 +211,6 @@ def sys_smartbomb_evade(dt, eid, prsa, evade_fix):
 def sys_target_reached(dt: float, eid: EntityID, prsa: PRSA, target: vec2) -> None:
     """Flag the entity for culling if it has reached target."""
     if prsa.pos == target:
-        ecs.add_component(eid, Prop.IS_DEAD, True)
         ecs.set_property(eid, Prop.IS_DEAD)
 
 
@@ -327,7 +321,6 @@ def non_ecs_sys_collide_missile_with_battery():
             if not C.HITBOX_BATTERIES[i].collidepoint(m_prsa.pos):
                 continue
 
-            ecs.add_component(m_eid, Prop.IS_DEAD, True)
             ecs.set_property(m_eid, Prop.IS_DEAD)
 
             if not battery: continue
@@ -336,6 +329,7 @@ def non_ecs_sys_collide_missile_with_battery():
                 ecs.add_component(silo, Comp.LIFETIME,
                                   Cooldown(C.EXPLOSION_DURATION))
             GS.batteries[i].clear()
+
             break
 
 
@@ -347,7 +341,6 @@ def non_ecs_sys_collide_missile_with_city():
                 continue
 
             # Explode missile, even if city is already removed
-            ecs.add_component(m_eid, Prop.IS_DEAD, True)
             ecs.set_property(m_eid, Prop.IS_DEAD)
             if not c: continue
 
@@ -369,7 +362,6 @@ def non_ecs_sys_collide_missile_with_explosion():
             if delta.length() > e_scale() * width / 2:
                 continue
 
-            ecs.add_component(m_eid, Prop.IS_DEAD, True)
             ecs.set_property(m_eid, Prop.IS_DEAD)
             GS.score += GS.score_mult * C.Score.MISSILE
             break
@@ -384,7 +376,6 @@ def non_ecs_sys_collide_smartbomb_with_battery():
                 continue
 
             # Mark as dead, even if battery is already emptied
-            ecs.add_component(b_eid, Prop.IS_DEAD, True)
             ecs.set_property(b_eid, Prop.IS_DEAD)
 
             if not battery: continue
@@ -407,7 +398,6 @@ def non_ecs_sys_collide_smartbomb_with_city():
             if not C.HITBOX_CITY[i].collidepoint(b_prsa.pos):
                 continue
 
-            ecs.add_component(b_eid, Prop.IS_DEAD, True)
             ecs.set_property(b_eid, Prop.IS_DEAD)
             if not c: continue
 
@@ -438,7 +428,6 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
 
             # explode
             if dlen <= lt * C.EXPLOSION_RADIUS:
-                ecs.add_component(b_eid, Prop.IS_DEAD, True)
                 ecs.set_property(b_eid, Prop.IS_DEAD)
 
                 prev_score = GS.score // C.BONUS_CITY_SCORE
@@ -470,3 +459,9 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
                         dodge = right_dodge * speed
 
                 ecs.add_component(b_eid, Comp.EVADE_FIX, dodge)
+
+
+def non_ecs_sys_prune():
+    dead = ecs.eids_by_property(Prop.IS_DEAD)
+    for eid in dead:
+        ecs.remove_entity(eid)

@@ -40,9 +40,9 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     non_ecs_sys_collide_smartbomb_with_battery,
                                     non_ecs_sys_collide_smartbomb_with_city,
                                     non_ecs_sys_collide_smartbomb_with_explosion,
-                                    sys_aim, sys_close_orphan_sound,
-                                    sys_container, sys_detonate_flyer,
-                                    sys_detonate_missile,
+                                    non_ecs_sys_prune, sys_aim,
+                                    sys_close_orphan_sound, sys_container,
+                                    sys_detonate_flyer, sys_detonate_missile,
                                     sys_detonate_smartbomb,
                                     sys_dont_overshoot, sys_explosion,
                                     sys_lifetime, sys_momentum, sys_mouse,
@@ -349,7 +349,6 @@ class Game(GameState):
         self.do_collisions()
 
     def update_pre_linger_phase(self, dt: float) -> None:
-        print('pre_linger')
         missiles = ecs.eids_by_cids(Comp.MOMENTUM, has_properties={Prop.IS_MISSILE})
         flyers = ecs.eids_by_cids(Comp.MOMENTUM, has_properties={Prop.IS_FLYER})
         smartbombs = ecs.eids_by_cids(Comp.SPEED, has_properties={Prop.IS_SMARTBOMB})
@@ -453,12 +452,14 @@ class Game(GameState):
 
         self.do_collisions()
 
-        ecs.run_system(dt, sys_detonate_flyer, Comp.PRSA, Prop.IS_DEAD, has_properties={Prop.IS_FLYER})
-        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, Prop.IS_DEAD, has_properties={Prop.IS_MISSILE})
-        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, Prop.IS_DEAD, has_properties={Prop.IS_SMARTBOMB})
+        ecs.run_system(dt, sys_detonate_flyer, Comp.PRSA, has_properties={Prop.IS_FLYER, Prop.IS_DEAD})
+        ecs.run_system(dt, sys_detonate_missile, Comp.PRSA, Comp.TRAIL, has_properties={Prop.IS_MISSILE, Prop.IS_DEAD})
+        ecs.run_system(dt, sys_detonate_smartbomb, Comp.PRSA, has_properties={Prop.IS_SMARTBOMB, Prop.IS_DEAD})
 
         # Shutdown needs to be very last, else all the IS_DEAD filters won't trigger
-        ecs.run_system(dt, sys_shutdown, Prop.IS_DEAD)
+        ecs.run_system(dt, sys_shutdown, Comp.SHUTDOWN, has_properties={Prop.IS_DEAD})
+
+        non_ecs_sys_prune()
 
     def do_collisions(self) -> None:
         non_ecs_sys_collide_flyer_with_explosion()

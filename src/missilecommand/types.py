@@ -23,6 +23,7 @@ class Prop(StrEnum):
     IS_DEAD_TRAIL = auto()  # Trail eraser
     IS_DEBRIEFING = auto()  # Entities created in Debriefing
     IS_DEFENSE = auto()  # opposite of IS_INCOMING
+    IS_ESCAPED = auto()  # Flyer escaped and won't explode
     IS_EXPLOSION = auto()  # Yeah...
     IS_FLYER = auto()  # Plane/Satellite thingy
     IS_GAMEOVER = auto()  # stuff added by the gameover state

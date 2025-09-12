@@ -4,6 +4,7 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
+import random
 import sys
 
 from argparse import ArgumentParser
@@ -38,7 +39,6 @@ def load_sounds(assets: Path) -> None:
     sounds = assets.glob('*.wav')
     cache['sounds'] = {fname.stem: pygame.mixer.Sound(fname)
                        for fname in (assets / f for f in sounds)}
-    # FIXME
     for s in cache['sounds'].values():
         s.set_volume(0.1)
 
@@ -65,6 +65,8 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
 
 
 def main() -> None:
+    random.seed(42)
+
     cmdline = ArgumentParser(description=C.TITLE)
     cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
     cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')

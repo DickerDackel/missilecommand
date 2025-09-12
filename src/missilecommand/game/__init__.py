@@ -129,7 +129,7 @@ class Game(GameState):
         ecs.create_archetype(Comp.PRSA, Comp.MASK, Comp.SCALE)  # for Explosion collisions
         ecs.create_archetype(Comp.PRSA, Comp.TARGET, Comp.MOMENTUM)  # For smartbomb evasion
 
-        mk_crosshair()
+        mk_crosshair(self.app.logical_rect.center)
 
         msg = C.MESSAGES['game']['HIGHSCORE']
         mk_score_label(f'{highscoretable.leader.score:5d}', *msg[1:], eid=EIDs.HIGHSCORE)

@@ -67,9 +67,9 @@ def mk_city(pos: Point, eid: EntityID = None) -> EntityID:
     return eid
 
 
-def mk_crosshair() -> EntityID:
+def mk_crosshair(mouse_pos) -> EntityID:
     eid = 'player'
-    pos = vec2(pygame.mouse.get_pos())
+    pos = vec2(mouse_pos)
     ecs.create_entity(eid)
     ecs.set_property(eid, Prop.IS_INFRASTRUCTURE)
     ecs.set_property(eid, Comp.WANTS_MOUSE)

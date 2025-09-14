@@ -187,10 +187,9 @@ def sys_momentum(dt: float, eid: EntityID, prsa: PRSA, momentum: Momentum) -> No
     prsa.pos += momentum * dt
 
 
-def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, remap: Callable) -> None:
+def sys_mouse(dt: float, eid: EntityID, prsa: PRSA, *, mouse_pos=Point) -> None:
     """Apply mouse position to prsa.pos"""
-    mp = remap(pygame.mouse.get_pos())
-    prsa.pos = vec2(mp)
+    prsa.pos = vec2(mouse_pos)
 
 
 def sys_shutdown(dt: float, eid: float, shutdown: Callable) -> None:

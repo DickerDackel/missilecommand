@@ -22,7 +22,7 @@ from rpeasings import out_quad
 import missilecommand.config as C
 
 from missilecommand.types import Comp, Container, EIDs, EntityID, Momentum, Prop, Trail
-from missilecommand.utils import play_sound
+from missilecommand.utils import log_event, play_sound
 
 
 def mk_battery(battery_id: int, pos: Point) -> tuple[EntityID, list[EntityID]]:
@@ -185,6 +185,8 @@ def mk_missile(start: vec2, dest: vec2, speed: float,
     if shutdown_callback is not None:
         ecs.add_component(eid, Comp.SHUTDOWN, shutdown_callback)
 
+    log_event(f'MISSILE {start[0]} {start[1]} {dest[0]} {dest[1]} {speed}')
+
     return eid
 
 
@@ -296,6 +298,7 @@ def mk_texture(texture: sdl2.Texture, prsa: PRSA, anchor: str = 'center', color:
         ecs.add_component(eid, Comp.COLOR, color)
 
     return eid
+
 
 def mk_trail_eraser(trail: Trail) -> None:
     eid = ecs.create_entity()

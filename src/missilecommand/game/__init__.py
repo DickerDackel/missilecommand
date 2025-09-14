@@ -3,7 +3,7 @@ logging.info(__name__)  # noqa: E402
 
 from enum import StrEnum, auto
 from itertools import chain, cycle
-from random import randint, shuffle
+from random import randint, seed, shuffle
 from typing import Any
 
 import pygame
@@ -24,6 +24,7 @@ import missilecommand.config as C
 
 from missilecommand.game.briefing import Briefing
 from missilecommand.game.debriefing import Debriefing
+from missilecommand.game.demoplayer import DemoPlayer
 from missilecommand.game.incoming import Incoming
 from missilecommand.game.pause import Pause
 from missilecommand.game.waves import wave_iter
@@ -53,7 +54,7 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     sys_trail_eraser, sys_trail,
                                     sys_update_trail,)
 from missilecommand.types import Comp, EIDs, EntityID, Prop
-from missilecommand.utils import (check_for_exit, cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
+from missilecommand.utils import (check_for_exit, cls, log_event, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
 
 class StatePhase(StrEnum):
@@ -67,11 +68,15 @@ class StatePhase(StrEnum):
 
 
 class Game(GameState):
-    def __init__(self, app: App) -> None:
+    def __init__(self, app: App, demo=False) -> None:
         self.app = app
+        self.demo = demo
         self.renderer = self.app.renderer
 
-        pygame.mouse.set_pos(app.coordinates_to_window(self.app.logical_rect.center))
+        self.demo_player = DemoPlayer(C.ASSETS / 'demo.in')
+        self.demo_walker = None
+
+        self.mouse = None
 
         ecs.create_entity(EIDs.FLYER_SOUND)
         ecs.create_entity(EIDs.SMARTBOMB_SOUND)
@@ -108,11 +113,18 @@ class Game(GameState):
         self.allowed_targets = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
+        self.mouse = self.app.logical_rect.center
+        pygame.mouse.set_pos(self.app.coordinates_to_window(self.mouse))
+
         rect = pygame.Rect(self.app.coordinates_to_window(C.CROSSHAIR_CONSTRAINT.topleft),
                            self.app.size_to_window(C.CROSSHAIR_CONSTRAINT.size))
         self.app.window.mouse_rect = rect
 
         GS.reset()
+
+        self.demo_walker = iter(self.demo_player)
+        seed(a=1 if self.demo else None)
+        seed(1)
 
         self.paused = False
         self.level = -1
@@ -199,14 +211,23 @@ class Game(GameState):
         unpause_all_sounds()
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
+        check_for_exit(e)
+
+        if self.demo:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_1:
+                raise StateExit(1)
+
+            return
+
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
 
-        check_for_exit(e)
+        log_event(f'MOUSE {self.mouse[0]} {self.mouse[1]}')
 
         if e.type == pygame.KEYDOWN:
             if self.phase == StatePhase.PLAYING and e.key in C.KEY_SILO_MAP:
                 launchpad = C.KEY_SILO_MAP[e.key]
                 self.launch_defense(launchpad, self.mouse)
+                log_event(f'DEFENSE {launchpad}')
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
                 pause_all_sounds()
@@ -245,27 +266,6 @@ class Game(GameState):
             return
 
         launched_this_frame = 0
-        # Launch flyer if
-        #     no flyer is active
-        #     and the wave does have a flyer
-        #     and flyer cooldown is cold
-        #     and an incoming slot is free
-        free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-        if (not ecs.has(EIDs.FLYER)
-                and self.wave.flyer_cooldown
-                and self.cd_flyer.cold()
-                and free_slots):
-
-            def shutdown(eid: EntityID) -> None:
-                self.cd_flyer.reset()
-                self.incoming.remove(eid)
-
-            self.incoming.add(mk_flyer(EIDs.FLYER, self.wave.flyer_min_height,
-                                       self.wave.flyer_max_height,
-                                       self.wave.flyer_shoot_cooldown,
-                                       C.CONTAINER,
-                                       shutdown))
-            launched_this_frame += 1
 
         def spawn_missiles(number=1, origin=None):
             nonlocal launched_this_frame
@@ -289,59 +289,117 @@ class Game(GameState):
                 self.incoming_left -= 1
                 launched_this_frame += 1
 
-        # Once missiles have been launched, only launch more when the earlier
-        # ones are below a given height.  Basically a delay between launches.
-        may_launch = (len(self.incoming) == 0 and self.incoming_left > 0
-                      or all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
-                             for eid in self.incoming))
-        if may_launch:
-            spawn_missiles(C.MAX_LAUNCHES_PER_FRAME - launched_this_frame)
-
-        # Flyer shoots
-        if (ecs.has(EIDs.FLYER)):
-            prsa, cd_shoot = ecs.comps_of_eid(EIDs.FLYER, Comp.PRSA, Comp.FLYER_SHOOT_COOLDOWN)
-            if cd_shoot.cold():
-                cd_shoot.reset()
-                spawn_missiles(randint(1, 3), origin=prsa.pos)
-
-        # From the missile command ROM dump text:
-        # So the conditions required for an ICBM to be eligible to split are:
-        # * No previously-examined missile is above 159.
-        # * The current missile, or a previously-examined missile, is at an
-        #   altitude between 128 and 159.
-        # * There must be available slots in the ICBM table, and unspent ICBMs
-        #   for the wave.
-        for eid in list(self.incoming):  # listify the set, since it will change
-            prsa = ecs.comp_of_eid(eid, Comp.PRSA)
-            free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-            if (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]
-                and free_slots
-                and self.incoming_left):
-                spawn_missiles(randint(1, 3))
-            else:
-                break
-
-        # Smartbombs are like missiles, but they take **2** missile slots.
-        # A smartbomb may be launched if:
-        # * The level actually has smartbombs and there are still some left to launch
-        # * A smartbomb slot is free (max 3 on screen)
-        # * 2 Missile slots are free (counting already active smartbombs as well)
+        # Launch flyer if
+        #     no flyer is active
+        #     and the wave does have a flyer
+        #     and flyer cooldown is cold
+        #     and an incoming slot is free
         free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-        if (C.MAX_LAUNCHES_PER_FRAME - launched_this_frame > 0
-            and self.smartbombs_left
-            and self.smartbombs.free_slots()
-            and self.incoming.free_slots() >= 2 * (len(self.smartbombs) + 1)):
+        if (not ecs.has(EIDs.FLYER)
+                and self.wave.flyer_cooldown
+                and self.cd_flyer.cold()
+                and free_slots):
 
-            def shutdown(eid: EntityID):
-                self.smartbombs.remove(eid)
+            def shutdown(eid: EntityID) -> None:
+                self.cd_flyer.reset()
+                self.incoming.remove(eid)
 
-            start = vec2(randint(0, self.app.logical_rect.width), -3)
-            target = next(self.allowed_targets)
-            speed = self.wave.missile_speed
-            eid = mk_smartbomb(start, target, speed, shutdown_callback=shutdown)
-            self.smartbombs.add(eid)
-            self.smartbombs_left -= 1
+            self.incoming.add(mk_flyer(EIDs.FLYER, self.wave.flyer_min_height,
+                                       self.wave.flyer_max_height,
+                                       self.wave.flyer_shoot_cooldown,
+                                       C.CONTAINER,
+                                       shutdown))
             launched_this_frame += 1
+
+        if self.demo:
+            while True:
+                demo_event = next(self.demo_walker)
+                print(f'{demo_event=}')
+                match demo_event:
+                    case 'NOP':
+                        print('BREAK')
+                        break
+                    case ['MOUSE', x, y]:
+                        print(f'MOUSE: {x} {y}')
+                        self.mouse = (float(x), float(y))
+                    case ['MISSILE', start_x, start_y, dest_x, dest_y, speed]:
+                        # This is nearly duplicated from spawn_missile above, but
+                        # at this point I can't be bothered to refactor that...
+                        print(f'MISSILE: {start_x, start_y} {dest_x, dest_y} {speed}')
+
+                        def attack_shutdown_callback(eid: EntityID) -> None:
+                            self.incoming.remove(eid)
+
+                        start = vec2(start_x, start_y)
+                        target = vec2(dest_x, dest_y)
+                        speed = speed
+
+                        eid = mk_missile(start, target, speed, incoming=True,
+                                         shutdown_callback=attack_shutdown_callback)
+                        self.incoming.add(eid)
+                        self.incoming_left -= 1
+                        launched_this_frame += 1
+                    case ['DEFENSE', launchpad]:
+                        print(f'DEFENSE {launchpad}')
+                        self.launch_defense(int(launchpad), self.mouse)
+                    case _:
+                        if demo_event != 'NOP':
+                            print(f'HUH?!?: {demo_event}')
+
+        else:
+            # Once missiles have been launched, only launch more when the earlier
+            # ones are below a given height.  Basically a delay between launches.
+            may_launch = (len(self.incoming) == 0 and self.incoming_left > 0
+                          or all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
+                                 for eid in self.incoming))
+            if may_launch:
+                spawn_missiles(C.MAX_LAUNCHES_PER_FRAME - launched_this_frame)
+
+            # Flyer shoots
+            if (ecs.has(EIDs.FLYER)):
+                prsa, cd_shoot = ecs.comps_of_eid(EIDs.FLYER, Comp.PRSA, Comp.FLYER_SHOOT_COOLDOWN)
+                if cd_shoot.cold():
+                    cd_shoot.reset()
+                    spawn_missiles(randint(1, 3), origin=prsa.pos)
+
+            # From the missile command ROM dump text:
+            # So the conditions required for an ICBM to be eligible to split are:
+            # * No previously-examined missile is above 159.
+            # * The current missile, or a previously-examined missile, is at an
+            #   altitude between 128 and 159.
+            # * There must be available slots in the ICBM table, and unspent ICBMs
+            #   for the wave.
+            for eid in list(self.incoming):  # listify the set, since it will change
+                prsa = ecs.comp_of_eid(eid, Comp.PRSA)
+                free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
+                if (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]
+                    and free_slots
+                    and self.incoming_left):
+                    spawn_missiles(randint(1, 3))
+                else:
+                    break
+
+            # Smartbombs are like missiles, but they take **2** missile slots.
+            # A smartbomb may be launched if:
+            # * The level actually has smartbombs and there are still some left to launch
+            # * A smartbomb slot is free (max 3 on screen)
+            # * 2 Missile slots are free (counting already active smartbombs as well)
+            free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
+            if (C.MAX_LAUNCHES_PER_FRAME - launched_this_frame > 0
+                and self.smartbombs_left
+                and self.smartbombs.free_slots()
+                and self.incoming.free_slots() >= 2 * (len(self.smartbombs) + 1)):
+
+                def shutdown(eid: EntityID):
+                    self.smartbombs.remove(eid)
+
+                start = vec2(randint(0, self.app.logical_rect.width), -3)
+                target = next(self.allowed_targets)
+                speed = self.wave.missile_speed
+                eid = mk_smartbomb(start, target, speed, shutdown_callback=shutdown)
+                self.smartbombs.add(eid)
+                self.smartbombs_left -= 1
+                launched_this_frame += 1
 
         ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {GS.bonus_cities}')
 
@@ -387,6 +445,9 @@ class Game(GameState):
     def update_debriefing_phase(self, dt: float) -> None:
         if self.app.is_stacked(self): return
 
+        if self.demo:
+            raise StateExit
+
         self.phase = next(self.phase_walker)
 
     def update_gameover_phase(self, dt: float) -> None:
@@ -399,7 +460,7 @@ class Game(GameState):
         # Make mouse work even if stackpermissions forbids update
 
         ecs.run_system(0, sys_mouse, Comp.PRSA,
-                       remap=self.app.coordinates_from_window,
+                       mouse_pos=self.mouse,
                        has_properties={Comp.WANTS_MOUSE})
 
         ground = cache['textures']['ground']

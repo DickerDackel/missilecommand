@@ -65,8 +65,6 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
 
 
 def main() -> None:
-    random.seed(42)
-
     cmdline = ArgumentParser(description=C.TITLE)
     cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
     cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')
@@ -97,7 +95,7 @@ def main() -> None:
     states = SimpleNamespace(
         splash=Splash(app),
         title=Title(app),
-        demo=Demo(app),
+        demo=Game(app, demo=True),
         highscores=Highscores(app),
         highscoreentry=HighscoreEntry(app),
         game=Game(app),

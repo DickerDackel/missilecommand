@@ -54,7 +54,7 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     sys_trail_eraser, sys_trail,
                                     sys_update_trail,)
 from missilecommand.types import Comp, EIDs, EntityID, Prop
-from missilecommand.utils import (check_for_exit, cls, log_event, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
+from missilecommand.utils import (check_for_exit, cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
 
 class StatePhase(StrEnum):
@@ -221,13 +221,10 @@ class Game(GameState):
 
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
 
-        log_event(f'MOUSE {self.mouse[0]} {self.mouse[1]}')
-
         if e.type == pygame.KEYDOWN:
             if self.phase == StatePhase.PLAYING and e.key in C.KEY_SILO_MAP:
                 launchpad = C.KEY_SILO_MAP[e.key]
                 self.launch_defense(launchpad, self.mouse)
-                log_event(f'DEFENSE {launchpad}')
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
                 pause_all_sounds()
@@ -314,18 +311,14 @@ class Game(GameState):
         if self.demo:
             while True:
                 demo_event = next(self.demo_walker)
-                print(f'{demo_event=}')
                 match demo_event:
                     case 'NOP':
-                        print('BREAK')
                         break
                     case ['MOUSE', x, y]:
-                        print(f'MOUSE: {x} {y}')
                         self.mouse = (float(x), float(y))
                     case ['MISSILE', start_x, start_y, dest_x, dest_y, speed]:
                         # This is nearly duplicated from spawn_missile above, but
                         # at this point I can't be bothered to refactor that...
-                        print(f'MISSILE: {start_x, start_y} {dest_x, dest_y} {speed}')
 
                         def attack_shutdown_callback(eid: EntityID) -> None:
                             self.incoming.remove(eid)
@@ -340,11 +333,7 @@ class Game(GameState):
                         self.incoming_left -= 1
                         launched_this_frame += 1
                     case ['DEFENSE', launchpad]:
-                        print(f'DEFENSE {launchpad}')
                         self.launch_defense(int(launchpad), self.mouse)
-                    case _:
-                        if demo_event != 'NOP':
-                            print(f'HUH?!?: {demo_event}')
 
         else:
             # Once missiles have been launched, only launch more when the earlier

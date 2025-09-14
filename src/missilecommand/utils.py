@@ -47,13 +47,6 @@ def debug_rect(renderer, rect, color='red'):
     renderer.draw_color = bkp_color
 
 
-def log_event(*args):
-    return
-    now = pygame.time.get_ticks()
-    with open('eventlog.txt', 'a') as f:
-        print(now, *args, file=f)
-
-
 def play_sound(sound: pygame.mixer.Sound, *args, **kwargs) -> int:
     if not C.PLAY_AUDIO: return None
 

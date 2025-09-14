@@ -445,7 +445,7 @@ def non_ecs_sys_collide_smartbomb_with_explosion():
 
                 if dlen < 1.25 * C.EXPLOSION_RADIUS:
                     # Just dodge towards outside of radius
-                    dodge = -delta.normalize() * speed * 1.5
+                    dodge = -delta.normalize() * speed
 
                 else:
                     # dodge left or right

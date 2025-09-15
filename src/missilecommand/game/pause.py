@@ -19,11 +19,6 @@ class Pause(GameState):
     def __init__(self, app: App) -> None:
         self.app = app
 
-        # FIXME
-        self.state_label = mk_textlabel('PAUSE',
-                                        self.app.logical_rect.topright,
-                                        'topright', 'white', eid='pausestate_label')
-
         self.labels = []
 
         msg = C.MESSAGES['pause']['PAUSE']
@@ -51,7 +46,5 @@ class Pause(GameState):
         pass
 
     def teardown(self):
-        ecs.remove_entity(self.state_label)  # FIXME
-
         for eid in self.labels:
             ecs.remove_entity(eid)

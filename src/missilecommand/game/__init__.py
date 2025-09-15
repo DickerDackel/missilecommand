@@ -147,7 +147,7 @@ class Game(GameState):
         mk_score_label(f'{highscoretable.leader.score:5d}', *msg[1:], eid=EIDs.HIGHSCORE)
         msg = C.MESSAGES['game']['SCORE']
         mk_score_label(f'{GS.score:5d}  ', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE)
-        mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)  # FIXME eid literal
+        mk_textlabel('←', msg.pos, msg.anchor, msg.color, eid=EIDs.SCORE_ARROW)
         ecs.add_component(EIDs.SCORE_ARROW, Comp.COLOR_CYCLE, AutoSequence((C.COLOR.special_text, C.COLOR.background)))
 
         msg = C.MESSAGES['game']['BONUS CITIES']

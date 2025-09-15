@@ -70,7 +70,6 @@ def main() -> None:
     cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')
     cmdline.add_argument('-S', '--stats', action='store_true', default=0, help='Show statistics on exit')
     cmdline.add_argument('-P', '--perftrace', action='store_true', default=0, help='Show live performance data')
-    cmdline.add_argument('-U', '--unlimited', action='store_true', default=False, help='Unlimited ammo FIXME')
     opts = cmdline.parse_args(sys.argv[1:])
     opts.verbose = max(min(opts.verbose, 3), 0)
     opts.quiet = max(min(opts.quiet, 2), 0)
@@ -112,7 +111,6 @@ def main() -> None:
     sm.add(states.highscoreentry, states.highscores)
     walker = sm.walker(states.splash)
 
-    app.opts = opts  # FIXME
     app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
 
 

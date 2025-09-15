@@ -18,8 +18,9 @@ from rpeasings import in_quad
 import missilecommand.config as C
 
 from missilecommand.launchers import mk_gameover_explosion, mk_gameover_text
-from missilecommand.systems import (sys_apply_scale, sys_colorcycle, sys_colorize,
-                        sys_textcurtain, sys_draw_textlabel, sys_draw_texture)
+from missilecommand.systems import (sys_apply_scale, sys_colorcycle,
+                                    sys_colorize, sys_textcurtain,
+                                    sys_draw_textlabel, sys_draw_texture)
 from missilecommand.types import Comp, Prop
 from missilecommand.utils import check_for_exit, play_sound, purge_entities
 

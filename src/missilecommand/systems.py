@@ -170,7 +170,8 @@ def sys_explosion(dt: float,
                   prsa: PRSA,
                   scale: LerpThing) -> None:
     if scale.finished():
-        ecs.remove_entity(eid)
+        ecs.set_property(eid, Prop.IS_DEAD)
+        # ecs.remove_entity(eid)
         return
 
     prsa.scale = scale()

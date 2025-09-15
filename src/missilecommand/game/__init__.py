@@ -264,28 +264,6 @@ class Game(GameState):
 
         launched_this_frame = 0
 
-        def spawn_missiles(number=1, origin=None):
-            nonlocal launched_this_frame
-
-            def attack_shutdown_callback(eid: EntityID) -> None:
-                self.incoming.remove(eid)
-
-            free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-            to_launch = min(number,
-                            free_slots,
-                            self.incoming_left)
-
-            for i in range(to_launch):
-                start = vec2(origin) if origin else vec2(randint(0, self.app.logical_rect.width), -3)
-                target = next(self.allowed_targets)
-                speed = self.wave.missile_speed
-
-                eid = mk_missile(start, target, speed, incoming=True,
-                                 shutdown_callback=attack_shutdown_callback)
-                self.incoming.add(eid)
-                self.incoming_left -= 1
-                launched_this_frame += 1
-
         # Launch flyer if
         #     no flyer is active
         #     and the wave does have a flyer
@@ -310,7 +288,11 @@ class Game(GameState):
 
         if self.demo:
             while True:
-                demo_event = next(self.demo_walker)
+                try:
+                    demo_event = next(self.demo_walker)
+                except StopIteration:
+                    break
+
                 match demo_event:
                     case 'NOP':
                         break
@@ -332,10 +314,32 @@ class Game(GameState):
                         self.incoming.add(eid)
                         self.incoming_left -= 1
                         launched_this_frame += 1
+                        print(f'{self.incoming_left}: launched {start} -> {target}: {eid}')
                     case ['DEFENSE', launchpad]:
                         self.launch_defense(int(launchpad), self.mouse)
 
         else:
+            def spawn_missiles(number=1, origin=None):
+                nonlocal launched_this_frame
+
+                def attack_shutdown_callback(eid: EntityID) -> None:
+                    self.incoming.remove(eid)
+
+                free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
+                to_launch = min(number,
+                                free_slots,
+                                self.incoming_left)
+
+                for i in range(to_launch):
+                    start = vec2(origin) if origin else vec2(randint(0, self.app.logical_rect.width), -3)
+                    target = next(self.allowed_targets)
+                    speed = self.wave.missile_speed
+
+                    eid = mk_missile(start, target, speed, incoming=True,
+                                     shutdown_callback=attack_shutdown_callback)
+                    self.incoming.add(eid)
+                    self.incoming_left -= 1
+                    launched_this_frame += 1
             # Once missiles have been launched, only launch more when the earlier
             # ones are below a given height.  Basically a delay between launches.
             may_launch = (len(self.incoming) == 0 and self.incoming_left > 0

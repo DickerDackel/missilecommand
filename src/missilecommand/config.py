@@ -199,6 +199,7 @@ SPRITESHEET = {
     'explosions': [pygame.Rect(256, 0, 32, 32), pygame.Rect(288, 0, 32, 32),
                    pygame.Rect(320, 0, 32, 32), pygame.Rect(352, 0, 32, 32),
                    pygame.Rect(384, 0, 32, 32), pygame.Rect(416, 0, 32, 32)],
+    'crater': pygame.Rect(448, 0, 32, 32),
     'gameover-small': [pygame.Rect(256, 32, 32, 32), pygame.Rect(288, 32, 32, 32),
                        pygame.Rect(320, 32, 32, 32), pygame.Rect(352, 32, 32, 32),
                        pygame.Rect(384, 32, 32, 32), pygame.Rect(416, 32, 32, 32)],

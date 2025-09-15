@@ -177,10 +177,5 @@ class Title(GameState):
         self.crater_canvas.draw(dstrect=self.app.logical_rect)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
-        bkp_color = self.renderer.draw_color
-        self.renderer.draw_color = 'cyan'
-        self.app.renderer.draw_rect(self.app.logical_rect)
-        self.renderer.draw_color = bkp_color
-
     def teardown(self) -> None:
         ecs.reset()

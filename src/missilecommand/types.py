@@ -27,6 +27,7 @@ class Prop(StrEnum):
     IS_EXPLOSION = auto()  # Yeah...
     IS_FLYER = auto()  # Plane/Satellite thingy
     IS_GAMEOVER = auto()  # stuff added by the gameover state
+    IS_GROWING = auto()  # Check if explosion is still growing
     IS_INCOMING = auto()  # opposite of IS_DEFENSE
     IS_INFRASTRUCTURE = auto()  # mouse cursor, score, ...
     IS_LINGERING = auto()  # Not dead, but also no longer collisions

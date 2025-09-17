@@ -249,19 +249,38 @@ class Game(GameState):
 
         self.app.push(Briefing(self.app, GS.score_mult, cities), passthrough=StackPermissions.DRAW)
 
-    def update_gameplay_phase(self, dt: float) -> None:
-        # Switch to linger  if
-        #   No ammunition left
-        #   No city left
-        #   No more incoming
-        silos_left = sum(len(b) for b in GS.batteries)
+    def _update_demo_mode(self):
+        while True:
+            try:
+                demo_event = next(self.demo_walker)
+            except StopIteration:
+                break
 
-        if (silos_left == 0
-            or (not self.incoming and self.incoming_left <= 0
-                and not self.smartbombs and self.smartbombs_left <= 0)):
-            self.phase = next(self.phase_walker)
-            return
+            match demo_event:
+                case 'NOP':
+                    break
+                case ['MOUSE', x, y]:
+                    self.mouse = (float(x), float(y))
+                case ['MISSILE', start_x, start_y, dest_x, dest_y, speed]:
+                    # This is nearly duplicated from spawn_missile above, but
+                    # at this point I can't be bothered to refactor that...
 
+                    def attack_shutdown_callback(eid: EntityID) -> None:
+                        self.incoming.remove(eid)
+
+                    start = vec2(start_x, start_y)
+                    target = vec2(dest_x, dest_y)
+                    speed = speed
+
+                    eid = mk_missile(start, target, speed, incoming=True,
+                                     shutdown_callback=attack_shutdown_callback)
+                    self.incoming.add(eid)
+                    self.incoming_left -= 1
+                    print(f'{self.incoming_left}: launched {start} -> {target}: {eid}')
+                case ['DEFENSE', launchpad]:
+                    self.launch_defense(int(launchpad), self.mouse)
+
+    def _update_game_mode(self):
         launched_this_frame = 0
 
         # Launch flyer if
@@ -286,113 +305,98 @@ class Game(GameState):
                                        shutdown))
             launched_this_frame += 1
 
-        if self.demo:
-            while True:
-                try:
-                    demo_event = next(self.demo_walker)
-                except StopIteration:
-                    break
+        def spawn_missiles(number=1, origin=None):
+            nonlocal launched_this_frame
 
-                match demo_event:
-                    case 'NOP':
-                        break
-                    case ['MOUSE', x, y]:
-                        self.mouse = (float(x), float(y))
-                    case ['MISSILE', start_x, start_y, dest_x, dest_y, speed]:
-                        # This is nearly duplicated from spawn_missile above, but
-                        # at this point I can't be bothered to refactor that...
+            def attack_shutdown_callback(eid: EntityID) -> None:
+                self.incoming.remove(eid)
 
-                        def attack_shutdown_callback(eid: EntityID) -> None:
-                            self.incoming.remove(eid)
-
-                        start = vec2(start_x, start_y)
-                        target = vec2(dest_x, dest_y)
-                        speed = speed
-
-                        eid = mk_missile(start, target, speed, incoming=True,
-                                         shutdown_callback=attack_shutdown_callback)
-                        self.incoming.add(eid)
-                        self.incoming_left -= 1
-                        launched_this_frame += 1
-                        print(f'{self.incoming_left}: launched {start} -> {target}: {eid}')
-                    case ['DEFENSE', launchpad]:
-                        self.launch_defense(int(launchpad), self.mouse)
-
-        else:
-            def spawn_missiles(number=1, origin=None):
-                nonlocal launched_this_frame
-
-                def attack_shutdown_callback(eid: EntityID) -> None:
-                    self.incoming.remove(eid)
-
-                free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-                to_launch = min(number,
-                                free_slots,
-                                self.incoming_left)
-
-                for i in range(to_launch):
-                    start = vec2(origin) if origin else vec2(randint(0, self.app.logical_rect.width), -3)
-                    target = next(self.allowed_targets)
-                    speed = self.wave.missile_speed
-
-                    eid = mk_missile(start, target, speed, incoming=True,
-                                     shutdown_callback=attack_shutdown_callback)
-                    self.incoming.add(eid)
-                    self.incoming_left -= 1
-                    launched_this_frame += 1
-            # Once missiles have been launched, only launch more when the earlier
-            # ones are below a given height.  Basically a delay between launches.
-            may_launch = (len(self.incoming) == 0 and self.incoming_left > 0
-                          or all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
-                                 for eid in self.incoming))
-            if may_launch:
-                spawn_missiles(C.MAX_LAUNCHES_PER_FRAME - launched_this_frame)
-
-            # Flyer shoots
-            if (ecs.has(EIDs.FLYER)):
-                prsa, cd_shoot = ecs.comps_of_eid(EIDs.FLYER, Comp.PRSA, Comp.FLYER_SHOOT_COOLDOWN)
-                if cd_shoot.cold():
-                    cd_shoot.reset()
-                    spawn_missiles(randint(1, 3), origin=prsa.pos)
-
-            # From the missile command ROM dump text:
-            # So the conditions required for an ICBM to be eligible to split are:
-            # * No previously-examined missile is above 159.
-            # * The current missile, or a previously-examined missile, is at an
-            #   altitude between 128 and 159.
-            # * There must be available slots in the ICBM table, and unspent ICBMs
-            #   for the wave.
-            for eid in list(self.incoming):  # listify the set, since it will change
-                prsa = ecs.comp_of_eid(eid, Comp.PRSA)
-                free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-                if (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]
-                    and free_slots
-                    and self.incoming_left):
-                    spawn_missiles(randint(1, 3))
-                else:
-                    break
-
-            # Smartbombs are like missiles, but they take **2** missile slots.
-            # A smartbomb may be launched if:
-            # * The level actually has smartbombs and there are still some left to launch
-            # * A smartbomb slot is free (max 3 on screen)
-            # * 2 Missile slots are free (counting already active smartbombs as well)
             free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
-            if (C.MAX_LAUNCHES_PER_FRAME - launched_this_frame > 0
-                and self.smartbombs_left
-                and self.smartbombs.free_slots()
-                and self.incoming.free_slots() >= 2 * (len(self.smartbombs) + 1)):
+            to_launch = min(number,
+                            free_slots,
+                            self.incoming_left)
 
-                def shutdown(eid: EntityID):
-                    self.smartbombs.remove(eid)
-
-                start = vec2(randint(0, self.app.logical_rect.width), -3)
+            for i in range(to_launch):
+                start = vec2(origin) if origin else vec2(randint(0, self.app.logical_rect.width), -3)
                 target = next(self.allowed_targets)
                 speed = self.wave.missile_speed
-                eid = mk_smartbomb(start, target, speed, shutdown_callback=shutdown)
-                self.smartbombs.add(eid)
-                self.smartbombs_left -= 1
+
+                eid = mk_missile(start, target, speed, incoming=True,
+                                 shutdown_callback=attack_shutdown_callback)
+                self.incoming.add(eid)
+                self.incoming_left -= 1
                 launched_this_frame += 1
+        # Once missiles have been launched, only launch more when the earlier
+        # ones are below a given height.  Basically a delay between launches.
+        may_launch = (len(self.incoming) == 0 and self.incoming_left > 0
+                      or all(ecs.comp_of_eid(eid, Comp.PRSA).pos[1] > C.INCOMING_REQUIRED_HEIGHT
+                             for eid in self.incoming))
+        if may_launch:
+            spawn_missiles(C.MAX_LAUNCHES_PER_FRAME - launched_this_frame)
+
+        # Flyer shoots
+        if (ecs.has(EIDs.FLYER)):
+            prsa, cd_shoot = ecs.comps_of_eid(EIDs.FLYER, Comp.PRSA, Comp.FLYER_SHOOT_COOLDOWN)
+            if cd_shoot.cold():
+                cd_shoot.reset()
+                spawn_missiles(randint(1, 3), origin=prsa.pos)
+
+        # From the missile command ROM dump text:
+        # So the conditions required for an ICBM to be eligible to split are:
+        # * No previously-examined missile is above 159.
+        # * The current missile, or a previously-examined missile, is at an
+        #   altitude between 128 and 159.
+        # * There must be available slots in the ICBM table, and unspent ICBMs
+        #   for the wave.
+        for eid in list(self.incoming):  # listify the set, since it will change
+            prsa = ecs.comp_of_eid(eid, Comp.PRSA)
+            free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
+            if (C.FORK_HEIGHT_RANGE[0] < prsa.pos[1] < C.FORK_HEIGHT_RANGE[1]
+                and free_slots
+                and self.incoming_left):
+                spawn_missiles(randint(1, 3))
+            else:
+                break
+
+        # Smartbombs are like missiles, but they take **2** missile slots.
+        # A smartbomb may be launched if:
+        # * The level actually has smartbombs and there are still some left to launch
+        # * A smartbomb slot is free (max 3 on screen)
+        # * 2 Missile slots are free (counting already active smartbombs as well)
+        free_slots = self.incoming.free_slots() - 2 * len(self.smartbombs)
+        if (C.MAX_LAUNCHES_PER_FRAME - launched_this_frame > 0
+            and self.smartbombs_left
+            and self.smartbombs.free_slots()
+            and self.incoming.free_slots() >= 2 * (len(self.smartbombs) + 1)):
+
+            def shutdown(eid: EntityID):
+                self.smartbombs.remove(eid)
+
+            start = vec2(randint(0, self.app.logical_rect.width), -3)
+            target = next(self.allowed_targets)
+            speed = self.wave.missile_speed
+            eid = mk_smartbomb(start, target, speed, shutdown_callback=shutdown)
+            self.smartbombs.add(eid)
+            self.smartbombs_left -= 1
+            launched_this_frame += 1
+
+    def update_gameplay_phase(self, dt: float) -> None:
+        # Switch to linger  if
+        #   No ammunition left
+        #   No city left
+        #   No more incoming
+        silos_left = sum(len(b) for b in GS.batteries)
+
+        if (silos_left == 0
+            or (not self.incoming and self.incoming_left <= 0
+                and not self.smartbombs and self.smartbombs_left <= 0)):
+            self.phase = next(self.phase_walker)
+            return
+
+        if self.demo:
+            self._update_demo_mode()
+        else:
+            self._update_game_mode()
 
         ecs.add_component(EIDs.BONUS_CITIES, Comp.TEXT, f' x {GS.bonus_cities}')
 

@@ -4,7 +4,6 @@
 import logging
 logging.info(__name__)  # noqa: E402
 
-import random
 import sys
 
 from argparse import ArgumentParser
@@ -23,16 +22,10 @@ import missilecommand.config as C
 
 from missilecommand.splash import Splash
 from missilecommand.title import Title
-from missilecommand.demo import Demo
 from missilecommand.highscores import Highscores
 from missilecommand.highscoreentry import HighscoreEntry
 from missilecommand.game import Game
 from missilecommand.gameover import Gameover
-
-if 'XDG_SESSION_TYPE' in environ and environ['XDG_SESSION_TYPE'] == 'wayland':
-    environ['SDL_VIDEODRIVER'] = 'wayland'
-
-pygame.init()
 
 
 def load_sounds(assets: Path) -> None:
@@ -65,6 +58,11 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
 
 
 def main() -> None:
+    if 'XDG_SESSION_TYPE' in environ and environ['XDG_SESSION_TYPE'] == 'wayland':
+        environ['SDL_VIDEODRIVER'] = 'wayland'
+
+    pygame.init()
+
     cmdline = ArgumentParser(description=C.TITLE)
     cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
     cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')

@@ -276,7 +276,6 @@ class Game(GameState):
                                      shutdown_callback=attack_shutdown_callback)
                     self.incoming.add(eid)
                     self.incoming_left -= 1
-                    print(f'{self.incoming_left}: launched {start} -> {target}: {eid}')
                 case ['DEFENSE', launchpad]:
                     self.launch_defense(int(launchpad), self.mouse)
 

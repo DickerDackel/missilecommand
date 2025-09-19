@@ -2,7 +2,6 @@ import logging
 logging.info(__name__)  # noqa: E402
 
 from heapq import nlargest
-from itertools import chain
 from typing import Any
 
 import pygame
@@ -19,7 +18,7 @@ import missilecommand.config as C
 from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import mk_battery, mk_city, mk_textlabel, mk_texture
 from missilecommand.systems import (sys_draw_texture, sys_draw_textlabel, sys_textblink,
-                        sys_texture_from_texture_list)
+                                    sys_texture_from_texture_list)
 from missilecommand.types import Comp
 from missilecommand.utils import check_for_exit
 

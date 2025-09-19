@@ -1,0 +1,3 @@
+#! /bin/bash -i
+export PYTHONPATH=${APPDIR}/missilecommand
+./opt/python3.14/bin/python3.14 -m missilecommand

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Missile Command
+Exec=missilecommand/bin/missilecommand
+Comment=Missile Command in pygame-ce
+Icon=missilecommand
+Categories=Game;
+Terminal=true

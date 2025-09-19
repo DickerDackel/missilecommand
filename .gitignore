@@ -1,5 +1,9 @@
 # Mine > -----------------------------------------------------------------
 
+AppDir
+Missile_Command-x86_64.AppImage
+python3.14
+
 # python files in top directory are never part of the project
 /*.py
 

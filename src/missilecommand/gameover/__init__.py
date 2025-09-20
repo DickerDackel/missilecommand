@@ -19,7 +19,7 @@ from missilecommand.systems import (sys_apply_scale, sys_colorcycle,
                                     sys_colorize, sys_textcurtain,
                                     sys_draw_textlabel, sys_draw_texture)
 from missilecommand.types import Comp, Prop
-from missilecommand.utils import check_for_exit, play_sound, purge_entities
+from missilecommand.utils import play_sound, purge_entities
 
 EXPLOSION_EID = 'explosion'
 TEXT_EID = 'text'

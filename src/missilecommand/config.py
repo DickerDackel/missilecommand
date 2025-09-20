@@ -37,7 +37,7 @@ PLAY_AUDIO = True
 VENDOR = 'dackelsoft'
 APPNAME = 'Missile Command'
 STATE_DIRECTORY = Path(pygame.system.get_pref_path(VENDOR, APPNAME))
-HIGHSCORE_FILE = STATE_DIRECTORY / 'missile command highscores.json'
+HIGHSCORE_FILE = STATE_DIRECTORY / 'highscores.json'
 
 ########################################################################
 #   ____

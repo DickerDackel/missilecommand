@@ -26,10 +26,8 @@ class Splash(GameState):
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
-        self.state_label = mk_textlabel(
-            'DACKELSOFT',
-            self.app.logical_rect.center,
-            'center', 'white', scale=2)
+        msg = C.MESSAGES['splash']['DACKELSOFT']
+        mk_textlabel(*msg)
 
         self.cd_state = Cooldown(3)
 
@@ -45,9 +43,9 @@ class Splash(GameState):
             raise StateExit
 
     def draw(self) -> None:
-        self.app.renderer.draw_color = C.COLOR.background
-        self.app.renderer.clear()
+        # self.app.renderer.draw_color = C.COLOR.background
+        # self.app.renderer.clear()
         ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
 
     def teardown(self) -> None:
-        ecs.remove_entity(self.state_label)
+        pass

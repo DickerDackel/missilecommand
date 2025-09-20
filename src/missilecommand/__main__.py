@@ -1,9 +1,5 @@
 #!/bin/env python3
 
-# Must follow after loading of ddframework.app
-import logging
-logging.info(__name__)  # noqa: E402
-
 import sys
 
 from argparse import ArgumentParser
@@ -64,28 +60,10 @@ def main() -> None:
 
     pygame.init()
 
-    cmdline = ArgumentParser(description=C.TITLE)
-    cmdline.add_argument('-v', '--verbose', action='count', default=0, help='Enable verbose logging')
-    cmdline.add_argument('-q', '--quiet', action='count', default=0, help='Supress even error or crictical log messages')
-    cmdline.add_argument('-S', '--stats', action='store_true', default=0, help='Show statistics on exit')
-    cmdline.add_argument('-P', '--perftrace', action='store_true', default=0, help='Show live performance data')
-    opts = cmdline.parse_args(sys.argv[1:])
-    opts.verbose = max(min(opts.verbose, 3), 0)
-    opts.quiet = max(min(opts.quiet, 2), 0)
-
-    log_level = [
-        logging.DEBUG,
-        logging.INFO,
-        logging.WARNING,
-        logging.ERROR,
-        logging.CRITICAL,
-    ][2 - opts.verbose + opts.quiet]
-    logging.basicConfig(level=log_level)  # noqa: E402
-
-    w = pygame.Window(size=C.WINDOW.size, position=pygame.WINDOWPOS_CENTERED)
-    app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
-    # app = App(C.TITLE, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
-    # pygame.mouse.set_visible(False)
+    # w = pygame.Window(size=C.WINDOW.size, position=pygame.WINDOWPOS_CENTERED)
+    # app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
+    app = App(C.TITLE, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
+    pygame.mouse.set_visible(False)
 
     load_sounds(C.ASSETS)
     load_spritesheet(app.renderer, C.ASSETS.joinpath('spritesheet.png'))
@@ -110,8 +88,8 @@ def main() -> None:
     sm.add(states.highscoreentry, states.highscores)
     walker = sm.walker(states.splash)
 
-    # walker = DebugLayer(app, walker)
-    app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
+    walker = DebugLayer(app, walker)
+    app.run(walker)
 
 
 if __name__ == "__main__":

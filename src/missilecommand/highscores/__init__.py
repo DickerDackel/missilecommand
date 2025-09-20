@@ -1,6 +1,3 @@
-import logging
-logging.info(__name__)  # noqa: E402
-
 from heapq import nlargest
 from typing import Any
 

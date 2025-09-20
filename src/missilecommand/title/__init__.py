@@ -1,6 +1,3 @@
-import logging
-logging.info(__name__)  # noqa: E402
-
 from enum import StrEnum, auto
 from random import randint, triangular
 from typing import Any

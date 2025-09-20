@@ -1,6 +1,3 @@
-import logging
-logging.info(__name__)  # noqa: E402
-
 from pathlib import Path
 from enum import IntEnum, auto
 from importlib.resources import files
@@ -12,6 +9,7 @@ import pygame
 from ddframework.gridlayout import GridLayout
 from pygame.math import Vector2 as vec2
 from pygame.typing import ColorLike, Point
+
 
 ########################################################################
 #     _                _ _           _   _

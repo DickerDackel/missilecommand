@@ -7,7 +7,6 @@
 
 ## Checklist
     * Sane and useful logging in all modules
-    * Debug logging in all functions?
     * cleanup all imports (unused, order)
 
 

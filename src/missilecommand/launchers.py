@@ -1,6 +1,3 @@
-import logging
-logging.info(__name__)  # noqa: E402
-
 from collections.abc import Callable
 from random import choice, randint, random, shuffle
 from typing import Any

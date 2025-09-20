@@ -1,6 +1,3 @@
-import logging
-logging.info(__name__)  # noqa: E402
-
 import pygame
 import tinyecs as ecs
 

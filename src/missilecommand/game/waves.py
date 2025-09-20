@@ -1,6 +1,3 @@
-import logging
-logging.info(__name__)  # noqa: E402
-
 from collections.abc import Iterator
 from itertools import cycle
 from typing import NamedTuple

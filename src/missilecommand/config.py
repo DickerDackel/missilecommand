@@ -229,7 +229,10 @@ SPRITESHEET = {
                 pygame.Rect(128, 56, 8, 8), pygame.Rect(136, 56, 8, 8),
                 pygame.Rect(144, 56, 8, 8), pygame.Rect(152, 56, 8, 8),
                 pygame.Rect(160, 56, 8, 8), pygame.Rect(168, 56, 8, 8),
-                pygame.Rect(176, 56, 8, 8), pygame.Rect(184, 56, 8, 8)],
+                pygame.Rect(176, 56, 8, 8), pygame.Rect(184, 56, 8, 8),
+                pygame.Rect(192, 56, 8, 8), pygame.Rect(200, 56, 8, 8),
+                pygame.Rect(208, 56, 8, 8), pygame.Rect(216, 56, 8, 8),
+                ],
     'red': pygame.Rect(0, 64, 8, 8),
     'green': pygame.Rect(8, 64, 8, 8),
     'blue': pygame.Rect(16, 64, 8, 8),
@@ -245,7 +248,8 @@ CHAR_MAP = {' ': 42,
             'X': 23, 'Y': 24, 'Z': 25, '0': 26, '1': 27, '2': 28, '3': 29,
             '4': 30, '5': 31, '6': 32, '7': 33, '8': 34, '9': 35, '↑': 36,
             '↓': 37, '←': 38, '→': 39, '©': 40, 'popy': 41, '.': 43,
-            ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48}
+            ',': 44, '!': 45, ':': 46, ';': 47, 'x': 48, '__': 49, '-': 50,
+            '_': 51, '/': 52}
 
 
 ########################################################################
@@ -386,8 +390,7 @@ MESSAGES = {
         'INSTRUCTIONS': MessageConfig('INSTRUCTIONS', GRID(15, 8, 2, 2).center, 'center', COLOR.instructions, (2, 2)),
         'SPACE': MessageConfig('PRESS SPACE TO PLAY', GRID(15, 14, 2, 1).center, 'center', COLOR.instructions),
         'ESCAPE': MessageConfig('PRESS ESCAPE TO EXIT', GRID(15, 16, 2, 1).center, 'center', COLOR.instructions),
-        'FULLSCREEN': MessageConfig('PRESS F TO TOGGLE FULLSCREEN', GRID(15, 18, 2, 1).center, 'center', COLOR.instructions),
-        'RESOLUTION': MessageConfig('WINDOW RESOLUTION', GRID(15, 20, 2, 1).center, 'center', COLOR.instructions),
+        'FIRE': MessageConfig('PRESS Q/W/A TO FIRE', GRID(15, 18, 2, 1).center, 'center', COLOR.instructions),
     },
     'pause': {
         'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),

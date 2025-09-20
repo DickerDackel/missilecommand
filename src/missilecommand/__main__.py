@@ -1,8 +1,5 @@
 #!/bin/env python3
 
-import sys
-
-from argparse import ArgumentParser
 from os import environ
 from pathlib import Path
 from types import SimpleNamespace
@@ -21,6 +18,7 @@ from missilecommand.splash import Splash
 from missilecommand.title import Title
 from missilecommand.highscores import Highscores
 from missilecommand.highscoreentry import HighscoreEntry
+from missilecommand.instructions import Instructions
 from missilecommand.game import Game
 from missilecommand.gameover import Gameover
 
@@ -73,16 +71,18 @@ def main() -> None:
         title=Title(app),
         demo=Game(app, demo=True),
         highscores=Highscores(app),
+        instructions=Instructions(app),
         highscoreentry=HighscoreEntry(app),
         game=Game(app),
         gameover=Gameover(app),
     )
 
     sm = StateMachine()
-    sm.add(states.splash, states.title)
+    sm.add(states.splash, states.instructions)
+    sm.add(states.instructions, states.title, states.game)
     sm.add(states.title, states.demo, states.game)
     sm.add(states.demo, states.highscores, states.game)
-    sm.add(states.highscores, states.title, states.game)
+    sm.add(states.highscores, states.instructions, states.game)
     sm.add(states.game, states.gameover, states.highscoreentry)
     sm.add(states.gameover, states.highscores)
     sm.add(states.highscoreentry, states.highscores)

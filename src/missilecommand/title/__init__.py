@@ -14,7 +14,7 @@ from pygame import _sdl2 as sdl2
 from pygame import Vector2 as vec2
 
 import missilecommand.config as C
-from missilecommand.launchers import mk_explosion, mk_instructions, mk_textlabel
+from missilecommand.launchers import mk_explosion, mk_quickhelp
 from missilecommand.systems import (non_ecs_sys_prune, sys_draw_textlabel,
                                     sys_draw_texture, sys_explosion,
                                     sys_shutdown, sys_textblink,
@@ -82,8 +82,6 @@ class Title(GameState):
         txt_missile = C.MESSAGES['title']['MISSILE']
         txt_command = C.MESSAGES['title']['COMMAND']
 
-        rect = self.crater_canvas.get_rect()
-
         bkp_target = self.renderer.target
         bkp_color = self.renderer.draw_color
 
@@ -97,7 +95,7 @@ class Title(GameState):
         self.renderer.target = bkp_target
         self.renderer.draw_color = bkp_color
 
-        mk_instructions()
+        mk_quickhelp()
 
         self.phase_walker = phases.walker()
         self.phase = next(self.phase_walker)

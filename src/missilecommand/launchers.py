@@ -156,15 +156,15 @@ def mk_gameover_text(the_end: AutoSequence, *args: Any, **kwargs: dict[str, Any]
     return eid
 
 
-def mk_instructions(r: tuple[int, int, int, int] = (15, 15, 2, 1)):
+def mk_quickhelp(r: tuple[int, int, int, int] = (15, 15, 2, 1)):
     x, y, w, h = r
     pos = C.GRID(x, y, w, h).center
-    msg = C.MESSAGES['instructions']['SPACE']
+    msg = C.MESSAGES['quickhelp']['SPACE']
     eid_space = mk_textlabel(msg[0], pos, *msg[2:])
     ecs.add_component(eid_space, Comp.COLOR_CYCLE, AutoSequence((msg.color, C.COLOR.clear)))
 
     pos = C.GRID(x, y + 2, w, h).center
-    msg = C.MESSAGES['instructions']['ESCAPE']
+    msg = C.MESSAGES['quickhelp']['ESCAPE']
     eid_escape = mk_textlabel(msg[0], pos, *msg[2:])
     ecs.add_component(eid_escape, Comp.COLOR_CYCLE, AutoSequence((msg.color, C.COLOR.clear)))
 

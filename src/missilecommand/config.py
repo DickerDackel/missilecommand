@@ -58,6 +58,7 @@ COLOR = SimpleNamespace(
     initials='yellow',
     instructions='white',
     normal_text='blue',
+    quickhelp='white',
     score_color='red',
     special_text='red',
     title='white'
@@ -381,18 +382,25 @@ MESSAGES = {
         'BONUS CITY POINTS': MessageConfig('                 10000       ', GRID(15, 15, 2, 1).center, 'center', COLOR.special_text),
         'HIGH SCORES': MessageConfig('HIGH SCORES', GRID(15, 2, 2, 1).center, 'center', COLOR.normal_text),
     },
+    'instructions': {
+        'INSTRUCTIONS': MessageConfig('INSTRUCTIONS', GRID(15, 8, 2, 2).center, 'center', COLOR.instructions, (2, 2)),
+        'SPACE': MessageConfig('PRESS SPACE TO PLAY', GRID(15, 14, 2, 1).center, 'center', COLOR.instructions),
+        'ESCAPE': MessageConfig('PRESS ESCAPE TO EXIT', GRID(15, 16, 2, 1).center, 'center', COLOR.instructions),
+        'FULLSCREEN': MessageConfig('PRESS F TO TOGGLE FULLSCREEN', GRID(15, 18, 2, 1).center, 'center', COLOR.instructions),
+        'RESOLUTION': MessageConfig('WINDOW RESOLUTION', GRID(15, 20, 2, 1).center, 'center', COLOR.instructions),
+    },
     'pause': {
         'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),
+    },
+    'quickhelp': {
+        'SPACE': MessageConfig('PRESS SPACE TO START', GRID(15, 12, 2, 2).center, 'center', COLOR.quickhelp),
+        'ESCAPE': MessageConfig('ESCAPE TO EXIT', GRID(15, 20, 14, 2).center, 'center', COLOR.quickhelp),
     },
     'splash': {
         'DACKELSOFT': MessageConfig('DACKELSOFT', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 3, 1, 1).center, 'center', COLOR.title, (2, 2))
     },
     'title': {
-        'MISSILE': MessageConfig('MISSILE', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 3 - 1, 1, 1).midbottom, 'midbottom', COLOR.title, (3, 3)),
-        'COMMAND': MessageConfig('COMMAND', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 3 + 1, 1, 1).midtop, 'midtop', COLOR.title, (3, 3)),
+        'MISSILE': MessageConfig('MISSILE', GRID(15, 8, 2, 2).center, 'midbottom', COLOR.title, (3, 3)),
+        'COMMAND': MessageConfig('COMMAND', GRID(15, 8, 2, 2).center, 'midtop', COLOR.title, (3, 3)),
     },
-    'instructions': {
-        'SPACE': MessageConfig('PRESS SPACE TO START', GRID(15, 12, 2, 2).center, 'center', COLOR.instructions),
-        'ESCAPE': MessageConfig('ESCAPE TO EXIT', GRID(15, 20, 14, 2).center, 'center', COLOR.instructions),
-    }
 }

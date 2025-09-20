@@ -28,7 +28,7 @@ from missilecommand.game.waves import wave_iter
 from missilecommand.gamestate import gs as GS
 from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import (mk_battery, mk_city, mk_crosshair,
-                                      mk_flyer, mk_instructions, mk_missile,
+                                      mk_flyer, mk_quickhelp, mk_missile,
                                       mk_ruin, mk_score_label, mk_smartbomb,
                                       mk_target, mk_textlabel, mk_texture)
 from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
@@ -158,7 +158,7 @@ class Game(GameState):
             self.cd_flyer.reset()
 
         if self.demo:
-            mk_instructions()
+            mk_quickhelp()
 
     def setup_wave(self) -> None:
         purge_entities(Prop.IS_BATTERY)

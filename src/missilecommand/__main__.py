@@ -88,7 +88,7 @@ def main() -> None:
     sm.add(states.highscoreentry, states.highscores)
     walker = sm.walker(states.splash)
 
-    walker = DebugLayer(app, walker)
+    # walker = DebugLayer(app, walker)
     app.run(walker)
 
 

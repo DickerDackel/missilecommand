@@ -27,7 +27,7 @@ class Instructions(GameState):
         for msg in C.MESSAGES['instructions'].values():
             mk_textlabel(*msg)
 
-        self.cd_state = Cooldown(15)
+        self.cd_state = Cooldown(10)
 
     def restart(self, from_state: 'GameState', result: Any) -> None:
         pass
@@ -38,8 +38,6 @@ class Instructions(GameState):
         if e.type == pygame.KEYDOWN:
             if e.key == pygame.K_SPACE:
                 raise StateExit(1)
-            elif e.key == pygame.K_f:
-                self.app.window.fullscreen = not self.app.window.fullscreen
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():

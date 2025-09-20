@@ -20,6 +20,7 @@ from ddframework.statemachine import StateMachine
 
 import missilecommand.config as C
 
+from missilecommand.debug_layer import DebugLayer
 from missilecommand.splash import Splash
 from missilecommand.title import Title
 from missilecommand.highscores import Highscores
@@ -81,7 +82,7 @@ def main() -> None:
     ][2 - opts.verbose + opts.quiet]
     logging.basicConfig(level=log_level)  # noqa: E402
 
-    w = pygame.Window(size=(1280, 960), position=pygame.WINDOWPOS_CENTERED)
+    w = pygame.Window(size=C.WINDOW.size, position=pygame.WINDOWPOS_CENTERED)
     app = App(C.TITLE, window=w, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     # app = App(C.TITLE, resolution=C.SCREEN.size, fps=C.FPS, bgcolor=C.COLOR.background)
     # pygame.mouse.set_visible(False)
@@ -109,6 +110,7 @@ def main() -> None:
     sm.add(states.highscoreentry, states.highscores)
     walker = sm.walker(states.splash)
 
+    # walker = DebugLayer(app, walker)
     app.run(walker, perftrace=opts.perftrace, stats=opts.stats)
 
 

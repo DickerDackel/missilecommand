@@ -159,6 +159,21 @@ def mk_gameover_text(the_end: AutoSequence, *args: Any, **kwargs: dict[str, Any]
     return eid
 
 
+def mk_instructions(r: tuple[int, int, int, int] = (15, 15, 2, 1)):
+    x, y, w, h = r
+    pos = C.GRID(x, y, w, h).center
+    msg = C.MESSAGES['instructions']['SPACE']
+    eid_space = mk_textlabel(msg[0], pos, *msg[2:])
+    ecs.add_component(eid_space, Comp.COLOR_CYCLE, AutoSequence((msg.color, C.COLOR.clear)))
+
+    pos = C.GRID(x, y + 2, w, h).center
+    msg = C.MESSAGES['instructions']['ESCAPE']
+    eid_escape = mk_textlabel(msg[0], pos, *msg[2:])
+    ecs.add_component(eid_escape, Comp.COLOR_CYCLE, AutoSequence((msg.color, C.COLOR.clear)))
+
+    return (eid_space, eid_escape)
+
+
 def mk_missile(start: vec2, dest: vec2, speed: float,
                shutdown_callback: Callable | None = None,
                *, incoming: bool) -> None:

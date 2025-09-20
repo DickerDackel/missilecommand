@@ -7,6 +7,8 @@ import pygame
 import pygame._sdl2 as sdl2
 import tinyecs as ecs
 
+from ddframework.cache import cache
+from ddframework.dynamicsprite import PRSA
 from pygame.typing import ColorLike, Point
 
 from pgcooldown import remap
@@ -45,6 +47,26 @@ def debug_rect(renderer, rect, color='red'):
     renderer.draw_color = color
     renderer.draw_rect(rect)
     renderer.draw_color = bkp_color
+
+
+def draw_text(text: str, prsa: PRSA, anchor: str, color: ColorLike) -> None:
+    font = cache['textures']['letters']
+    crect = font[0].get_rect().scale_by(prsa.scale)
+    rect = crect.scale_by(len(text), 1)
+    setattr(rect, anchor, prsa.pos)
+    crect.midleft = rect.midleft
+
+    col = pygame.Color(color)
+    for c in text:
+        letter = font[C.CHAR_MAP[c]]
+        bkp_color = letter.color
+        bkp_alpha = letter.alpha
+        letter.color = col
+        letter.alpha = col.a
+        letter.draw(dstrect=crect)
+        letter.color = bkp_color
+        letter.alpha = bkp_alpha
+        crect.midleft = crect.midright
 
 
 def play_sound(sound: pygame.mixer.Sound, *args, **kwargs) -> int:

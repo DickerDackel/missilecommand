@@ -81,10 +81,7 @@ class Gameover(GameState):
         pass
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        check_for_exit(e)
-        if e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_1:
-                raise StateExit(1)
+        ...
 
     def update(self, dt: float) -> None:
         update_fn = self.phase_handlers[self.phase]

@@ -10,19 +10,20 @@ import tinyecs as ecs
 
 from ddframework.app import App, GameState, StateExit
 from ddframework.cache import cache
+from ddframework.dynamicsprite import PRSA
 from ddframework.statemachine import StateMachine
 from pgcooldown import Cooldown, LerpThing
 from pygame import _sdl2 as sdl2
 from pygame import Vector2 as vec2
 
 import missilecommand.config as C
-from missilecommand.launchers import mk_explosion, mk_textlabel
+from missilecommand.launchers import mk_explosion, mk_instructions, mk_textlabel
 from missilecommand.systems import (non_ecs_sys_prune, sys_draw_textlabel,
                                     sys_draw_texture, sys_explosion,
-                                    sys_shutdown,
+                                    sys_shutdown, sys_textblink,
                                     sys_texture_from_texture_list)
 from missilecommand.types import Comp, Prop
-from missilecommand.utils import check_for_exit, play_sound
+from missilecommand.utils import check_for_exit, draw_text, play_sound
 
 
 def sys_create_crater(dt, eid, prsa, texture=None):
@@ -81,24 +82,30 @@ class Title(GameState):
     def reset(self, *args: Any, **kwargs: Any) -> None:
         ecs.reset()
 
-        msg = C.MESSAGES['title']['MISSILE']
-        mk_textlabel(*msg)
+        txt_missile = C.MESSAGES['title']['MISSILE']
+        txt_command = C.MESSAGES['title']['COMMAND']
 
-        msg = C.MESSAGES['title']['COMMAND']
-        mk_textlabel(*msg)
+        rect = self.crater_canvas.get_rect()
+
+        bkp_target = self.renderer.target
+        bkp_color = self.renderer.draw_color
+
+        self.renderer.target = self.crater_canvas
+        self.renderer.draw_color = C.COLOR.clear
+        self.renderer.clear()
+
+        draw_text(txt_missile.text, PRSA(pos=txt_missile.pos, scale=txt_missile.scale), anchor=txt_missile.anchor, color=txt_missile.color)
+        draw_text(txt_command.text, PRSA(pos=txt_command.pos, scale=txt_command.scale), anchor=txt_command.anchor, color=txt_command.color)
+
+        self.renderer.target = bkp_target
+        self.renderer.draw_color = bkp_color
+
+        mk_instructions()
 
         self.phase_walker = phases.walker()
         self.phase = next(self.phase_walker)
 
         self.explosions = set()
-
-        bkp_color = self.renderer.draw_color
-        bkp_target = self.renderer.target
-        self.renderer.draw_color = C.COLOR.clear
-        self.renderer.target = self.crater_canvas
-        self.renderer.clear()
-        self.renderer.target = bkp_target
-        self.renderer.draw_color = bkp_color
 
     def restart(self, from_state: 'GameState', result: Any) -> None:
         pass
@@ -109,7 +116,7 @@ class Title(GameState):
         self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
 
         if e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_1:
+            if e.key == pygame.K_SPACE:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:
@@ -141,8 +148,8 @@ class Title(GameState):
 
         if self.cd_bomb.cold():
             self.cd_bomb.reset()
-            for i in range(3):
-                midline = self.app.logical_rect.centery
+            for i in range(2):
+                midline = self.app.logical_rect.height / 3
                 y_spread = self.app.logical_rect.height / 4
 
                 pos = vec2(self.bomb_x() + randint(-10, 10),
@@ -170,11 +177,12 @@ class Title(GameState):
             raise StateExit
 
     def draw(self) -> None:
-        self.app.renderer.draw_color = C.COLOR.background
-        self.app.renderer.clear()
+        # self.app.renderer.draw_color = C.COLOR.background
+        # self.app.renderer.clear()
 
-        ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
         self.crater_canvas.draw(dstrect=self.app.logical_rect)
+        ecs.run_system(0, sys_textblink, Comp.COLOR_CYCLE)
+        ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
         ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA)
 
     def teardown(self) -> None:

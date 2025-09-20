@@ -14,7 +14,7 @@ import missilecommand.config as C
 
 from missilecommand.launchers import mk_textlabel
 from missilecommand.types import Comp
-from missilecommand.utils import check_for_exit, play_sound
+from missilecommand.utils import play_sound
 
 
 class Briefing(GameState):
@@ -40,7 +40,9 @@ class Briefing(GameState):
         self.sounds_pending = cities
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        check_for_exit(e)
+        if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            self.teardown()
+            raise StateExit(-1)
 
     def update(self, dt: float) -> None:
         if self.cd_state.cold():

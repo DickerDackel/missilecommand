@@ -4,6 +4,7 @@ logging.info(__name__)  # noqa: E402
 from enum import StrEnum, auto
 from itertools import chain
 
+import pygame
 import tinyecs as ecs
 
 from ddframework.app import App, GameState, StateExit
@@ -17,7 +18,7 @@ from missilecommand.gamestate import gs as GS
 from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import mk_textlabel
 from missilecommand.types import Comp, EIDs, Prop
-from missilecommand.utils import check_for_exit, play_sound
+from missilecommand.utils import play_sound
 
 
 class StatePhase(StrEnum):
@@ -73,7 +74,9 @@ class Debriefing(GameState):
         self.city_score = 0
 
     def dispatch_event(self, e):
-        check_for_exit(e)
+        if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            self.teardown()
+            raise StateExit(-1)
 
     def update(self, dt):
         update_fn = self.phase_handlers[self.phase]

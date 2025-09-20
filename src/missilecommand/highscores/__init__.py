@@ -16,7 +16,7 @@ from ddframework.dynamicsprite import PRSA
 import missilecommand.config as C
 
 from missilecommand.highscoretable import highscoretable
-from missilecommand.launchers import mk_battery, mk_city, mk_textlabel, mk_texture
+from missilecommand.launchers import mk_battery, mk_city, mk_instructions, mk_textlabel, mk_texture
 from missilecommand.systems import (sys_draw_texture, sys_draw_textlabel, sys_textblink,
                                     sys_texture_from_texture_list)
 from missilecommand.types import Comp
@@ -74,7 +74,7 @@ class Highscores(GameState):
         check_for_exit(e)
 
         if e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_1:
+            if e.key == pygame.K_SPACE:
                 raise StateExit(1)
 
     def update(self, dt: float) -> None:

@@ -31,9 +31,9 @@ from missilecommand.game.waves import wave_iter
 from missilecommand.gamestate import gs as GS
 from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import (mk_battery, mk_city, mk_crosshair,
-                                      mk_flyer, mk_missile, mk_ruin,
-                                      mk_score_label, mk_smartbomb, mk_target,
-                                      mk_textlabel, mk_texture)
+                                      mk_flyer, mk_instructions, mk_missile,
+                                      mk_ruin, mk_score_label, mk_smartbomb,
+                                      mk_target, mk_textlabel, mk_texture)
 from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     non_ecs_sys_collide_missile_with_battery,
                                     non_ecs_sys_collide_missile_with_city,
@@ -160,6 +160,9 @@ class Game(GameState):
         def reset_cd_flyer() -> None:
             self.cd_flyer.reset()
 
+        if self.demo:
+            mk_instructions()
+
     def setup_wave(self) -> None:
         purge_entities(Prop.IS_BATTERY)
         purge_entities(Prop.IS_CITY)
@@ -211,10 +214,11 @@ class Game(GameState):
         unpause_all_sounds()
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
-        check_for_exit(e)
+        if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            raise StateExit
 
         if self.demo:
-            if e.type == pygame.KEYDOWN and e.key == pygame.K_1:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
                 raise StateExit(1)
 
             return

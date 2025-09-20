@@ -25,6 +25,7 @@ from pygame.typing import ColorLike, Point
 
 TITLE = 'missilecommand'
 SCREEN = pygame.Rect(0, 0, 256, 240)
+WINDOW = pygame.Rect(0, 0, 818, 768)
 FPS = 60
 
 ASSETS = files('missilecommand.assets')
@@ -57,6 +58,7 @@ COLOR = SimpleNamespace(
     gameover='#df3e23',
     grid='grey',
     initials='yellow',
+    instructions='white',
     normal_text='blue',
     score_color='red',
     special_text='red',
@@ -117,10 +119,10 @@ HITBOX_BATTERIES = [
 ]
 
 
-POS_MISSILES_DEBRIEFING = vec2(GRID(16, 12, 1, 1).midleft)
-POS_CITIES_DEBRIEFING = vec2(GRID(16, 15, 1, 1).midleft)
-POS_MISSILES_SCORE_DEBRIEFING = vec2(GRID(14, 12, 1, 1).midright)
-POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(14, 15, 1, 1).midright)
+POS_MISSILES_DEBRIEFING = vec2(GRID(16, 11, 1, 1).midleft)
+POS_CITIES_DEBRIEFING = vec2(GRID(16, 14, 1, 1).midleft)
+POS_MISSILES_SCORE_DEBRIEFING = vec2(GRID(14, 11, 1, 1).midright)
+POS_CITIES_SCORE_DEBRIEFING = vec2(GRID(14, 14, 1, 1).midright)
 
 ########################################################################
 #   ____                        ____       _   _   _
@@ -362,7 +364,7 @@ MESSAGES = {
         '↓ CITIES': MessageConfig('↓', GRID(21, 19, 2, 2).center, 'center', COLOR.special_text),
     },
     'debriefing': {
-        'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 8, 2, 1).center, 'center', COLOR.normal_text),
+        'BONUS POINTS': MessageConfig('BONUS POINTS', GRID(15, 7, 2, 1).center, 'center', COLOR.normal_text),
     },
     'game': {
         'SCORE': MessageConfig('SCORE', GRID(8, 0, 2, 1).midright, 'midright', COLOR.special_text),
@@ -384,8 +386,15 @@ MESSAGES = {
     'pause': {
         'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),
     },
-    'title': {
-        'MISSILE': MessageConfig('MISSILE', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 - 1, 1, 1).midbottom, 'midbottom', COLOR.title, (3, 3)),
-        'COMMAND': MessageConfig('COMMAND', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 2 + 1, 1, 1).midtop, 'midtop', COLOR.title, (3, 3)),
+    'splash': {
+        'DACKELSOFT': MessageConfig('DACKELSOFT', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 3, 1, 1).center, 'center', COLOR.title, (2, 2))
     },
+    'title': {
+        'MISSILE': MessageConfig('MISSILE', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 3 - 1, 1, 1).midbottom, 'midbottom', COLOR.title, (3, 3)),
+        'COMMAND': MessageConfig('COMMAND', GRID(GRID_WIDTH / 2, GRID_HEIGHT / 3 + 1, 1, 1).midtop, 'midtop', COLOR.title, (3, 3)),
+    },
+    'instructions': {
+        'SPACE': MessageConfig('PRESS SPACE TO START', GRID(15, 12, 2, 2).center, 'center', COLOR.instructions),
+        'ESCAPE': MessageConfig('ESCAPE TO EXIT', GRID(15, 20, 14, 2).center, 'center', COLOR.instructions),
+    }
 }

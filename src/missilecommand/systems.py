@@ -24,7 +24,7 @@ from missilecommand.gamestate import gs as GS
 from missilecommand.highscoretable import highscoretable
 from missilecommand.launchers import mk_explosion, mk_ruin, mk_trail_eraser
 from missilecommand.types import Comp, EIDs, EntityID, Momentum, Prop, Trail
-from missilecommand.utils import play_sound
+from missilecommand.utils import draw_text, play_sound
 
 
 def sys_aim(dt: float,
@@ -125,19 +125,7 @@ def sys_dont_overshoot(dt: float, eid: EntityID,
 
 def sys_draw_textlabel(dt: float, eid: EntityID, text: str,
                        prsa: PRSA, anchor: str, color: ColorLike) -> None:
-    font = cache['textures']['letters']
-    crect = font[0].get_rect().scale_by(prsa.scale)
-    rect = crect.scale_by(len(text), 1)
-    setattr(rect, anchor, prsa.pos)
-    crect.midleft = rect.midleft
-
-    for c in text:
-        letter = font[C.CHAR_MAP[c]]
-        bkp_color = letter.color
-        letter.color = color
-        letter.draw(dstrect=crect)
-        letter.color = bkp_color
-        crect.midleft = crect.midright
+    draw_text(text, prsa, anchor, color)
 
 
 def sys_draw_texture(dt: float, eid: EntityID, texture: sdl2.Texture, prsa: PRSA) -> None:

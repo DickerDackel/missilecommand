@@ -1,29 +1,3 @@
-# Mine > -----------------------------------------------------------------
-
-AppDir
-Missile_Command-x86_64.AppImage
-python3.14
-
-# python files in top directory are never part of the project
-/*.py
-
-# I often name profile results like this
-*.out
-
-# Too big
-Research
-
-Session.vim
-tags
-
-# Local clones of my various libs
-complib
-ddframework
-lfo
-pgcooldown
-rpeasings
-tinyecs
-# < Mine -----------------------------------------------------------------
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -228,3 +202,34 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Mine > -----------------------------------------------------------------
+
+# python files in top directory are never part of the project
+/*.py
+
+AppDir
+Missile_Command-x86_64.AppImage
+python3.14
+
+# For pyinstaller, and perhaps pygbag
+!/main.py
+!/assets/pyinstaller/missilecommand.spec
+
+# I often name profile results like this
+*.out
+
+# Too big
+Research
+
+Session.vim
+tags
+
+# Local clones of my various libs
+complib
+ddframework
+lfo
+pgcooldown
+rpeasings
+tinyecs
+# < Mine -----------------------------------------------------------------

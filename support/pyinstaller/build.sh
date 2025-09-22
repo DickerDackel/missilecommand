@@ -17,4 +17,4 @@ pyinstaller --name=missilecommand \
     --add-data="src/missilecommand/assets/silo-count.wav:missilecommand/assets" \
     --add-data="src/missilecommand/assets/smartbomb.wav:missilecommand/assets" \
     --add-data="src/missilecommand/assets/spritesheet.png:missilecommand/assets" \
-    assets/pyinstaller/main.py
+    support/pyinstaller/main.py

@@ -51,7 +51,7 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     sys_trail_eraser, sys_trail,
                                     sys_update_trail,)
 from missilecommand.types import Comp, EIDs, EntityID, Prop
-from missilecommand.utils import (check_for_exit, cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
+from missilecommand.utils import (cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
 
 
 class StatePhase(StrEnum):

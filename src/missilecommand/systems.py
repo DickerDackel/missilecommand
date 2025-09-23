@@ -270,13 +270,13 @@ def non_ecs_sys_collide_flyer_with_explosion():
 
         for e_eid, (e_prsa, e_mask, e_scale) in explosions:
             lt = e_scale()
-            e_rect = e_mask.get_rect()
-            scale = vec2(e_rect.size) * lt
-            scaled_mask = e_mask.scale(scale)
+            e_scaled = vec2(e_mask.get_size()) * lt
+            scaled_mask = e_mask.scale(e_scaled)
             m_rect = scaled_mask.get_rect(center=e_prsa.pos)
             offset = vec2(m_rect.topleft) - vec2(f_rect.topleft)
 
-            if scaled_mask.overlap(f_mask, offset) is None:
+            overlap = scaled_mask.overlap(f_mask, offset)
+            if overlap is None:
                 continue
 
             # Don't flag it dead yet, just let it linger motionless for 1s

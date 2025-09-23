@@ -7,7 +7,7 @@ import pygame._sdl2 as sdl2
 import tinyecs as ecs
 
 from pygame.math import Vector2 as vec2
-from pygame.typing import ColorLike, Point
+from pygame.typing import ColorLike, Point, RectLike
 
 from pgcooldown import Cooldown, LerpThing
 
@@ -72,6 +72,42 @@ def mk_crosshair(mouse_pos) -> EntityID:
     ecs.set_property(eid, Comp.WANTS_MOUSE)
     ecs.add_component(eid, Comp.TEXTURE, cache['textures']['crosshair'])
     ecs.add_component(eid, Comp.PRSA, PRSA(pos=pos))
+
+    return eid
+
+
+def mk_debug_line(p0: Point, p1: Point, color: ColorLike = 'red') -> EntityID:
+    """Draw a line in a given color, used for debugging
+
+    Components:
+        Comp.LINE
+        Comp.COLOR
+
+    Properties:
+        Prop.DEBUG
+    """
+
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.LINE, (p0, p1))
+    ecs.add_component(eid, Comp.COLOR, pygame.Color(color))
+    ecs.set_property(eid, Prop.DEBUG)
+
+
+def mk_debug_rect(rect: RectLike, color: ColorLike = 'red') -> EntityID:
+    """Draw a rect in a given color, used for debugging hitboxes
+
+    Components:
+        Comp.RECT
+        Comp.COLOR
+
+    Properties:
+        Prop.DEBUG
+    """
+
+    eid = ecs.create_entity()
+    ecs.add_component(eid, Comp.RECT, pygame.Rect(rect))
+    ecs.add_component(eid, Comp.COLOR, pygame.Color(color))
+    ecs.set_property(eid, Prop.DEBUG)
 
     return eid
 

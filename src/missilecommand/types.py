@@ -14,6 +14,7 @@ Trail = list[tuple[Point, Point]]
 
 class Prop(StrEnum):
     # Flags
+    DEBUG = auto()
     IS_BATTERY = auto()  # Batteries contain silos (unlaunched missiles)
     IS_CITY = auto()  # This is a city
     IS_DEAD = auto()  # This object is dead and will be culled by a system
@@ -54,10 +55,12 @@ class Comp(StrEnum):
     FLYER_SHOOT_COOLDOWN = auto()
     HITBOX = auto()
     LIFETIME = auto()  # Cooldown, sys_lifetime
+    LINE = auto()  # tuple of 2 Points, only for debugging
     MASK = auto()  # sprite mask for collision checks
     MOMENTUM = auto()  # sys_momentum
     PARENT_TYPE = auto()  # sound checks if any of its parent sprites are active
     PRSA = auto()
+    RECT = auto()  # Just a generic rect, right now only for debugging
     SCALE = auto()  # LerpThing, sys_apply_scale
     SHUTDOWN = auto()
     SOUND_CHANNEL = auto()

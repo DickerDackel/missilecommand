@@ -81,6 +81,52 @@ def sys_container(dt: float,
         ecs.set_property(eid, Prop.IS_ESCAPED)
 
 
+def sys_debug_line(dt: float, eid: EntityID, line: tuple[Point, Point], color: ColorLike,
+                   *, renderer=None) -> None:
+    """Draw a line in a given color, used for debugging hitboxes
+
+    Expected Properties:
+        Comp.Line
+        Comp.COLOR
+
+    Expected kwargs:
+        renderer: sdl2.Renderer
+
+    """
+
+    print('debug_line')
+    if renderer is None:
+        raise RuntimeError('renderer must be given')
+
+    bkp_color = renderer.draw_color
+    renderer.draw_color = color
+    renderer.draw_line(*line)
+    renderer.draw_color = bkp_color
+
+
+def sys_debug_rect(dt: float, eid: EntityID, rect: pygame.Rect, color: ColorLike,
+                   *, renderer=None) -> None:
+    """Draw a rect in a given color, used for debugging hitboxes
+
+    Expected Properties:
+        Comp.RECT
+        Comp.COLOR
+
+    Expected kwargs:
+        renderer: sdl2.Renderer
+
+    """
+
+    print('debug_rect')
+    if renderer is None:
+        raise RuntimeError('renderer must be given')
+
+    bkp_color = renderer.draw_color
+    renderer.draw_color = color
+    renderer.draw_rect(rect)
+    renderer.draw_color = bkp_color
+
+
 def sys_detonate_flyer(dt: float,
                        eid: EntityID,
                        prsa: PRSA) -> None:
@@ -256,7 +302,12 @@ def sys_update_trail(dt: float, eid: EntityID, prsa: PRSA, trail: Trail) -> None
     trail.append((previous, prsa.pos.copy()))
 
 
-def non_ecs_sys_collide_flyer_with_explosion():
+def non_ecs_sys_debug_prune():
+    """Purge all entities with property Prop.DEBUG"""
+    ecs.purge_by_property(Prop.DEBUG)
+
+
+def non_ecs_sys_collide_flyer_with_explosion() -> None:
     # There is actually only max 1 flyer at any given time, but in case
     # this changes when moving past the original...
     flyers = ecs.comps_of_archetype(Comp.PRSA, Comp.MASK, has_properties={Prop.IS_FLYER})

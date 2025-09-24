@@ -77,8 +77,6 @@ class Game(GameState):
         self.demo_player = DemoPlayer(C.ASSETS / 'demo.in')
         self.demo_walker = None
 
-        self.mouse = None
-
         ecs.create_entity(EIDs.FLYER_SOUND)
         ecs.create_entity(EIDs.SMARTBOMB_SOUND)
         self.trail_canvas = sdl2.Texture(self.renderer, self.app.logical_rect.size, target=True)
@@ -114,8 +112,8 @@ class Game(GameState):
         self.allowed_targets = None
 
     def reset(self, *args: Any, **kwargs: Any) -> None:
-        self.mouse = self.app.logical_rect.center
-        pygame.mouse.set_pos(self.app.coordinates_to_window(self.mouse))
+        self.app.mouse = self.app.logical_rect.center
+        pygame.mouse.set_pos(self.app.coordinates_to_window(self.app.mouse))
 
         rect = pygame.Rect(self.app.coordinates_to_window(C.CROSSHAIR_CONSTRAINT.topleft),
                            self.app.size_to_window(C.CROSSHAIR_CONSTRAINT.size))
@@ -226,12 +224,10 @@ class Game(GameState):
 
             return
 
-        self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
-
         if e.type == pygame.KEYDOWN:
             if self.phase == StatePhase.PLAYING and e.key in C.KEY_SILO_MAP:
                 launchpad = C.KEY_SILO_MAP[e.key]
-                self.launch_defense(launchpad, self.mouse)
+                self.launch_defense(launchpad, self.app.mouse)
             elif e.key == pygame.K_p:
                 self.app.push(Pause(self.app), passthrough=StackPermissions.DRAW)
                 pause_all_sounds()
@@ -267,7 +263,7 @@ class Game(GameState):
                 case 'NOP':
                     break
                 case ['MOUSE', x, y]:
-                    self.mouse = (float(x), float(y))
+                    self.app.mouse = (float(x), float(y))
                 case ['MISSILE', start_x, start_y, dest_x, dest_y, speed]:
                     # This is nearly duplicated from spawn_missile above, but
                     # at this point I can't be bothered to refactor that...
@@ -284,7 +280,7 @@ class Game(GameState):
                     self.incoming.add(eid)
                     self.incoming_left -= 1
                 case ['DEFENSE', launchpad]:
-                    self.launch_defense(int(launchpad), self.mouse)
+                    self.launch_defense(int(launchpad), self.app.mouse)
 
     def _update_game_mode(self):
         launched_this_frame = 0
@@ -465,7 +461,7 @@ class Game(GameState):
         # Make mouse work even if stackpermissions forbids update
 
         ecs.run_system(0, sys_mouse, Comp.PRSA,
-                       mouse_pos=self.mouse,
+                       mouse_pos=self.app.mouse,
                        has_properties={Comp.WANTS_MOUSE})
 
         ground = cache['textures']['ground']

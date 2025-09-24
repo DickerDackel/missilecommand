@@ -108,8 +108,6 @@ class Title(GameState):
     def dispatch_event(self, e: pygame.event.Event) -> None:
         check_for_exit(e)
 
-        self.mouse = self.app.coordinates_from_window(pygame.mouse.get_pos())
-
         if e.type == pygame.KEYDOWN:
             if e.key == pygame.K_SPACE:
                 raise StateExit(1)

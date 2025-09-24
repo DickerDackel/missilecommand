@@ -22,6 +22,8 @@ from missilecommand.instructions import Instructions
 from missilecommand.game import Game
 from missilecommand.gameover import Gameover
 
+BANNER = 'Missile Command v0.0.5'
+
 
 def load_sounds(assets: Path) -> None:
     sounds = assets.glob('*.wav')
@@ -53,6 +55,8 @@ def load_spritesheet(renderer: sdl2.Renderer, fname: str) -> None:
 
 
 def main() -> None:
+    print(BANNER)
+
     if 'XDG_SESSION_TYPE' in environ and environ['XDG_SESSION_TYPE'] == 'wayland':
         environ['SDL_VIDEODRIVER'] = 'wayland'
 

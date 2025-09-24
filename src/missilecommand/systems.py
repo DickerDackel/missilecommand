@@ -94,7 +94,6 @@ def sys_debug_line(dt: float, eid: EntityID, line: tuple[Point, Point], color: C
 
     """
 
-    print('debug_line')
     if renderer is None:
         raise RuntimeError('renderer must be given')
 
@@ -117,7 +116,6 @@ def sys_debug_rect(dt: float, eid: EntityID, rect: pygame.Rect, color: ColorLike
 
     """
 
-    print('debug_rect')
     if renderer is None:
         raise RuntimeError('renderer must be given')
 
@@ -324,7 +322,7 @@ def non_ecs_sys_collide_flyer_with_explosion() -> None:
             e_scaled = vec2(e_mask.get_size()) * lt
             scaled_mask = e_mask.scale(e_scaled)
             m_rect = scaled_mask.get_rect(center=e_prsa.pos)
-            offset = vec2(m_rect.topleft) - vec2(f_rect.topleft)
+            offset = vec2(f_rect.topleft) - vec2(m_rect.topleft)
 
             overlap = scaled_mask.overlap(f_mask, offset)
             if overlap is None:

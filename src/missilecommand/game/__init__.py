@@ -38,8 +38,10 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     non_ecs_sys_collide_smartbomb_with_battery,
                                     non_ecs_sys_collide_smartbomb_with_city,
                                     non_ecs_sys_collide_smartbomb_with_explosion,
+                                    non_ecs_sys_debug_prune,
                                     non_ecs_sys_prune, sys_aim,
                                     sys_close_orphan_sound, sys_container,
+                                    sys_debug_line, sys_debug_rect,
                                     sys_detonate_flyer, sys_detonate_missile,
                                     sys_detonate_smartbomb,
                                     sys_dont_overshoot, sys_explosion,
@@ -476,6 +478,12 @@ class Game(GameState):
 
         ecs.run_system(0, sys_textblink, Comp.COLOR_CYCLE)
         ecs.run_system(0, sys_draw_textlabel, Comp.TEXT, Comp.PRSA, Comp.ANCHOR, Comp.COLOR)
+
+        # This is for debugging only
+        ecs.run_system(0, sys_debug_rect, Comp.RECT, Comp.COLOR, has_properties={Prop.DEBUG}, renderer=self.renderer)
+        ecs.run_system(0, sys_debug_line, Comp.LINE, Comp.COLOR, has_properties={Prop.DEBUG}, renderer=self.renderer)
+        ecs.run_system(0, sys_draw_texture, Comp.TEXTURE, Comp.PRSA, has_properties={Prop.DEBUG})
+        non_ecs_sys_debug_prune()
 
     def launch_defense(self, launchpad: int, target: Point) -> None:
         if not GS.batteries[launchpad]:

@@ -51,7 +51,9 @@ from missilecommand.systems import (non_ecs_sys_collide_flyer_with_explosion,
                                     sys_trail_eraser, sys_trail,
                                     sys_update_trail,)
 from missilecommand.types import Comp, EIDs, EntityID, Prop
-from missilecommand.utils import (cls, pause_all_sounds, play_sound, purge_entities, unpause_all_sounds)
+from missilecommand.utils import (cls, pause_all_sounds, play_sound,
+                                  purge_entities, stop_all_sounds,
+                                  unpause_all_sounds)
 
 
 class StatePhase(StrEnum):
@@ -212,10 +214,12 @@ class Game(GameState):
 
     def dispatch_event(self, e: pygame.event.Event) -> None:
         if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            self.teardown()
             raise StateExit
 
         if self.demo:
             if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
+                self.teardown()
                 raise StateExit(1)
 
             return
@@ -390,6 +394,7 @@ class Game(GameState):
         if (silos_left == 0
             or (not self.incoming and self.incoming_left <= 0
                 and not self.smartbombs and self.smartbombs_left <= 0)):
+            stop_all_sounds()
             self.phase = next(self.phase_walker)
             return
 
@@ -443,6 +448,7 @@ class Game(GameState):
         if self.app.is_stacked(self): return
 
         if self.demo:
+            self.teardown()
             raise StateExit
 
         self.phase = next(self.phase_walker)
@@ -531,3 +537,6 @@ class Game(GameState):
         ecs.add_component(EIDs.SCORE, Comp.TEXT, f'{GS.score:5d}  ')
         if GS.score > highscoretable.leader.score:
             ecs.add_component(EIDs.HIGHSCORE, Comp.TEXT, f'{GS.score:5d}')
+
+    def teardown(self):
+        stop_all_sounds()

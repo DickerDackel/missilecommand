@@ -51,16 +51,21 @@ HIGHSCORE_FILE = STATE_DIRECTORY / 'highscores.json'
 COLOR = SimpleNamespace(
     background='black',
     clear=(255, 255, 255, 0),
-    defense_missile='blue',
-    enemy_missile='red',
+    defense_missile='dodgerblue2',
+    # defense_missile='blue',  # This is the original pure blue
+    enemy_missile='orangered2',
+    # enemy_missile='red',  # This is the original pure red
     gameover='#df3e23',
     grid='grey',
     initials='yellow',
     instructions='white',
-    normal_text='blue',
+    normal_text='dodgerblue2',
+    # normal_text='blue',  # This is the original pure blue
     quickhelp='white',
-    score_color='red',
-    special_text='red',
+    score_color='orangered2',
+    # score_color='red',  # This is the original pure red
+    special_text='orangered2',
+    # special_text='red',  # This is the original pure red
     title='white'
 )
 

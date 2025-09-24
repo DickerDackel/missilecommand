@@ -393,10 +393,11 @@ MESSAGES = {
     },
     'instructions': {
         'INSTRUCTIONS': MessageConfig('INSTRUCTIONS', GRID(15, 8, 2, 2).center, 'center', COLOR.instructions, (2, 2)),
-        'SPACE': MessageConfig('PRESS SPACE TO PLAY', GRID(15, 14, 2, 1).center, 'center', COLOR.instructions),
-        'ESCAPE': MessageConfig('PRESS ESCAPE TO EXIT', GRID(15, 16, 2, 1).center, 'center', COLOR.instructions),
-        'MOUSE': MessageConfig('USE MOUSE CURSOR TO AIM', GRID(15, 18, 2, 1).center, 'center', COLOR.instructions),
-        'FIRE': MessageConfig('PRESS Q/W/A TO FIRE', GRID(15, 20, 2, 1).center, 'center', COLOR.instructions),
+        'SPACE': MessageConfig('PRESS SPACE TO PLAY', GRID(15, 13, 2, 1).center, 'center', COLOR.instructions),
+        'ESCAPE': MessageConfig('PRESS ESCAPE TO EXIT', GRID(15, 15, 2, 1).center, 'center', COLOR.instructions),
+        'MOUSE': MessageConfig('USE MOUSE CURSOR TO AIM', GRID(15, 17, 2, 1).center, 'center', COLOR.instructions),
+        'FIRE': MessageConfig('PRESS Q/W/A TO FIRE', GRID(15, 19, 2, 1).center, 'center', COLOR.instructions),
+        'PAUSE': MessageConfig('PRESS P TO PAUSE', GRID(15, 21, 2, 1).center, 'center', COLOR.instructions),
     },
     'pause': {
         'PAUSE': MessageConfig('PAUSE', GRID(15, 4, 2, 2).center, 'center', COLOR.normal_text, (3, 3)),
